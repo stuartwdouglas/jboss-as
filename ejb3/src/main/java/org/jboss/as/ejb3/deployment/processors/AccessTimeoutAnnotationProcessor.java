@@ -25,6 +25,7 @@ package org.jboss.as.ejb3.deployment.processors;
 import org.jboss.as.ejb3.component.session.SessionBeanComponentDescription;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.annotation.CompositeIndex;
+import org.jboss.ejb3.concurrency.spi.TimePeriod;
 import org.jboss.invocation.proxy.MethodIdentifier;
 import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.AnnotationTarget;
@@ -36,7 +37,6 @@ import org.jboss.jandex.Type;
 import org.jboss.logging.Logger;
 
 import javax.ejb.AccessTimeout;
-import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -89,7 +89,7 @@ public class AccessTimeoutAnnotationProcessor extends AbstractAnnotationEJBProce
 
         for (AnnotationInstance annotationInstance : annotations) {
             AnnotationTarget target = annotationInstance.target();
-            AccessTimeout accessTimeout = this.getAccessTimeout(annotationInstance);
+            TimePeriod accessTimeout = this.getAccessTimeout(annotationInstance);
             if (target instanceof ClassInfo) {
                 // bean level
                 componentDescription.setBeanLevelAccessTimeout(((ClassInfo) target).name().toString(), accessTimeout);
@@ -108,26 +108,11 @@ public class AccessTimeoutAnnotationProcessor extends AbstractAnnotationEJBProce
         }
     }
 
-    private AccessTimeout getAccessTimeout(AnnotationInstance annotationInstance) {
+    private TimePeriod getAccessTimeout(AnnotationInstance annotationInstance) {
         final long timeout = annotationInstance.value().asLong();
         AnnotationValue unitAnnVal = annotationInstance.value("unit");
         final TimeUnit unit = unitAnnVal != null ? TimeUnit.valueOf(unitAnnVal.asEnum()) : TimeUnit.MILLISECONDS;
-        return new AccessTimeout() {
-            @Override
-            public long value() {
-                return timeout;
-            }
-
-            @Override
-            public TimeUnit unit() {
-                return unit;
-            }
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return AccessTimeout.class;
-            }
-        };
+        return new TimePeriod(timeout, unit);
 
     }
 

@@ -29,6 +29,7 @@ import org.jboss.as.ejb3.component.session.SessionBeanComponent;
 import org.jboss.as.naming.ManagedReference;
 import org.jboss.as.server.CurrentServiceContainer;
 import org.jboss.ejb3.concurrency.spi.LockableComponent;
+import org.jboss.ejb3.concurrency.spi.TimePeriod;
 import org.jboss.invocation.Interceptor;
 import org.jboss.invocation.InterceptorFactory;
 import org.jboss.invocation.InterceptorFactoryContext;
@@ -37,9 +38,7 @@ import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.StopContext;
 
-import javax.ejb.AccessTimeout;
 import javax.ejb.LockType;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -65,7 +64,7 @@ public class SingletonComponent extends SessionBeanComponent implements Lockable
 
     private Map<EJBBusinessMethod, LockType> methodLockTypes;
 
-    private Map<EJBBusinessMethod, AccessTimeout> methodAccessTimeouts;
+    private Map<EJBBusinessMethod, TimePeriod> methodAccessTimeouts;
 
     private final List<ServiceName> dependsOn;
     private final Method timeoutMethod;
@@ -162,56 +161,26 @@ public class SingletonComponent extends SessionBeanComponent implements Lockable
     }
 
     @Override
-    public AccessTimeout getAccessTimeout(Method method) {
+    public TimePeriod getAccessTimeout(Method method) {
         final EJBBusinessMethod ejbMethod = new EJBBusinessMethod(method);
-        final AccessTimeout accessTimeout = this.methodAccessTimeouts.get(ejbMethod);
+        final TimePeriod accessTimeout = this.methodAccessTimeouts.get(ejbMethod);
         if (accessTimeout != null) {
             return accessTimeout;
         }
         // check bean level access timeout
-        final AccessTimeout beanTimeout = this.beanLevelAccessTimeout.get(method.getDeclaringClass().getName());
+        final TimePeriod beanTimeout = this.beanLevelAccessTimeout.get(method.getDeclaringClass().getName());
         if (beanTimeout != null) {
             return beanTimeout;
         }
         //TODO: this should be configurable
-        return new AccessTimeout() {
-            @Override
-            public long value() {
-                return 5;
-            }
-
-            @Override
-            public TimeUnit unit() {
-                return TimeUnit.MINUTES;
-            }
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return AccessTimeout.class;
-            }
-        };
+        return getDefaultAccessTimeout();
     }
 
     @Override
-    public AccessTimeout getDefaultAccessTimeout() {
+    public TimePeriod getDefaultAccessTimeout() {
         // TODO: This has to be configurable.
         // Currently defaults to 5 minutes
-        return new AccessTimeout() {
-            @Override
-            public long value() {
-                return 5;
-            }
-
-            @Override
-            public TimeUnit unit() {
-                return TimeUnit.MINUTES;
-            }
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return AccessTimeout.class;
-            }
-        };
+        return new TimePeriod(5, TimeUnit.MINUTES);
     }
 
     private synchronized void destroySingletonInstance() {

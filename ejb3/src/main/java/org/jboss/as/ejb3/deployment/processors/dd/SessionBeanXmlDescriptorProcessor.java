@@ -38,6 +38,7 @@ import org.jboss.as.ejb3.deployment.EjbJarDescription;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
+import org.jboss.ejb3.concurrency.spi.TimePeriod;
 import org.jboss.invocation.proxy.MethodIdentifier;
 import org.jboss.logging.Logger;
 import org.jboss.metadata.ejb.spec.AccessTimeoutMetaData;
@@ -54,13 +55,11 @@ import org.jboss.metadata.ejb.spec.SessionBeanMetaData;
 import org.jboss.metadata.ejb.spec.StatefulTimeoutMetaData;
 import org.jboss.metadata.javaee.spec.LifecycleCallbackMetaData;
 
-import javax.ejb.AccessTimeout;
 import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.LockType;
 import javax.ejb.TransactionAttributeType;
 import javax.ejb.TransactionManagementType;
 import javax.interceptor.InvocationContext;
-import java.lang.annotation.Annotation;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -258,23 +257,8 @@ public class SessionBeanXmlDescriptorProcessor extends AbstractEjbXmlDescriptorP
         if (accessTimeoutMetaData != null) {
             final long timeout = accessTimeoutMetaData.getTimeout();
             final TimeUnit unit = accessTimeoutMetaData.getUnit();
-            AccessTimeout accessTimeout = new AccessTimeout() {
-                @Override
-                public long value() {
-                    return timeout;
-                }
 
-                @Override
-                public TimeUnit unit() {
-                    return unit;
-                }
-
-                @Override
-                public Class<? extends Annotation> annotationType() {
-                    return AccessTimeout.class;
-                }
-            };
-            singletonComponentDescription.setBeanLevelAccessTimeout(singletonComponentDescription.getEJBClassName(), accessTimeout);
+            singletonComponentDescription.setBeanLevelAccessTimeout(singletonComponentDescription.getEJBClassName(), new TimePeriod(timeout, unit));
         }
     }
 

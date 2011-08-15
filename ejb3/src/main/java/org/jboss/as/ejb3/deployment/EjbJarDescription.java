@@ -30,10 +30,9 @@ import org.jboss.as.ejb3.component.session.SessionBeanComponentDescription;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
+import org.jboss.ejb3.tx2.spi.ApplicationExceptionDetails;
 import org.jboss.modules.Module;
 
-import javax.ejb.ApplicationException;
-import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -49,7 +48,7 @@ public class EjbJarDescription {
 
     private final EEModuleDescription eeModuleDescription;
 
-    private final Map<String, ApplicationException> applicationExceptions = new ConcurrentHashMap<String, ApplicationException>();
+    private final Map<String, ApplicationExceptionDetails> applicationExceptions = new ConcurrentHashMap<String, ApplicationExceptionDetails>();
 
     private final Set<String> applicationLevelSecurityRoles = new HashSet<String>();
 
@@ -93,24 +92,7 @@ public class EjbJarDescription {
         if (exceptionClassName == null || exceptionClassName.isEmpty()) {
             throw new IllegalArgumentException("Invalid exception class name: " + exceptionClassName);
         }
-        //TODO: Is this a good idea? ApplicationException's equals/hashCode
-        //will not work the way that would be expected
-        ApplicationException appException = new ApplicationException() {
-            @Override
-            public boolean inherited() {
-                return inherited;
-            }
-
-            @Override
-            public boolean rollback() {
-                return rollback;
-            }
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return ApplicationException.class;
-            }
-        };
+        ApplicationExceptionDetails appException = new ApplicationExceptionDetails(rollback, inherited);
         // add it to the map
         this.applicationExceptions.put(exceptionClassName, appException);
     }
@@ -123,7 +105,7 @@ public class EjbJarDescription {
         return this.eeModuleDescription;
     }
 
-    Map<String, ApplicationException> getApplicationExceptions() {
+    Map<String, ApplicationExceptionDetails> getApplicationExceptions() {
         return Collections.unmodifiableMap(this.applicationExceptions);
     }
 
@@ -146,7 +128,7 @@ public class EjbJarDescription {
     }
 
     private void prepareApplicationExceptions(EjbJarConfiguration ejbDeploymentConfiguration, ClassLoader classLoader) throws DeploymentUnitProcessingException {
-        for (Map.Entry<String, ApplicationException> entry : this.applicationExceptions.entrySet()) {
+        for (Map.Entry<String, ApplicationExceptionDetails> entry : this.applicationExceptions.entrySet()) {
             String applicationExceptionClass = entry.getKey();
             try {
                 Class<?> exceptionClass = classLoader.loadClass(applicationExceptionClass);

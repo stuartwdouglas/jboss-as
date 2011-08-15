@@ -26,6 +26,7 @@ import org.jboss.as.ejb3.component.AsyncFutureInterceptor;
 import org.jboss.as.ejb3.component.AsyncVoidInterceptor;
 import org.jboss.as.ejb3.component.EJBComponent;
 import org.jboss.as.threads.ThreadsServices;
+import org.jboss.ejb3.concurrency.spi.TimePeriod;
 import org.jboss.ejb3.context.spi.SessionContext;
 import org.jboss.invocation.InterceptorContext;
 import org.jboss.invocation.InterceptorFactory;
@@ -55,7 +56,7 @@ public abstract class SessionBeanComponent extends EJBComponent implements org.j
 
     static final ServiceName ASYNC_EXECUTOR_SERVICE_NAME = ThreadsServices.EXECUTOR.append("ejb3-async");
 
-    protected Map<String, AccessTimeout> beanLevelAccessTimeout;
+    protected Map<String, TimePeriod> beanLevelAccessTimeout;
     private final Set<Method> asynchronousMethods;
     protected Executor asyncExecutor;
     protected final Map<Method, InterceptorFactory> timeoutInterceptors;

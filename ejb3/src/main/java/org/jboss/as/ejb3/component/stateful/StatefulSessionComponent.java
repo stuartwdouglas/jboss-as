@@ -28,6 +28,7 @@ import org.jboss.as.ejb3.component.session.SessionBeanComponent;
 import org.jboss.as.naming.ManagedReference;
 import org.jboss.ejb3.cache.Cache;
 import org.jboss.ejb3.cache.StatefulObjectFactory;
+import org.jboss.ejb3.concurrency.spi.TimePeriod;
 import org.jboss.ejb3.context.spi.SessionContext;
 import org.jboss.invocation.Interceptor;
 import org.jboss.invocation.InterceptorFactory;
@@ -44,7 +45,6 @@ import javax.transaction.Synchronization;
 import javax.transaction.SystemException;
 import javax.transaction.Transaction;
 import java.io.Serializable;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Map;
@@ -68,7 +68,7 @@ public class StatefulSessionComponent extends SessionBeanComponent {
     final InterceptorFactory afterBegin;
     final InterceptorFactory afterCompletion;
     final InterceptorFactory beforeCompletion;
-    private Map<EJBBusinessMethod, AccessTimeout> methodAccessTimeouts;
+    private Map<EJBBusinessMethod, TimePeriod> methodAccessTimeouts;
 
     /**
      * Construct a new instance.
@@ -104,7 +104,7 @@ public class StatefulSessionComponent extends SessionBeanComponent {
 
     @Override
     public <T> T getBusinessObject(SessionContext ctx, Class<T> businessInterface) throws IllegalStateException {
-        if(businessInterface == null) {
+        if (businessInterface == null) {
             throw new IllegalStateException("Business interface type cannot be null");
         }
         return createViewInstanceProxy(businessInterface, Collections.<Object, Object>singletonMap(SESSION_ATTACH_KEY, getSessionIdOf(ctx)));
@@ -118,33 +118,18 @@ public class StatefulSessionComponent extends SessionBeanComponent {
     /**
      * Returns the {@link AccessTimeout} applicable to given method
      */
-    public AccessTimeout getAccessTimeout(Method method) {
+    public TimePeriod getAccessTimeout(Method method) {
         final EJBBusinessMethod ejbMethod = new EJBBusinessMethod(method);
-        final AccessTimeout accessTimeout = this.methodAccessTimeouts.get(ejbMethod);
+        final TimePeriod accessTimeout = this.methodAccessTimeouts.get(ejbMethod);
         if (accessTimeout != null) {
             return accessTimeout;
         }
         // check bean level access timeout
-        final AccessTimeout timeout = this.beanLevelAccessTimeout.get(method.getDeclaringClass().getName());
+        final TimePeriod timeout = this.beanLevelAccessTimeout.get(method.getDeclaringClass().getName());
         if (timeout != null) {
             return timeout;
         }
-        return new AccessTimeout() {
-            @Override
-            public long value() {
-                return 5;
-            }
-
-            @Override
-            public TimeUnit unit() {
-                return TimeUnit.MINUTES;
-            }
-
-            @Override
-            public Class<? extends Annotation> annotationType() {
-                return AccessTimeout.class;
-            }
-        };
+        return new TimePeriod(5, TimeUnit.MINUTES);
     }
 
     //    @Override

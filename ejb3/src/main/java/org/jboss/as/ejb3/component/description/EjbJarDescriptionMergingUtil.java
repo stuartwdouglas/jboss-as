@@ -31,9 +31,9 @@ import org.jboss.as.ejb3.component.singleton.SingletonComponentDescription;
 import org.jboss.as.ejb3.component.stateful.StatefulComponentDescription;
 import org.jboss.as.ejb3.component.stateless.StatelessComponentDescription;
 import org.jboss.as.ejb3.deployment.EjbJarDescription;
+import org.jboss.ejb3.concurrency.spi.TimePeriod;
 import org.jboss.msc.service.ServiceName;
 
-import javax.ejb.AccessTimeout;
 import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.LockType;
 import java.util.ArrayList;
@@ -212,11 +212,11 @@ public class EjbJarDescriptionMergingUtil {
         }
 
         // access timeout
-        AccessTimeout overrideAccessTimeout = override.getBeanLevelAccessTimeout().get(mergedBean.getEJBClassName());
+        TimePeriod overrideAccessTimeout = override.getBeanLevelAccessTimeout().get(mergedBean.getEJBClassName());
         if (overrideAccessTimeout != null) {
             mergedBean.setBeanLevelAccessTimeout(mergedBean.getEJBClassName(), overrideAccessTimeout);
         } else {
-            AccessTimeout originalAccessTimeout = original.getBeanLevelAccessTimeout().get(mergedBean.getEJBClassName());
+            TimePeriod originalAccessTimeout = original.getBeanLevelAccessTimeout().get(mergedBean.getEJBClassName());
             if (originalAccessTimeout != null) {
                 mergedBean.setBeanLevelAccessTimeout(mergedBean.getEJBClassName(), originalAccessTimeout);
             }

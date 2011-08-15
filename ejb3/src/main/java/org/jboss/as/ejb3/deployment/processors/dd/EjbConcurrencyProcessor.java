@@ -34,6 +34,7 @@ import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
 import org.jboss.as.server.deployment.reflect.ClassReflectionIndex;
 import org.jboss.as.server.deployment.reflect.DeploymentReflectionIndex;
+import org.jboss.ejb3.concurrency.spi.TimePeriod;
 import org.jboss.invocation.proxy.MethodIdentifier;
 import org.jboss.metadata.ejb.spec.AccessTimeoutMetaData;
 import org.jboss.metadata.ejb.spec.ConcurrentMethodMetaData;
@@ -52,7 +53,6 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * DUP that processes concurrency information for singleton beans.
@@ -114,9 +114,9 @@ public class EjbConcurrencyProcessor implements DeploymentUnitProcessor {
                 iterator.remove();
             }
         }
-        Iterator<Map.Entry<MethodIdentifier, AccessTimeout>> iterator2 = description.getMethodApplicableAccessTimeouts().entrySet().iterator();
+        Iterator<Map.Entry<MethodIdentifier, TimePeriod>> iterator2 = description.getMethodApplicableAccessTimeouts().entrySet().iterator();
         while (iterator2.hasNext()) {
-            Map.Entry<MethodIdentifier, AccessTimeout> entry = iterator2.next();
+            Map.Entry<MethodIdentifier, TimePeriod> entry = iterator2.next();
             if (annotationOverridden(classIndex, index, entry.getKey(), AccessTimeout.class)) {
                 iterator.remove();
             }
@@ -154,22 +154,7 @@ public class EjbConcurrencyProcessor implements DeploymentUnitProcessor {
                 }
                 final AccessTimeoutMetaData accessTimeout = concurrentMethod.getAccessTimeout();
                 if(accessTimeout != null) {
-                    singletonComponentDescription.setAccessTimeout(new AccessTimeout() {
-                        @Override
-                        public long value() {
-                            return accessTimeout.getTimeout();
-                        }
-
-                        @Override
-                        public TimeUnit unit() {
-                            return accessTimeout.getUnit();
-                        }
-
-                        @Override
-                        public Class<? extends Annotation> annotationType() {
-                            return AccessTimeout.class;
-                        }
-                    }, methodIdentifier);
+                    singletonComponentDescription.setAccessTimeout(new TimePeriod(accessTimeout.getTimeout(), accessTimeout.getUnit()), methodIdentifier);
                 }
             }
         }

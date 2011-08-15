@@ -22,10 +22,10 @@
 package org.jboss.as.ejb3.component.stateful;
 
 import org.jboss.as.ejb3.component.AbstractEJBInterceptor;
+import org.jboss.ejb3.concurrency.spi.TimePeriod;
 import org.jboss.invocation.InterceptorContext;
 import org.jboss.logging.Logger;
 
-import javax.ejb.AccessTimeout;
 import javax.ejb.ConcurrentAccessTimeoutException;
 import javax.ejb.EJBException;
 import javax.transaction.Status;
@@ -86,16 +86,16 @@ public class StatefulSessionSynchronizationInterceptor extends AbstractEJBInterc
         final StatefulSessionComponentInstance instance = getComponentInstance(context);
 
         final TransactionSynchronizationRegistry transactionSynchronizationRegistry = component.getTransactionSynchronizationRegistry();
-        final AccessTimeout timeout = component.getAccessTimeout(context.getMethod());
+        final TimePeriod timeout = component.getAccessTimeout(context.getMethod());
         if (log.isTraceEnabled()) {
             log.trace("Trying to acquire lock: " + lock + " for stateful component instance: " + instance + " during invocation: " + context);
         }
         // we obtain a lock in this synchronization interceptor because the lock needs to be tied to the synchronization
         // so that it can released on the tx synchronization callbacks
-        boolean acquired = lock.tryLock(timeout.value(), timeout.unit());
+        boolean acquired = lock.tryLock(timeout.getValue(), timeout.getTimeUnit());
         if (!acquired) {
             throw new ConcurrentAccessTimeoutException("EJB 3.1 FR 4.3.14.1 concurrent access timeout on " + context
-                    + " - could not obtain lock within " + timeout.value() + timeout.unit());
+                    + " - could not obtain lock within " + timeout.getValue() + timeout.getTimeUnit());
         }
         if (log.isTraceEnabled()) {
             log.trace("Acquired lock: " + lock + " for stateful component instance: " + instance + " during invocation: " + context);

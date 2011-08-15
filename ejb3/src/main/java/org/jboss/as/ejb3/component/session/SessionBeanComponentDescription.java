@@ -38,6 +38,7 @@ import org.jboss.as.ejb3.timerservice.AutoTimer;
 import org.jboss.as.ejb3.tx.CMTTxInterceptorFactory;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
+import org.jboss.ejb3.concurrency.spi.TimePeriod;
 import org.jboss.invocation.ImmediateInterceptorFactory;
 import org.jboss.invocation.proxy.MethodIdentifier;
 import org.jboss.logging.Logger;
@@ -60,7 +61,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Jaikiran Pai
@@ -88,17 +88,17 @@ public abstract class SessionBeanComponentDescription extends EJBComponentDescri
     /**
      * Map of class name to default {@link AccessTimeout} for this component.
      */
-    private Map<String, AccessTimeout> beanLevelAccessTimeout = new HashMap<String, AccessTimeout>();
+    private Map<String, TimePeriod> beanLevelAccessTimeout = new HashMap<String, TimePeriod>();
 
     /**
      * The {@link LockType} applicable for a specific bean methods.
      */
-    private Map<MethodIdentifier, LockType> methodLockTypes = new ConcurrentHashMap<MethodIdentifier, LockType>();
+    private Map<MethodIdentifier, LockType> methodLockTypes = new HashMap<MethodIdentifier, LockType>();
 
     /**
      * The {@link AccessTimeout} applicable for a specific bean methods.
      */
-    private Map<MethodIdentifier, AccessTimeout> methodAccessTimeouts = new ConcurrentHashMap<MethodIdentifier, AccessTimeout>();
+    private Map<MethodIdentifier, TimePeriod> methodAccessTimeouts = new HashMap<MethodIdentifier, TimePeriod>();
 
     /**
      * Methods on the component marked as @Asynchronous
@@ -269,7 +269,7 @@ public abstract class SessionBeanComponentDescription extends EJBComponentDescri
      *
      * @return
      */
-    public Map<String, AccessTimeout> getBeanLevelAccessTimeout() {
+    public Map<String, TimePeriod> getBeanLevelAccessTimeout() {
         return this.beanLevelAccessTimeout;
     }
 
@@ -278,7 +278,7 @@ public abstract class SessionBeanComponentDescription extends EJBComponentDescri
      *
      * @param accessTimeout The access timeout applicable for the class
      */
-    public void setBeanLevelAccessTimeout(String className, AccessTimeout accessTimeout) {
+    public void setBeanLevelAccessTimeout(String className, TimePeriod accessTimeout) {
         this.beanLevelAccessTimeout.put(className, accessTimeout);
     }
 
@@ -288,11 +288,11 @@ public abstract class SessionBeanComponentDescription extends EJBComponentDescri
      * @param accessTimeout The applicable access timeout for the method
      * @param method        The method
      */
-    public void setAccessTimeout(AccessTimeout accessTimeout, MethodIdentifier method) {
+    public void setAccessTimeout(TimePeriod accessTimeout, MethodIdentifier method) {
         this.methodAccessTimeouts.put(method, accessTimeout);
     }
 
-    public Map<MethodIdentifier, AccessTimeout> getMethodApplicableAccessTimeouts() {
+    public Map<MethodIdentifier, TimePeriod> getMethodApplicableAccessTimeouts() {
         return this.methodAccessTimeouts;
     }
 
