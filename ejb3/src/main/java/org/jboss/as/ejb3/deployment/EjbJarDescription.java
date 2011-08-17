@@ -92,7 +92,7 @@ public class EjbJarDescription {
         if (exceptionClassName == null || exceptionClassName.isEmpty()) {
             throw new IllegalArgumentException("Invalid exception class name: " + exceptionClassName);
         }
-        ApplicationExceptionDetails appException = new ApplicationExceptionDetails(rollback, inherited);
+        ApplicationExceptionDetails appException = new ApplicationExceptionDetails(exceptionClassName, rollback, inherited);
         // add it to the map
         this.applicationExceptions.put(exceptionClassName, appException);
     }

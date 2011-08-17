@@ -60,7 +60,7 @@ import java.util.Map;
 public abstract class EJBComponent extends BasicComponent implements org.jboss.ejb3.context.spi.EJBComponent {
     private static Logger log = Logger.getLogger(EJBComponent.class);
 
-    private static final ApplicationExceptionDetails APPLICATION_EXCEPTION = new ApplicationExceptionDetails(false, true);
+    private static final ApplicationExceptionDetails APPLICATION_EXCEPTION = new ApplicationExceptionDetails("java.lang.Exception", false, true);
 
     private final Map<MethodTransactionAttributeKey, TransactionAttributeType> txAttrs;
 
