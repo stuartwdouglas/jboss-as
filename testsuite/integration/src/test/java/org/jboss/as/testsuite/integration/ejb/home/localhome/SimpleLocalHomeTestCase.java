@@ -53,8 +53,15 @@ public class SimpleLocalHomeTestCase {
             "            <ejb-name>SimpleLocalHomeBean</ejb-name>\n" +
             "            <local-home>org.jboss.as.testsuite.integration.ejb.home.localhome.SimpleLocalHome</local-home>\n" +
             "            <local>org.jboss.as.testsuite.integration.ejb.home.localhome.SimpleLocalInterface</local>\n" +
-            "            <ejb-class>org.jboss.as.testsuite.integration.ejb.home.localhome.SimpleLocalBean</ejb-class>\n" +
+            "            <ejb-class>org.jboss.as.testsuite.integration.ejb.home.localhome.SimpleStatelessLocalBean</ejb-class>\n" +
             "            <session-type>Stateless</session-type>\n" +
+            "        </session>\n" +
+            "        <session>\n" +
+            "            <ejb-name>SimpleStatefulLocalHomeBean</ejb-name>\n" +
+            "            <local-home>org.jboss.as.testsuite.integration.ejb.home.localhome.SimpleStatefulLocalHome</local-home>\n" +
+            "            <local>org.jboss.as.testsuite.integration.ejb.home.localhome.SimpleLocalInterface</local>\n" +
+            "            <ejb-class>org.jboss.as.testsuite.integration.ejb.home.localhome.SimpleStatefulLocalBean</ejb-class>\n" +
+            "            <session-type>Stateful</session-type>\n" +
             "        </session>\n" +
             "    </enterprise-beans>\n" +
             "</ejb-jar>";
@@ -72,11 +79,20 @@ public class SimpleLocalHomeTestCase {
         return war;
     }
 
-
     @Test
-    public void testSimpleLocalHome() throws Exception {
-        final SimpleLocalHome home = (SimpleLocalHome)iniCtx.lookup("java:module/SimpleLocalHomeBean!" + SimpleLocalHome.class.getName());
+    public void testStatelessLocalHome() throws Exception {
+        final SimpleLocalHome home = (SimpleLocalHome) iniCtx.lookup("java:module/SimpleLocalHomeBean!" + SimpleLocalHome.class.getName());
         final SimpleLocalInterface ejbInstance = home.createSimple();
         Assert.assertEquals("Hello World", ejbInstance.sayHello());
+    }
+
+    @Test
+    public void testStatefulLocalHome() throws Exception {
+        final String message = "Bean Message";
+        final SimpleStatefulLocalHome home = (SimpleStatefulLocalHome) iniCtx.lookup("java:module/SimpleStatefulLocalHomeBean!" + SimpleStatefulLocalHome.class.getName());
+        SimpleLocalInterface ejbInstance = home.createSimple(message);
+        Assert.assertEquals(message, ejbInstance.sayHello());
+        ejbInstance = home.createComplex("hello", "world");
+        Assert.assertEquals("hello world", ejbInstance.sayHello());
     }
 }

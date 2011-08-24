@@ -19,36 +19,15 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.ejb3.component.stateless;
-
-import org.jboss.as.ee.component.ComponentView;
-import org.jboss.invocation.Interceptor;
-import org.jboss.invocation.InterceptorContext;
-import org.jboss.invocation.InterceptorFactory;
-import org.jboss.invocation.InterceptorFactoryContext;
-import org.jboss.msc.value.InjectedValue;
+package org.jboss.as.testsuite.integration.ejb.home.localhome;
 
 /**
- * Interceptor that handles home views for SLSBs.
  *
  * @author Stuart Douglas
  */
-public class StatelessSessionHomeInterceptorFactory implements InterceptorFactory {
+public interface SimpleStatefulLocalHome {
 
-    private final InjectedValue<ComponentView> viewToCreate = new InjectedValue<ComponentView>();
+    SimpleLocalInterface createSimple(String message);
+    SimpleLocalInterface createComplex(String first, String second);
 
-    @Override
-    public Interceptor create(final InterceptorFactoryContext context) {
-        return new Interceptor() {
-            @Override
-            public Object processInvocation(final InterceptorContext context) throws Exception {
-                final ComponentView view = viewToCreate.getValue();
-                return view.createInstance().createProxy();
-            }
-        };
-    }
-
-    public InjectedValue<ComponentView> getViewToCreate() {
-        return viewToCreate;
-    }
 }

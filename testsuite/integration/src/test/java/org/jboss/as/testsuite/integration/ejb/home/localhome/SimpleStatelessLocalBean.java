@@ -24,7 +24,7 @@ package org.jboss.as.testsuite.integration.ejb.home.localhome;
 /**
  * @author Stuart Douglas
  */
-public class SimpleLocalBean implements SimpleLocalInterface {
+public class SimpleStatelessLocalBean implements SimpleLocalInterface {
     @Override
     public String sayHello() {
         return "Hello World";

@@ -131,7 +131,6 @@ public abstract class SessionBeanComponentDescription extends EJBComponentDescri
      */
     private EjbLocalHomeViewDescription ejbLocalHomeView;
 
-
     public enum SessionBeanType {
         STATELESS,
         STATEFUL,
@@ -165,19 +164,6 @@ public abstract class SessionBeanComponentDescription extends EJBComponentDescri
             assertNoRemoteView(viewClassName);
             registerView(viewClassName, MethodIntf.LOCAL);
         }
-    }
-
-    public void addLocalHome(final String localHome) {
-        final EjbLocalHomeViewDescription view = new EjbLocalHomeViewDescription(this, localHome);
-        getViews().add(view);
-        this.ejbLocalHomeView = view;
-    }
-
-    public void addEjbLocalObjectView(final String viewClassName) {
-        assertNoRemoteView(viewClassName);
-        final EJBViewDescription view = registerView(viewClassName, MethodIntf.LOCAL);
-        view.setEjb2xView(true);
-        this.ejbLocalView = view;
     }
 
 
@@ -486,7 +472,6 @@ public abstract class SessionBeanComponentDescription extends EJBComponentDescri
     public EjbLocalHomeViewDescription getEjbLocalHomeView() {
         return ejbLocalHomeView;
     }
-
     @Override
     public SessionBeanMetaData getDescriptorData() {
         return (SessionBeanMetaData) super.getDescriptorData();
