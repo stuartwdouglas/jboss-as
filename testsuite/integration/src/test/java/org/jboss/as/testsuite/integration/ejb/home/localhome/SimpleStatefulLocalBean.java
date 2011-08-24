@@ -24,7 +24,7 @@ package org.jboss.as.testsuite.integration.ejb.home.localhome;
 /**
  * @author Stuart Douglas
  */
-public class SimpleStatefulLocalBean implements SimpleLocalInterface {
+public class SimpleStatefulLocalBean  {
 
     private String message;
 
@@ -36,8 +36,6 @@ public class SimpleStatefulLocalBean implements SimpleLocalInterface {
         this.message = first + " " + second;
     }
 
-
-    @Override
     public String sayHello() {
         return message;
     }

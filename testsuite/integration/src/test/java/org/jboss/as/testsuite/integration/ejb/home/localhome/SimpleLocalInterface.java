@@ -21,11 +21,13 @@
  */
 package org.jboss.as.testsuite.integration.ejb.home.localhome;
 
+import javax.ejb.EJBLocalObject;
+
 /**
  *
  * @author Stuart Douglas
  */
-public interface SimpleLocalInterface {
+public interface SimpleLocalInterface extends EJBLocalObject {
 
     public String sayHello();
 

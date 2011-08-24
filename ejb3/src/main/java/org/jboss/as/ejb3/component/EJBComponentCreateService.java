@@ -111,7 +111,9 @@ public class EJBComponentCreateService extends BasicComponentCreateService {
                         if (!Modifier.isPublic(method.getModifiers()))
                             continue;
                         final Method componentMethod = getComponentMethod(componentConfiguration, method.getName(), method.getParameterTypes());
-                        this.processTxAttr(ejbComponentDescription, viewType, componentMethod);
+                        if(componentMethod != null) {
+                            this.processTxAttr(ejbComponentDescription, viewType, componentMethod);
+                        }
                     }
                 }
             }
@@ -138,7 +140,7 @@ public class EJBComponentCreateService extends BasicComponentCreateService {
         try {
             return componentConfiguration.getComponentClass().getMethod(name, parameterTypes);
         } catch (NoSuchMethodException e) {
-            throw new RuntimeException(e);
+            return null;
         }
     }
 
@@ -166,7 +168,6 @@ public class EJBComponentCreateService extends BasicComponentCreateService {
             // it's a BMT bean
             return;
         }
-
 
         String className = method.getDeclaringClass().getName();
         String methodName = method.getName();

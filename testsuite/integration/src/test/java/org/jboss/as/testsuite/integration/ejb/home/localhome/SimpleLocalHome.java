@@ -21,12 +21,14 @@
  */
 package org.jboss.as.testsuite.integration.ejb.home.localhome;
 
+import javax.ejb.EJBLocalHome;
+
 /**
  * Simple local home interface
  *
  * @author Stuart Douglas
  */
-public interface SimpleLocalHome {
+public interface SimpleLocalHome extends EJBLocalHome {
 
     SimpleLocalInterface createSimple();
 

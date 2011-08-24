@@ -32,6 +32,7 @@ import org.jboss.invocation.ImmediateInterceptorFactory;
 import org.jboss.invocation.Interceptor;
 import org.jboss.invocation.InterceptorContext;
 import org.jboss.invocation.Interceptors;
+import org.jboss.invocation.proxy.MethodIdentifier;
 import org.jboss.invocation.proxy.ProxyFactory;
 import org.jboss.msc.service.ServiceName;
 
@@ -66,7 +67,7 @@ public class ViewDescription {
     public ViewDescription(final ComponentDescription componentDescription, final String viewClassName) {
         this.componentDescription = componentDescription;
         this.viewClassName = viewClassName;
-        if(isDefaultConfiguratorRequired()) {
+        if (isDefaultConfiguratorRequired()) {
             configurators.addFirst(new DefaultConfigurator());
         }
     }
@@ -119,9 +120,10 @@ public class ViewDescription {
 
     /**
      * Creates view configuration. Allows for extensibility in EE sub components.
-     * @param viewClass view class
+     *
+     * @param viewClass              view class
      * @param componentConfiguration component config
-     * @param proxyFactory proxy factory
+     * @param proxyFactory           proxy factory
      * @return new view configuration
      */
     public ViewConfiguration createViewConfiguration(final Class<?> viewClass, final ComponentConfiguration componentConfiguration, final ProxyFactory<?> proxyFactory) {
@@ -161,9 +163,11 @@ public class ViewDescription {
             ClassReflectionIndex<?> index = reflectionIndex.getClassIndex(componentConfiguration.getComponentClass());
             List<Method> methods = configuration.getProxyFactory().getCachedMethods();
             for (Method method : methods) {
-                final Method componentMethod = ClassReflectionIndexUtil.findRequiredMethod(reflectionIndex, index, method);
-                configuration.addViewInterceptor(method,new ImmediateInterceptorFactory(new ComponentDispatcherInterceptor(componentMethod)), InterceptorOrder.View.COMPONENT_DISPATCHER);
-                configuration.addClientInterceptor(method, CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
+                final Method componentMethod = ClassReflectionIndexUtil.findMethod(reflectionIndex, index, MethodIdentifier.getIdentifierForMethod(method));
+                if (componentMethod != null) {
+                    configuration.addViewInterceptor(method, new ImmediateInterceptorFactory(new ComponentDispatcherInterceptor(componentMethod)), InterceptorOrder.View.COMPONENT_DISPATCHER);
+                    configuration.addClientInterceptor(method, CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
+                }
             }
 
             configuration.addViewPostConstructInterceptor(Interceptors.getTerminalInterceptorFactory(), InterceptorOrder.ViewPostConstruct.TERMINAL_INTERCEPTOR);
