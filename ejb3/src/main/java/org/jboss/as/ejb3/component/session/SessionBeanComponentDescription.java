@@ -32,6 +32,7 @@ import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
 import org.jboss.as.ejb3.component.EJBComponentDescription;
 import org.jboss.as.ejb3.component.EJBViewDescription;
+import org.jboss.as.ejb3.component.EjbLocalHomeViewDescription;
 import org.jboss.as.ejb3.component.MethodIntf;
 import org.jboss.as.ejb3.concurrency.AccessTimeoutDetails;
 import org.jboss.as.ejb3.deployment.EjbJarDescription;
@@ -120,6 +121,16 @@ public abstract class SessionBeanComponentDescription extends EJBComponentDescri
      */
     private String mappedName;
 
+    /**
+     * The EJB 2.x local view
+     */
+    private EJBViewDescription ejbLocalView;
+
+    /**
+     * The ejb local home view
+     */
+    private EjbLocalHomeViewDescription ejbLocalHomeView;
+
 
     public enum SessionBeanType {
         STATELESS,
@@ -155,6 +166,20 @@ public abstract class SessionBeanComponentDescription extends EJBComponentDescri
             registerView(viewClassName, MethodIntf.LOCAL);
         }
     }
+
+    public void addLocalHome(final String localHome) {
+        final EjbLocalHomeViewDescription view = new EjbLocalHomeViewDescription(this, localHome);
+        getViews().add(view);
+        this.ejbLocalHomeView = view;
+    }
+
+    public void addEjbLocalObjectView(final String viewClassName) {
+        assertNoRemoteView(viewClassName);
+        final EJBViewDescription view = registerView(viewClassName, MethodIntf.LOCAL);
+        view.setEjb2xView(true);
+        this.ejbLocalView = view;
+    }
+
 
     public void addLocalBusinessInterfaceViews(final String... classNames) {
         addLocalBusinessInterfaceViews(Arrays.asList(classNames));
@@ -452,6 +477,14 @@ public abstract class SessionBeanComponentDescription extends EJBComponentDescri
     @Override
     public boolean isStateless() {
         return getSessionBeanType() == SessionBeanType.STATELESS;
+    }
+
+    public EJBViewDescription getEjbLocalView() {
+        return ejbLocalView;
+    }
+
+    public EjbLocalHomeViewDescription getEjbLocalHomeView() {
+        return ejbLocalHomeView;
     }
 
     @Override

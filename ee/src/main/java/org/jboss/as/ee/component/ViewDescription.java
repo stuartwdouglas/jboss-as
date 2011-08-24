@@ -66,7 +66,13 @@ public class ViewDescription {
     public ViewDescription(final ComponentDescription componentDescription, final String viewClassName) {
         this.componentDescription = componentDescription;
         this.viewClassName = viewClassName;
-        configurators.addFirst(new DefaultConfigurator());
+        if(isDefaultConfiguratorRequired()) {
+            configurators.addFirst(new DefaultConfigurator());
+        }
+    }
+
+    protected boolean isDefaultConfiguratorRequired() {
+        return true;
     }
 
     /**

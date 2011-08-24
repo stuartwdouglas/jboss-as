@@ -40,6 +40,7 @@ import org.jboss.as.ejb3.deployment.processors.EjbJndiBindingsDeploymentUnitProc
 import org.jboss.as.ejb3.deployment.processors.EjbRefProcessor;
 import org.jboss.as.ejb3.deployment.processors.EjbResourceInjectionAnnotationProcessor;
 import org.jboss.as.ejb3.deployment.processors.ImplicitLocalViewProcessor;
+import org.jboss.as.ejb3.deployment.processors.LocalHomeProcessor;
 import org.jboss.as.ejb3.deployment.processors.MessageDrivenComponentDescriptionFactory;
 import org.jboss.as.ejb3.deployment.processors.SessionBeanComponentDescriptionFactory;
 import org.jboss.as.ejb3.deployment.processors.TimerServiceJndiBindingProcessor;
@@ -133,7 +134,11 @@ class EJB3SubsystemAdd extends AbstractBoottimeAddStepHandler implements Descrip
                 if (!lite) {
                     logger.debug("Add support for MDB");
                     processorTarget.addDeploymentProcessor(Phase.PARSE, Phase.PARSE_MDB_CREATE_COMPONENT_DESCRIPTIONS, new MessageDrivenComponentDescriptionFactory());
+
                     processorTarget.addDeploymentProcessor(Phase.POST_MODULE, Phase.POST_MODULE_EJB_ASYNCHRONOUS_MERGE, new AsynchronousMergingProcessor());
+
+                    logger.debug("Add support for Home Interfaces");
+                    processorTarget.addDeploymentProcessor(Phase.POST_MODULE, Phase.POST_MODULE_LOCAL_HOME, new LocalHomeProcessor());
                 }
 
                 processorTarget.addDeploymentProcessor(Phase.PARSE, Phase.PARSE_ANNOTATION_EJB, new EjbAnnotationProcessor());
