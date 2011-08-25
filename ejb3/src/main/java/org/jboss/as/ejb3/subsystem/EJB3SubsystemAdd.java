@@ -39,6 +39,7 @@ import org.jboss.as.ejb3.deployment.processors.EjbJarParsingDeploymentUnitProces
 import org.jboss.as.ejb3.deployment.processors.EjbJndiBindingsDeploymentUnitProcessor;
 import org.jboss.as.ejb3.deployment.processors.EjbRefProcessor;
 import org.jboss.as.ejb3.deployment.processors.EjbResourceInjectionAnnotationProcessor;
+import org.jboss.as.ejb3.deployment.processors.EntityBeanComponentDescriptionFactory;
 import org.jboss.as.ejb3.deployment.processors.ImplicitLocalViewProcessor;
 import org.jboss.as.ejb3.deployment.processors.LocalHomeProcessor;
 import org.jboss.as.ejb3.deployment.processors.MessageDrivenComponentDescriptionFactory;
@@ -140,6 +141,9 @@ class EJB3SubsystemAdd extends AbstractBoottimeAddStepHandler implements Descrip
 
                     logger.debug("Add support for Home Interfaces");
                     processorTarget.addDeploymentProcessor(Phase.POST_MODULE, Phase.POST_MODULE_LOCAL_HOME, new LocalHomeProcessor());
+
+                    logger.debug("Add support for Entity Beans");
+                    processorTarget.addDeploymentProcessor(Phase.PARSE, Phase.PARSE_ENTITY_BEAN_CREATE_COMPONENT_DESCRIPTIONS, new EntityBeanComponentDescriptionFactory());
                 }
 
                 processorTarget.addDeploymentProcessor(Phase.PARSE, Phase.PARSE_ANNOTATION_EJB, new EjbAnnotationProcessor());
