@@ -23,9 +23,12 @@ package org.jboss.as.ejb3.component.entity;
 
 import org.jboss.as.ee.component.BasicComponent;
 import org.jboss.as.ee.component.BasicComponentInstance;
+import org.jboss.as.ee.component.Component;
 import org.jboss.as.naming.ManagedReference;
 import org.jboss.invocation.Interceptor;
 
+import javax.ejb.EntityBean;
+import javax.ejb.EntityContext;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -33,11 +36,47 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Stuart Douglas
  */
-public  class EntityBeanComponentInstance extends BasicComponentInstance {
+public class EntityBeanComponentInstance extends BasicComponentInstance {
+
+    /**
+     * The primary key of this instance, is it is associated with an object identity
+     */
+    private volatile Object primaryKey;
 
     protected EntityBeanComponentInstance(final BasicComponent component, final AtomicReference<ManagedReference> instanceReference, final Interceptor preDestroyInterceptor, final Map<Method, Interceptor> methodInterceptors) {
         super(component, instanceReference, preDestroyInterceptor, methodInterceptors);
     }
 
+    @Override
+    public EntityBeanComponent getComponent() {
+        return (EntityBeanComponent) super.getComponent();
+    }
 
+    @Override
+    public EntityBean getInstance() {
+        return (EntityBean) super.getInstance();
+    }
+
+    public Object getPrimaryKey() {
+        return primaryKey;
+    }
+
+    /**
+     * Associates this entity with a
+     * @param primaryKey
+     */
+    public synchronized void associate(Object primaryKey) {
+        this.primaryKey = primaryKey;
+
+    }
+
+    public synchronized void deassociate() {
+
+        this.primaryKey = null;
+    }
+
+    public void setupContext() {
+        getInstance().setEntityContext(new EntityContext() {
+        });
+    }
 }

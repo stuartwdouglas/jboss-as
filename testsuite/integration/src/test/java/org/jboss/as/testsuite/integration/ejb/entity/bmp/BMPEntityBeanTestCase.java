@@ -50,7 +50,7 @@ public class BMPEntityBeanTestCase {
 
         WebArchive war = ShrinkWrap.create(WebArchive.class, ARCHIVE_NAME);
         war.addPackage(BMPEntityBeanTestCase.class.getPackage());
-        war.addAsWebInfResource("/ejb/entity/bmp/ejb-jar.xml", "ejb-jar.xml");
+        war.addAsWebInfResource("ejb/entity/bmp/ejb-jar.xml", "ejb-jar.xml");
         return war;
     }
 
@@ -61,5 +61,4 @@ public class BMPEntityBeanTestCase {
         final Integer pk = (Integer)ejbInstance.getPrimaryKey();
         Assert.assertEquals("Hello", DataStore.DATA.get(pk));
     }
-
 }

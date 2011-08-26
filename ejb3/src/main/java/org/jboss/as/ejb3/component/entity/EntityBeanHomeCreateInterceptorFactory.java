@@ -19,7 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.ejb3.component;
+package org.jboss.as.ejb3.component.entity;
 
 import org.jboss.as.ee.component.ComponentView;
 import org.jboss.as.ee.component.ComponentViewInstance;
@@ -36,7 +36,7 @@ import java.lang.reflect.Method;
  *
  * @author Stuart Douglas
  */
-public class SessionBeanHomeInterceptorFactory implements InterceptorFactory {
+public class EntityBeanHomeCreateInterceptorFactory implements InterceptorFactory {
 
     private final InjectedValue<ComponentView> viewToCreate = new InjectedValue<ComponentView>();
 
@@ -50,7 +50,7 @@ public class SessionBeanHomeInterceptorFactory implements InterceptorFactory {
      */
     private final Method method;
 
-    public SessionBeanHomeInterceptorFactory(final Method method) {
+    public EntityBeanHomeCreateInterceptorFactory(final Method method) {
         this.method = method;
     }
 

@@ -20,10 +20,11 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.as.ejb3.deployment.processors;
+package org.jboss.as.ejb3.deployment.processors.entity;
 
 import org.jboss.as.ejb3.component.entity.EntityBeanComponentDescription;
 import org.jboss.as.ejb3.deployment.EjbJarDescription;
+import org.jboss.as.ejb3.deployment.processors.EJBComponentDescriptionFactory;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.annotation.CompositeIndex;
@@ -63,6 +64,19 @@ public class EntityBeanComponentDescriptionFactory extends EJBComponentDescripti
         description.setDescriptorData(entity);
 
         description.setPersistenceType(entity.getPersistenceType());
+
+        //TODO: validation
+
+        final String localHome = entity.getLocalHome();
+        if (localHome != null) {
+            description.addLocalHome(localHome);
+        }
+
+        final String local = entity.getLocal();
+        if (local != null) {
+            description.addEjbLocalObjectView(local);
+        }
+
 
     }
 

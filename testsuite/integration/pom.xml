@@ -51,7 +51,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
-                <inherited>false</inherited>
+                <inherited>false</inherited>    
                 <executions>
                     <execution>
                         <id>build-jars</id>
@@ -103,6 +103,7 @@
                                 <exclude>org/jboss/as/testsuite/integration/xerces/ws/**/*TestCase.java</exclude>
                                 <exclude>org/jboss/as/testsuite/integration/mdb/**/*TestCase.java</exclude>
                                 <exclude>org/jboss/as/testsuite/integration/ejb/async/**/*TestCase.java</exclude>
+                                <exclude>org/jboss/as/testsuite/integration/ejb/entity/**/*TestCase.java</exclude>
                             </excludes>
                         </configuration>
                     </plugin>
@@ -149,6 +150,7 @@
                                         <include>org/jboss/as/testsuite/integration/xerces/ws/**/*TestCase.java</include>
                                         <include>org/jboss/as/testsuite/integration/mdb/**/*TestCase.java</include>
                                         <include>org/jboss/as/testsuite/integration/ejb/async/**/*TestCase.java</include>
+                                        <include>org/jboss/as/testsuite/integration/ejb/entity/**/*TestCase.java</include>
                                     </includes>
                                     <excludes>
                                         <exclude>none</exclude>

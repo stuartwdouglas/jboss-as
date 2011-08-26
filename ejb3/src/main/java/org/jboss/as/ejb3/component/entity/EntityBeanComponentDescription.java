@@ -21,6 +21,8 @@
  */
 package org.jboss.as.ejb3.component.entity;
 
+import org.jboss.as.ee.component.ComponentConfiguration;
+import org.jboss.as.ee.component.EEApplicationDescription;
 import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ejb3.component.EJBComponentDescription;
 import org.jboss.as.ejb3.deployment.EjbJarDescription;
@@ -49,6 +51,18 @@ public class EntityBeanComponentDescription extends EJBComponentDescription {
     protected void addCurrentInvocationContextFactory(final ViewDescription view) {
 
     }
+
+
+    @Override
+    public ComponentConfiguration createConfiguration(EEApplicationDescription applicationDescription) {
+
+        final ComponentConfiguration configuration = new ComponentConfiguration(this, applicationDescription.getClassConfiguration(getComponentClassName()));
+        // setup the component create service
+        configuration.setComponentCreateServiceFactory(EntityBeanComponentCreateService.FACTORY);
+
+        return configuration;
+    }
+
 
 
     public PersistenceType getPersistenceType() {

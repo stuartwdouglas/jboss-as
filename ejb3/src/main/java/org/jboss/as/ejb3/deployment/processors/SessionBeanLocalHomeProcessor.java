@@ -34,7 +34,8 @@ import org.jboss.as.ee.component.interceptors.InterceptorOrder;
 import org.jboss.as.ejb3.component.EJBComponentDescription;
 import org.jboss.as.ejb3.component.EJBViewDescription;
 import org.jboss.as.ejb3.component.MethodIntf;
-import org.jboss.as.ejb3.component.SessionBeanHomeInterceptorFactory;
+import org.jboss.as.ejb3.component.session.SessionBeanHomeInterceptorFactory;
+import org.jboss.as.ejb3.component.session.SessionBeanComponentDescription;
 import org.jboss.as.ejb3.component.stateful.StatefulComponentDescription;
 import org.jboss.as.ejb3.component.stateless.StatelessComponentDescription;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
@@ -52,20 +53,17 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Processor that hooks up local home interfaces. At the moment it only hooks up stateless session beans
- * <p/>
- * <p/>
- * Not sure if this is the best place for this code at the moment.
+ * Processor that hooks up home interfaces for session beans
  *
  * @author Stuart Douglas
  */
-public class LocalHomeProcessor extends AbstractComponentConfigProcessor {
+public class SessionBeanLocalHomeProcessor extends AbstractComponentConfigProcessor {
 
     @Override
     protected void processComponentConfig(final DeploymentUnit deploymentUnit, final DeploymentPhaseContext phaseContext, final CompositeIndex index, final ComponentDescription componentDescription) throws DeploymentUnitProcessingException {
 
-        if (componentDescription instanceof EJBComponentDescription) {
-            final EJBComponentDescription ejbComponentDescription = (EJBComponentDescription) componentDescription;
+        if (componentDescription instanceof SessionBeanComponentDescription) {
+            final SessionBeanComponentDescription ejbComponentDescription = (SessionBeanComponentDescription) componentDescription;
 
             //check for EJB's with a local home interface
             if (ejbComponentDescription.getEjbLocalHomeView() != null) {
@@ -89,7 +87,7 @@ public class LocalHomeProcessor extends AbstractComponentConfigProcessor {
                                 //we have a create method
                                 final ViewDescription createdView = resolveViewDescription(method, ejbComponentDescription);
 
-                                Method initMethod = resolveInitMethod(ejbComponentDescription, componentConfiguration, configuration, method, createdView);
+                                Method initMethod = resolveInitMethod(ejbComponentDescription, method);
                                 final SessionBeanHomeInterceptorFactory factory = new SessionBeanHomeInterceptorFactory(initMethod);
                                 //add a dependency on the view to create
                                 componentConfiguration.getStartDependencies().add(new DependencyConfigurator<ComponentStartService>() {
@@ -111,18 +109,18 @@ public class LocalHomeProcessor extends AbstractComponentConfigProcessor {
     }
 
 
-    private Method resolveInitMethod(final EJBComponentDescription description, final ComponentConfiguration componentConfiguration, final ViewConfiguration configuration, final Method method, final ViewDescription createdView) throws DeploymentUnitProcessingException {
+    private Method resolveInitMethod(final EJBComponentDescription description, final Method method) throws DeploymentUnitProcessingException {
         if (description instanceof StatelessComponentDescription) {
             return null;
         } else if (description instanceof StatefulComponentDescription) {
-            return resolveStatefulInitMethod((StatefulComponentDescription) description, componentConfiguration, configuration, method, createdView);
+            return resolveStatefulInitMethod((StatefulComponentDescription) description, method);
         } else {
             throw new DeploymentUnitProcessingException("Local Home not allowed for " + description);
         }
     }
 
 
-    private Method resolveStatefulInitMethod(final StatefulComponentDescription description, final ComponentConfiguration componentConfiguration, final ViewConfiguration configuration, final Method method, final ViewDescription createdView) throws DeploymentUnitProcessingException {
+    private Method resolveStatefulInitMethod(final StatefulComponentDescription description, final Method method) throws DeploymentUnitProcessingException {
 
         //for a SFSB we need to resolve the corresponding init method for this create method
 

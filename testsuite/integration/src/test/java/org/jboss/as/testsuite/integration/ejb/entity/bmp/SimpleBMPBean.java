@@ -37,17 +37,16 @@ public class SimpleBMPBean implements EntityBean {
     
     private String myField;
     private EntityContext entityContext;
-    private Integer primaryKey;
     private boolean ejbPostCreateCalled;
 
 
     public Integer ejbCreateEmpty() {
-        primaryKey = ID.incrementAndGet();
+        int primaryKey = ID.incrementAndGet();
         return primaryKey;
     }
 
     public Integer ejbCreateWithValue(String value) {
-        primaryKey = ID.incrementAndGet();
+        int primaryKey = ID.incrementAndGet();
         myField = value;
         return primaryKey;
     }
@@ -77,7 +76,7 @@ public class SimpleBMPBean implements EntityBean {
 
     @Override
     public void ejbRemove() throws RemoveException, EJBException, RemoteException {
-        DataStore.DATA.remove(primaryKey);
+        DataStore.DATA.remove(entityContext.getPrimaryKey());
     }
 
     @Override
@@ -87,17 +86,17 @@ public class SimpleBMPBean implements EntityBean {
 
     @Override
     public void ejbPassivate() throws EJBException, RemoteException {
-
+        myField = null;
     }
 
     @Override
     public void ejbLoad() throws EJBException, RemoteException {
-        this.myField = DataStore.DATA.get(primaryKey);
+        this.myField = DataStore.DATA.get(entityContext.getPrimaryKey());
     }
 
     @Override
     public void ejbStore() throws EJBException, RemoteException {
-        DataStore.DATA.put(primaryKey, myField);
+        DataStore.DATA.put((Integer) entityContext.getPrimaryKey(), myField);
     }
 
     public String getMyField() {
