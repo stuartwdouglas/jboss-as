@@ -29,29 +29,29 @@ import org.jboss.invocation.InterceptorFactory;
 import org.jboss.invocation.InterceptorFactoryContext;
 import org.jboss.logging.Logger;
 
-import javax.ejb.ConcurrentAccessException;
-import javax.ejb.ConcurrentAccessTimeoutException;
 import javax.ejb.NoSuchEJBException;
-import java.rmi.RemoteException;
+import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Interceptor factory for entity beans that associates an invocation with a primary key
+ * Interceptor that calls the EJB remove method for BMP entity beans
  *
  * @author Stuart Douglas
  */
-public class EntityBeanAssociatingInterceptorFactory implements InterceptorFactory {
+public class EntityBeanRemoveInterceptorFactory implements InterceptorFactory {
 
     private final Logger log = Logger.getLogger(EntityBeanAssociatingInterceptorFactory.class);
 
+    private final Method ejbRemove;
     private final Object primaryKeyContextKey;
 
-    public EntityBeanAssociatingInterceptorFactory(Object primaryKeyContextKey) {
+    public EntityBeanRemoveInterceptorFactory(final Method ejbRemove, final Object primaryKeyContextKey) {
+        this.ejbRemove = ejbRemove;
         this.primaryKeyContextKey = primaryKeyContextKey;
     }
 
     @Override
-    public Interceptor create(InterceptorFactoryContext context) {
+    public Interceptor create(final InterceptorFactoryContext context) {
         final AtomicReference<Object> primaryKeyReference = (AtomicReference<Object>) context.getContextData().get(this.primaryKeyContextKey);
 
         return new AbstractEJBInterceptor() {
@@ -64,42 +64,24 @@ public class EntityBeanAssociatingInterceptorFactory implements InterceptorFacto
                     throw new NoSuchEJBException("Invocation was not associated with an instance, primary key was null, instance may have been removed");
                 }
 
-                final EntityBeanComponentInstance instance = component.getCache().get(primaryKey);
 
+                final EntityBeanComponentInstance instance = component.getCache().get(primaryKey);
+                //Call the ejbRemove method
+                Method oldMethod = context.getMethod();
                 try {
                     context.putPrivateData(ComponentInstance.class, instance);
-                    return context.proceed();
-                } catch (Exception ex) {
-                    // Detect app exception
-                    if (component.getApplicationException(ex.getClass(), context.getMethod()) != null) {
-                        // it's an application exception, just throw it back.
-                        throw ex;
-                    }
-                    if (ex instanceof ConcurrentAccessTimeoutException || ex instanceof ConcurrentAccessException) {
-                        throw ex;
-                    }
-                    if (ex instanceof RuntimeException || ex instanceof RemoteException) {
-                        if (log.isTraceEnabled())
-                            log.trace("Discarding bean " + primaryKey + " because of exception", ex);
-                        component.getCache().discard(primaryKey);
-                    }
-                    throw ex;
-                } catch (final Error e) {
-                    if (log.isTraceEnabled())
-                        log.trace("Discarding bean " + primaryKey + " because of error", e);
-                    component.getCache().discard(primaryKey);
-                    throw e;
-                } catch (final Throwable t) {
-                    if (log.isTraceEnabled())
-                        log.trace("Discarding bean " + primaryKey + " because of Throwable", t);
-                    component.getCache().discard(primaryKey);
-                    throw new RuntimeException(t);
+                    context.setMethod(ejbRemove);
+                    context.setTarget(instance.getInstance());
+                    instance.getInterceptor(ejbRemove).processInvocation(context);
                 } finally {
-                    // the StatefulSessionSynchronizationInterceptor will take care of releasing
+                    context.setMethod(oldMethod);
+                    context.setTarget(null);
                     context.putPrivateData(ComponentInstance.class, null);
                 }
+                //now un-associate the instance
+                component.getCache().remove(primaryKeyReference);
+                return null;
             }
         };
-
     }
 }

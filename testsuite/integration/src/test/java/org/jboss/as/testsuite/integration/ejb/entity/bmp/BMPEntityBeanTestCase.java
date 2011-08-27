@@ -32,6 +32,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import javax.ejb.NoSuchEJBException;
 import javax.naming.InitialContext;
 import java.util.Collection;
 
@@ -100,10 +101,10 @@ public class BMPEntityBeanTestCase {
         result.remove();
         Assert.assertFalse(DataStore.DATA.containsKey(56));
         try {
+            result.getMyField();
+            throw new RuntimeException("Expected invocation on removed instance to fail");
+        } catch (NoSuchEJBException expected) {
 
-        } catch (EntityRe)
-        int handle = col.
-        for (BMPLocalInterface result : col) {
         }
     }
 }

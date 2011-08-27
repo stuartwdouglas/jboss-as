@@ -34,6 +34,9 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * {@link org.jboss.invocation.Interceptor} which manages {@link javax.transaction.Synchronization} semantics on an entity bean.
  *
+ * For now we are using a completely synchronized approach to entity concurrency. There is at most 1 entity active for a given primary
+ * key at any time, and access is synchronized within a transaction.
+ *
  * @author <a href="mailto:cdewolf@redhat.com">Carlo de Wolf</a>
  * @author Jaikiran Pai
  * @author Stuart Douglas

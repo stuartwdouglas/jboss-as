@@ -28,6 +28,8 @@ import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
+import org.jboss.as.server.deployment.reflect.ClassReflectionIndex;
+import org.jboss.as.server.deployment.reflect.DeploymentReflectionIndex;
 
 import java.lang.reflect.Method;
 
@@ -41,6 +43,8 @@ public class EntityBeanObjectViewConfigurator implements ViewConfigurator {
     @Override
     public void configure(final DeploymentPhaseContext context, final ComponentConfiguration componentConfiguration, final ViewDescription description, final ViewConfiguration configuration) throws DeploymentUnitProcessingException {
 
+
+        final DeploymentReflectionIndex index = context.getDeploymentUnit().getAttachment(org.jboss.as.server.deployment.Attachments.REFLECTION_INDEX);
         final Object primaryKeyContextKey = new Object();
 
         configuration.addViewPostConstructInterceptor(new EntityBeanEjbCreateMethodInterceptorFactory(primaryKeyContextKey), InterceptorOrder.ViewPostConstruct.INSTANCE_CREATE);
@@ -52,11 +56,25 @@ public class EntityBeanObjectViewConfigurator implements ViewConfigurator {
             if (method.getName().equals("getPrimaryKey") && method.getParameterTypes().length == 0) {
                 configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
                 configuration.addViewInterceptor(method, EntityBeanInterceptors.GET_PRIMARY_KEY, InterceptorOrder.View.COMPONENT_DISPATCHER);
-            } else {
-
+            } else if(method.getName().equals("remove") && method.getParameterTypes().length == 0) {
+                Method remove = resolveRemoveMethod(componentConfiguration.getComponentClass(), index, componentConfiguration.getComponentName());
+                configuration.addViewInterceptor(method, new EntityBeanRemoveInterceptorFactory(remove, primaryKeyContextKey), InterceptorOrder.View.COMPONENT_DISPATCHER);
             }
         }
 
     }
 
+    private Method resolveRemoveMethod( final Class<?> componentClass, final DeploymentReflectionIndex index, final String ejbName) throws DeploymentUnitProcessingException {
+
+        Class<?> clazz = componentClass;
+        while (clazz != Object.class) {
+            final ClassReflectionIndex<?> classIndex = index.getClassIndex(clazz);
+            Method ret = classIndex.getMethod(Void.TYPE, "ejbRemove");
+            if (ret != null) {
+                return ret;
+            }
+            clazz = clazz.getSuperclass();
+        }
+        throw new DeploymentUnitProcessingException("Could not resolve ejbRemove method for interface method on EJB " + ejbName);
+    }
 }
