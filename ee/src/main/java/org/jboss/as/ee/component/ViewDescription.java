@@ -148,7 +148,7 @@ public class ViewDescription {
         return configurators;
     }
 
-    static final ImmediateInterceptorFactory CLIENT_DISPATCHER_INTERCEPTOR_FACTORY = new ImmediateInterceptorFactory(new Interceptor() {
+    public static final ImmediateInterceptorFactory CLIENT_DISPATCHER_INTERCEPTOR_FACTORY = new ImmediateInterceptorFactory(new Interceptor() {
         public Object processInvocation(final InterceptorContext context) throws Exception {
             ComponentViewInstance viewInstance = context.getPrivateData(ComponentViewInstance.class);
             return viewInstance.getEntryPoint(context.getMethod()).processInvocation(context);

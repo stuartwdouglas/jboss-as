@@ -269,6 +269,11 @@ public abstract class EJBComponentDescription extends ComponentDescription {
     public void addLocalHome(final String localHome) {
         final EjbLocalHomeViewDescription view = new EjbLocalHomeViewDescription(this, localHome);
         getViews().add(view);
+        // setup server side view interceptors
+        setupViewInterceptors(view);
+        // setup client side view interceptors
+        setupClientViewInterceptors(view);
+        // return created view
         this.ejbLocalHomeView = view;
     }
 

@@ -69,7 +69,7 @@ public class EntityBeanHomeCreateInterceptorFactory implements InterceptorFactor
                 final ComponentView view = viewToCreate.getValue();
                 final HashMap<Object, Object> ctx = new HashMap<Object, Object>();
                 ctx.put(EJB_CREATE_METHOD_KEY, ejbCreate);
-                ctx.put(EJB_POST_CREATE_METHOD_KEY, ejbCreate);
+                ctx.put(EJB_POST_CREATE_METHOD_KEY, ejbPostCreate);
                 ctx.put(PARAMETERS_KEY, context.getParameters());
                 final ComponentViewInstance instance = view.createInstance();
                 return instance.createProxy();

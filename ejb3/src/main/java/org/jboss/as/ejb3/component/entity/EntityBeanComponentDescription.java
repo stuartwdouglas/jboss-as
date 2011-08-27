@@ -21,7 +21,11 @@
  */
 package org.jboss.as.ejb3.component.entity;
 
+import org.jboss.as.ee.component.Component;
 import org.jboss.as.ee.component.ComponentConfiguration;
+import org.jboss.as.ee.component.ComponentConfigurator;
+import org.jboss.as.ee.component.ComponentDescription;
+import org.jboss.as.ee.component.ComponentInstanceInterceptorFactory;
 import org.jboss.as.ee.component.EEApplicationDescription;
 import org.jboss.as.ee.component.ViewConfiguration;
 import org.jboss.as.ee.component.ViewConfigurator;
@@ -29,10 +33,14 @@ import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
 import org.jboss.as.ejb3.component.AbstractEjbHomeViewDescription;
 import org.jboss.as.ejb3.component.EJBComponentDescription;
+import org.jboss.as.ejb3.component.session.SessionInvocationContextInterceptor;
 import org.jboss.as.ejb3.deployment.EjbJarDescription;
 import org.jboss.as.ejb3.tx.CMTTxInterceptorFactory;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
+import org.jboss.invocation.Interceptor;
+import org.jboss.invocation.InterceptorFactory;
+import org.jboss.invocation.InterceptorFactoryContext;
 import org.jboss.metadata.ejb.spec.PersistenceType;
 import org.jboss.msc.service.ServiceName;
 
@@ -46,9 +54,12 @@ import javax.ejb.TransactionManagementType;
 public class EntityBeanComponentDescription extends EJBComponentDescription {
 
     private PersistenceType persistenceType;
+    private boolean reentrant;
+    private String primaryKeyType;
 
     public EntityBeanComponentDescription(final String componentName, final String componentClassName, final EjbJarDescription ejbJarDescription, final ServiceName deploymentUnitServiceName) {
         super(componentName, componentClassName, ejbJarDescription, deploymentUnitServiceName);
+        addSynchronizationInterceptor();
     }
 
     @Override
@@ -57,7 +68,13 @@ public class EntityBeanComponentDescription extends EJBComponentDescription {
     }
 
     @Override
-    protected void addCurrentInvocationContextFactory(final ViewDescription view) {
+    protected void addCurrentInvocationContextFactory(ViewDescription view) {
+        view.getConfigurators().add(new ViewConfigurator() {
+            @Override
+            public void configure(DeploymentPhaseContext context, ComponentConfiguration componentConfiguration, ViewDescription description, ViewConfiguration configuration) throws DeploymentUnitProcessingException {
+                configuration.addViewInterceptor(EntityInvocationContextInterceptor.FACTORY, InterceptorOrder.View.INVOCATION_CONTEXT_INTERCEPTOR);
+            }
+        });
 
     }
 
@@ -98,6 +115,39 @@ public class EntityBeanComponentDescription extends EJBComponentDescription {
     }
 
 
+
+    private void addSynchronizationInterceptor() {
+        // we must run before the DefaultFirstConfigurator
+        getConfigurators().addFirst(new ComponentConfigurator() {
+            @Override
+            public void configure(DeploymentPhaseContext context, ComponentDescription description, ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
+                final InterceptorFactory interceptorFactory = new ComponentInstanceInterceptorFactory() {
+                    @Override
+                    protected Interceptor create(Component component, InterceptorFactoryContext context) {
+                        return new EntityBeanSynchronizationInterceptor(isReentrant());
+                    }
+                };
+                configuration.addComponentInterceptor(interceptorFactory, InterceptorOrder.Component.SYNCHRONIZATION_INTERCEPTOR, false);
+            }
+        });
+
+    }
+
+    public String getPrimaryKeyType() {
+        return primaryKeyType;
+    }
+
+    public void setPrimaryKeyType(final String primaryKeyType) {
+        this.primaryKeyType = primaryKeyType;
+    }
+
+    public boolean isReentrant() {
+        return reentrant;
+    }
+
+    public void setReentrant(final boolean reentrant) {
+        this.reentrant = reentrant;
+    }
 
     public PersistenceType getPersistenceType() {
         return persistenceType;

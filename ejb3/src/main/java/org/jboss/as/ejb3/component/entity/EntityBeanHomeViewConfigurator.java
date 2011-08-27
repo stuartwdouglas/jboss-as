@@ -22,6 +22,9 @@
 package org.jboss.as.ejb3.component.entity;
 
 import org.jboss.as.ee.component.ComponentConfiguration;
+import org.jboss.as.ee.component.ComponentStartService;
+import org.jboss.as.ee.component.ComponentView;
+import org.jboss.as.ee.component.DependencyConfigurator;
 import org.jboss.as.ee.component.ViewConfiguration;
 import org.jboss.as.ee.component.ViewConfigurator;
 import org.jboss.as.ee.component.ViewDescription;
@@ -32,6 +35,7 @@ import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.reflect.ClassReflectionIndex;
 import org.jboss.as.server.deployment.reflect.DeploymentReflectionIndex;
+import org.jboss.msc.service.ServiceBuilder;
 
 import java.lang.reflect.Method;
 
@@ -53,7 +57,13 @@ public class EntityBeanHomeViewConfigurator implements ViewConfigurator {
         configuration.addViewPostConstructInterceptor(org.jboss.invocation.Interceptors.getTerminalInterceptorFactory(), InterceptorOrder.ViewPostConstruct.TERMINAL_INTERCEPTOR);
         configuration.addViewPreDestroyInterceptor(org.jboss.invocation.Interceptors.getTerminalInterceptorFactory(), InterceptorOrder.ViewPreDestroy.TERMINAL_INTERCEPTOR);
 
+
+        final EntityBeanComponentDescription componentDescription = (EntityBeanComponentDescription) componentConfiguration.getComponentDescription();
+
         for (final Method method : configuration.getProxyFactory().getCachedMethods()) {
+
+            configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.View.COMPONENT_DISPATCHER);
+
             if (method.getName().equals("equals") && method.getParameterTypes().length == 1 && method.getParameterTypes()[0] == Object.class) {
                 //TODO:
             } else if (method.getName().equals("hashCode") && method.getParameterTypes().length == 0) {
@@ -61,14 +71,26 @@ public class EntityBeanHomeViewConfigurator implements ViewConfigurator {
             } else if (method.getName().startsWith("create")) {
                 //we have a create method.
                 //lets resolve the corresponding ejbCreate method
-                final Method ejbCreate = resolveCreateMethod("ejbCreate",componentConfiguration.getComponentClass(), deploymentReflectionIndex, method, componentConfiguration.getComponentName());
-                final Method ejbPostCreate = resolveCreateMethod("ejbPostCreate",componentConfiguration.getComponentClass(), deploymentReflectionIndex, method, componentConfiguration.getComponentName());
+                final Method ejbCreate = resolveCreateMethod("ejbCreate", componentDescription.getPrimaryKeyType(), componentConfiguration.getComponentClass(), deploymentReflectionIndex, method, componentConfiguration.getComponentName());
+                final Method ejbPostCreate = resolveCreateMethod("ejbPostCreate", void.class.getName(), componentConfiguration.getComponentClass(), deploymentReflectionIndex, method, componentConfiguration.getComponentName());
 
-                configuration.addViewInterceptor(method, new EntityBeanHomeCreateInterceptorFactory(ejbCreate, ejbPostCreate), InterceptorOrder.View.HOME_CREATE_INTERCEPTOR);
-                
-            } else if(method.getName().startsWith("find")) {
+                //we have a create method
+                final ViewDescription createdView = componentDescription.getEjbLocalView();
 
-            } else if(method.getName().equals("remove")) {
+                final EntityBeanHomeCreateInterceptorFactory factory = new EntityBeanHomeCreateInterceptorFactory(ejbCreate, ejbPostCreate);
+                //add a dependency on the view to create
+                componentConfiguration.getStartDependencies().add(new DependencyConfigurator<ComponentStartService>() {
+                    @Override
+                    public void configureDependency(final ServiceBuilder<?> serviceBuilder, final ComponentStartService service) throws DeploymentUnitProcessingException {
+                        serviceBuilder.addDependency(createdView.getServiceName(), ComponentView.class, factory.getViewToCreate());
+                    }
+                });
+                //add the interceptor
+                configuration.addClientInterceptor(method, factory, InterceptorOrder.View.HOME_CREATE_INTERCEPTOR);
+
+            } else if (method.getName().startsWith("find")) {
+
+            } else if (method.getName().equals("remove")) {
 
             } else {
 
@@ -77,18 +99,26 @@ public class EntityBeanHomeViewConfigurator implements ViewConfigurator {
     }
 
 
-    private Method resolveCreateMethod(final  String prefix, final Class<?> componentClass, final DeploymentReflectionIndex index, final Method method, final String ejbName) throws DeploymentUnitProcessingException {
+    private Method resolveCreateMethod(final String prefix, final String returnType, final Class<?> componentClass, final DeploymentReflectionIndex index, final Method method, final String ejbName) throws DeploymentUnitProcessingException {
 
         final String name = method.getName().replaceFirst("create", prefix);
         Class<?> clazz = componentClass;
         while (clazz != Object.class) {
             final ClassReflectionIndex<?> classIndex = index.getClassIndex(clazz);
-            Method ret = classIndex.getMethod(method.getReturnType(), name, method.getParameterTypes());
+            Method ret = classIndex.getMethod(returnType, name, namesOf(method.getParameterTypes()));
             if (ret != null) {
                 return ret;
             }
             clazz = clazz.getSuperclass();
         }
-        throw new DeploymentUnitProcessingException("Could not resolve corresponding ejbCreate for home interface method " + method + " on EJB " + ejbName);
+        throw new DeploymentUnitProcessingException("Could not resolve corresponding " + prefix + " for home interface method " + method + " on EJB " + ejbName);
+    }
+
+    private static String[] namesOf(final Class<?>[] types) {
+        final String[] strings = new String[types.length];
+        for (int i = 0, typesLength = types.length; i < typesLength; i++) {
+            strings[i] = types[i].getName();
+        }
+        return strings;
     }
 }

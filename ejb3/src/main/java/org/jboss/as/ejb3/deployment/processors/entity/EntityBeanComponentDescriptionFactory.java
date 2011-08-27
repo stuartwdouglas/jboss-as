@@ -64,7 +64,8 @@ public class EntityBeanComponentDescriptionFactory extends EJBComponentDescripti
         description.setDescriptorData(entity);
 
         description.setPersistenceType(entity.getPersistenceType());
-
+        description.setReentrant(entity.isReentrant());
+        description.setPrimaryKeyType(entity.getPrimKeyClass());
         //TODO: validation
 
         final String localHome = entity.getLocalHome();
@@ -76,6 +77,7 @@ public class EntityBeanComponentDescriptionFactory extends EJBComponentDescripti
         if (local != null) {
             description.addEjbLocalObjectView(local);
         }
+
 
 
     }

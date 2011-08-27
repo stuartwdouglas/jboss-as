@@ -44,6 +44,8 @@ public class EntityBeanComponentInstance extends BasicComponentInstance {
      * The primary key of this instance, is it is associated with an object identity
      */
     private volatile Object primaryKey;
+    private volatile boolean isDiscarded;
+    private volatile BaseEntityContext entityContext;
 
     protected EntityBeanComponentInstance(final BasicComponent component, final AtomicReference<ManagedReference> instanceReference, final Interceptor preDestroyInterceptor, final Map<Method, Interceptor> methodInterceptors) {
         super(component, instanceReference, preDestroyInterceptor, methodInterceptors);
@@ -61,6 +63,14 @@ public class EntityBeanComponentInstance extends BasicComponentInstance {
 
     public Object getPrimaryKey() {
         return primaryKey;
+    }
+
+
+    protected void discard() {
+        if (!isDiscarded) {
+            isDiscarded = true;
+            getComponent().getCache().discard(primaryKey);
+        }
     }
 
     @Override
@@ -103,10 +113,15 @@ public class EntityBeanComponentInstance extends BasicComponentInstance {
 
     public void setupContext() {
         try {
-            getInstance().setEntityContext(new BaseEntityContext(this));
+            this.entityContext = new BaseEntityContext(this);
+            getInstance().setEntityContext(entityContext);
         } catch (RemoteException e) {
             throw new WrappedRemoteException(e);
         }
+    }
+
+    public BaseEntityContext getEntityContext() {
+        return entityContext;
     }
 
     public EJBObject getEjbObject() {

@@ -22,11 +22,11 @@
 package org.jboss.as.ejb3.context.base;
 
 import org.jboss.as.ejb3.component.entity.EntityBeanComponentInstance;
+import org.jboss.as.ejb3.context.spi.EntityContext;
 import org.jboss.as.ejb3.context.spi.MessageDrivenBeanComponent;
 
 import javax.ejb.EJBLocalObject;
 import javax.ejb.EJBObject;
-import javax.ejb.EntityContext;
 
 /**
  * @author Stuart Douglas

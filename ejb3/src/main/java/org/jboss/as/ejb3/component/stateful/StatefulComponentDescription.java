@@ -146,7 +146,7 @@ public class StatefulComponentDescription extends SessionBeanComponentDescriptio
                         return new StatefulSessionSynchronizationInterceptor();
                     }
                 };
-                configuration.addComponentInterceptor(interceptorFactory, InterceptorOrder.Component.SFSB_SYNCHRONIZATION_INTERCEPTOR, false);
+                configuration.addComponentInterceptor(interceptorFactory, InterceptorOrder.Component.SYNCHRONIZATION_INTERCEPTOR, false);
             }
         });
 

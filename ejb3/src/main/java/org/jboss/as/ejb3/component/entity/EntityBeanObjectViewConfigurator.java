@@ -26,14 +26,8 @@ import org.jboss.as.ee.component.ViewConfiguration;
 import org.jboss.as.ee.component.ViewConfigurator;
 import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
-import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
-import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
-import org.jboss.as.server.deployment.reflect.ClassReflectionIndex;
-import org.jboss.as.server.deployment.reflect.DeploymentReflectionIndex;
-
-import java.lang.reflect.Method;
 
 /**
  * configurator that sets up interceptors for an EJB's object view
@@ -44,8 +38,6 @@ public class EntityBeanObjectViewConfigurator implements ViewConfigurator {
 
     @Override
     public void configure(final DeploymentPhaseContext context, final ComponentConfiguration componentConfiguration, final ViewDescription description, final ViewConfiguration configuration) throws DeploymentUnitProcessingException {
-        final DeploymentUnit deploymentUnit = context.getDeploymentUnit();
-        final DeploymentReflectionIndex deploymentReflectionIndex = deploymentUnit.getAttachment(Attachments.REFLECTION_INDEX);
 
         configuration.addClientPostConstructInterceptor(org.jboss.invocation.Interceptors.getTerminalInterceptorFactory(), InterceptorOrder.ClientPostConstruct.TERMINAL_INTERCEPTOR);
         configuration.addClientPreDestroyInterceptor(org.jboss.invocation.Interceptors.getTerminalInterceptorFactory(), InterceptorOrder.ClientPreDestroy.TERMINAL_INTERCEPTOR);
@@ -56,23 +48,8 @@ public class EntityBeanObjectViewConfigurator implements ViewConfigurator {
         final Object primaryKeyContextKey = new Object();
 
         configuration.addViewPostConstructInterceptor(new EntityBeanEjbCreateMethodInterceptorFactory(primaryKeyContextKey), InterceptorOrder.ViewPostConstruct.INSTANCE_CREATE);
-
+        configuration.addViewInterceptor(new EntityBeanAssociatingInterceptorFactory(primaryKeyContextKey), InterceptorOrder.View.ASSOCIATING_INTERCEPTOR);
 
     }
 
-
-    private Method resolveCreateMethod(final  String prefix, final Class<?> componentClass, final DeploymentReflectionIndex index, final Method method, final String ejbName) throws DeploymentUnitProcessingException {
-
-        final String name = method.getName().replaceFirst("create", prefix);
-        Class<?> clazz = componentClass;
-        while (clazz != Object.class) {
-            final ClassReflectionIndex<?> classIndex = index.getClassIndex(clazz);
-            Method ret = classIndex.getMethod(method.getReturnType(), name, method.getParameterTypes());
-            if (ret != null) {
-                return ret;
-            }
-            clazz = clazz.getSuperclass();
-        }
-        throw new DeploymentUnitProcessingException("Could not resolve corresponding ejbCreate for home interface method " + method + " on EJB " + ejbName);
-    }
 }
