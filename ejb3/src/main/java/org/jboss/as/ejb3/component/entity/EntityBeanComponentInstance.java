@@ -23,13 +23,15 @@ package org.jboss.as.ejb3.component.entity;
 
 import org.jboss.as.ee.component.BasicComponent;
 import org.jboss.as.ee.component.BasicComponentInstance;
-import org.jboss.as.ee.component.Component;
+import org.jboss.as.ejb3.context.base.BaseEntityContext;
 import org.jboss.as.naming.ManagedReference;
 import org.jboss.invocation.Interceptor;
 
+import javax.ejb.EJBLocalObject;
+import javax.ejb.EJBObject;
 import javax.ejb.EntityBean;
-import javax.ejb.EntityContext;
 import java.lang.reflect.Method;
+import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -61,22 +63,57 @@ public class EntityBeanComponentInstance extends BasicComponentInstance {
         return primaryKey;
     }
 
+    @Override
+    public void destroy() {
+        try {
+            getInstance().unsetEntityContext();
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
+        super.destroy();
+    }
+
     /**
-     * Associates this entity with a
-     * @param primaryKey
+     * Associates this entity with a primary key. This method is called when an entity bean is moved from the
+     * pool to the entity cache
+     *
+     * @param primaryKey The primary key to associate the entity with
      */
     public synchronized void associate(Object primaryKey) {
         this.primaryKey = primaryKey;
-
+        EntityBean instance = getInstance();
+        try {
+            instance.ejbActivate();
+            instance.ejbLoad();
+        } catch (RemoteException e) {
+            throw new WrappedRemoteException(e);
+        }
     }
 
     public synchronized void deassociate() {
-
+        EntityBean instance = getInstance();
+        try {
+            instance.ejbStore();
+            instance.ejbPassivate();
+        } catch (RemoteException e) {
+            throw new WrappedRemoteException(e);
+        }
         this.primaryKey = null;
     }
 
     public void setupContext() {
-        getInstance().setEntityContext(new EntityContext() {
-        });
+        try {
+            getInstance().setEntityContext(new BaseEntityContext(this));
+        } catch (RemoteException e) {
+            throw new WrappedRemoteException(e);
+        }
+    }
+
+    public EJBObject getEjbObject() {
+        throw new IllegalStateException("Not implemented yet");
+    }
+
+    public EJBLocalObject getEjbLocalObject() {
+        throw new IllegalStateException("Not implemented yet");
     }
 }

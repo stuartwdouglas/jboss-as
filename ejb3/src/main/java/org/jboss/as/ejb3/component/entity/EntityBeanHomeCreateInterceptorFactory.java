@@ -30,9 +30,15 @@ import org.jboss.invocation.InterceptorFactoryContext;
 import org.jboss.msc.value.InjectedValue;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
 
 /**
- * Interceptor that handles home views for session beans
+ * Interceptor that hooks up create methods for Entity beans.
+ *
+ * This is a view level interceptor that should be attached to create methods on the home interface.
+ *
+ * It simply creates an instance of the object view, passing in the creation parameters. The object view post create
+ * interceptors are responsible for getting an instance and associating it with the identity.
  *
  * @author Stuart Douglas
  */
@@ -40,18 +46,19 @@ public class EntityBeanHomeCreateInterceptorFactory implements InterceptorFactor
 
     private final InjectedValue<ComponentView> viewToCreate = new InjectedValue<ComponentView>();
 
-    //TODO: there has to be a better way to pass this into the create interceptor chain
-    public static final ThreadLocal<Method> INIT_METHOD = new ThreadLocal<Method>();
+    public static final Object EJB_CREATE_METHOD_KEY = new Object();
+    public static final Object EJB_POST_CREATE_METHOD_KEY = new Object();
 
-    public static final ThreadLocal<Object[]> INIT_PARAMETERS = new ThreadLocal<Object[]>();
 
-    /**
-     * The init method to invoke on the SFSB
-     */
-    private final Method method;
+    public static final Object PARAMETERS_KEY = new Object();
 
-    public EntityBeanHomeCreateInterceptorFactory(final Method method) {
-        this.method = method;
+    private final Method ejbCreate;
+
+    private final Method ejbPostCreate;
+
+    public EntityBeanHomeCreateInterceptorFactory(final Method method, final Method ejbPostCreate) {
+        this.ejbCreate = method;
+        this.ejbPostCreate = ejbPostCreate;
     }
 
     @Override
@@ -60,15 +67,12 @@ public class EntityBeanHomeCreateInterceptorFactory implements InterceptorFactor
             @Override
             public Object processInvocation(final InterceptorContext context) throws Exception {
                 final ComponentView view = viewToCreate.getValue();
-                try {
-                    INIT_METHOD.set(method);
-                    INIT_PARAMETERS.set(context.getParameters());
-                    final ComponentViewInstance instance = view.createInstance();
-                    return instance.createProxy();
-                } finally {
-                    INIT_METHOD.remove();
-                    INIT_PARAMETERS.remove();
-                }
+                final HashMap<Object, Object> ctx = new HashMap<Object, Object>();
+                ctx.put(EJB_CREATE_METHOD_KEY, ejbCreate);
+                ctx.put(EJB_POST_CREATE_METHOD_KEY, ejbCreate);
+                ctx.put(PARAMETERS_KEY, context.getParameters());
+                final ComponentViewInstance instance = view.createInstance();
+                return instance.createProxy();
             }
         };
     }

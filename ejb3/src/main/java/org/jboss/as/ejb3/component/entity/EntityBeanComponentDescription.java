@@ -23,11 +23,20 @@ package org.jboss.as.ejb3.component.entity;
 
 import org.jboss.as.ee.component.ComponentConfiguration;
 import org.jboss.as.ee.component.EEApplicationDescription;
+import org.jboss.as.ee.component.ViewConfiguration;
+import org.jboss.as.ee.component.ViewConfigurator;
 import org.jboss.as.ee.component.ViewDescription;
+import org.jboss.as.ee.component.interceptors.InterceptorOrder;
+import org.jboss.as.ejb3.component.AbstractEjbHomeViewDescription;
 import org.jboss.as.ejb3.component.EJBComponentDescription;
 import org.jboss.as.ejb3.deployment.EjbJarDescription;
+import org.jboss.as.ejb3.tx.CMTTxInterceptorFactory;
+import org.jboss.as.server.deployment.DeploymentPhaseContext;
+import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.metadata.ejb.spec.PersistenceType;
 import org.jboss.msc.service.ServiceName;
+
+import javax.ejb.TransactionManagementType;
 
 /**
  * Description of an old school entity bean.
@@ -61,6 +70,31 @@ public class EntityBeanComponentDescription extends EJBComponentDescription {
         configuration.setComponentCreateServiceFactory(EntityBeanComponentCreateService.FACTORY);
 
         return configuration;
+    }
+
+    @Override
+    protected void setupViewInterceptors(ViewDescription view) {
+        // let super do its job first
+        super.setupViewInterceptors(view);
+
+        // add a Tx configurator
+        view.getConfigurators().add(new ViewConfigurator() {
+            @Override
+            public void configure(DeploymentPhaseContext context, ComponentConfiguration componentConfiguration, ViewDescription description, ViewConfiguration configuration) throws DeploymentUnitProcessingException {
+                EJBComponentDescription ejbComponentDescription = (EJBComponentDescription) componentConfiguration.getComponentDescription();
+                // Add CMT interceptor factory
+                if (TransactionManagementType.CONTAINER.equals(ejbComponentDescription.getTransactionManagementType())) {
+                    configuration.addViewInterceptor(CMTTxInterceptorFactory.INSTANCE, InterceptorOrder.View.CMT_TRANSACTION_INTERCEPTOR);
+                }
+            }
+        });
+
+        //now we need to figure out if this is a home or object view
+        if(view instanceof AbstractEjbHomeViewDescription) {
+            final AbstractEjbHomeViewDescription home = (AbstractEjbHomeViewDescription)view;
+            home.getConfigurators().add(new EntityBeanHomeViewConfigurator());
+        }
+
     }
 
 

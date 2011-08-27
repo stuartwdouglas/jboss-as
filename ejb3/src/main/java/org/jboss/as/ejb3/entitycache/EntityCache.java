@@ -30,6 +30,19 @@ import javax.ejb.NoSuchEntityException;
  */
 public interface EntityCache<T> {
 
+
+    /**
+     * Called after an entity bean has been created and associated with a new identity.
+     *
+     * This corresponds to an ejbCreate call on the entity bean.
+     *
+     * The newly created object will not be marked as in use. To invoke business methods
+     * on it it should still be acquired using get()
+     *
+     * @param instance The new instance
+     */
+    void create(Object key, T instance);
+
     /**
      * Get the specified object from cache. This will mark
      * the object as being in use. If the object is not found one will be
@@ -47,6 +60,12 @@ public interface EntityCache<T> {
      * @param obj the object
      */
     void release(T obj);
+
+    /**
+     * Discard the object, called when an exception occurs
+     * @param primaryKey
+     */
+    void discard(Object primaryKey);
 
     /**
      * Remove the specified object. This corresponds to an entity being

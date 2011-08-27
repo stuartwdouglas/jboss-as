@@ -31,7 +31,7 @@ import javax.ejb.EntityContext;
 /**
  * @author Stuart Douglas
  */
-public abstract class BaseEntityContext extends BaseEJBContext implements EntityContext {
+public class BaseEntityContext extends BaseEJBContext implements EntityContext {
 
     private final EntityBeanComponentInstance instance;
 
@@ -47,16 +47,16 @@ public abstract class BaseEntityContext extends BaseEJBContext implements Entity
 
     @Override
     public EJBLocalObject getEJBLocalObject() throws IllegalStateException {
-        return null;
+        return instance.getEjbLocalObject();
     }
 
     @Override
     public EJBObject getEJBObject() throws IllegalStateException {
-        return null;
+        return instance.getEjbObject();
     }
 
     @Override
     public Object getPrimaryKey() throws IllegalStateException {
-        return instance.get;
+        return instance.getPrimaryKey();
     }
 }

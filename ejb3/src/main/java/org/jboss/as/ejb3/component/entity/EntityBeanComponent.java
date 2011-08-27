@@ -67,7 +67,6 @@ public class EntityBeanComponent extends EJBComponent {
     protected BasicComponentInstance instantiateComponentInstance(final AtomicReference<ManagedReference> instanceReference, final Interceptor preDestroyInterceptor, final Map<Method, Interceptor> methodInterceptors, final InterceptorFactoryContext interceptorContext) {
         final EntityBeanComponentInstance instance =  new EntityBeanComponentInstance(this, instanceReference, preDestroyInterceptor, methodInterceptors);
         instance.setupContext();
-
         return instance;
     }
 

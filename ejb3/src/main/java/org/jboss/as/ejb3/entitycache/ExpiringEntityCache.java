@@ -142,6 +142,22 @@ public class ExpiringEntityCache<T> implements EntityCache<T> {
         }
     }
 
+    @Override
+    public void discard(final Object primaryKey) {
+        synchronized (cache) {
+            cache.remove(primaryKey);
+        }
+    }
+
+    @Override
+    public void create(Object key, final T instance) throws NoSuchEJBException {
+        synchronized (cache) {
+            Entry val = new Entry(key, instance);
+            val.lastUsed = System.currentTimeMillis();
+            val.state = State.INACTIVE;
+            cache.put(key, val);
+        }
+    }
 
     @Override
     public void release(final Object primaryKey) {
