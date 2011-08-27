@@ -21,17 +21,11 @@
  */
 package org.jboss.as.ejb3.component.entity;
 
-import org.jboss.as.ee.component.Component;
 import org.jboss.as.ee.component.ComponentInstance;
-import org.jboss.as.ee.component.ComponentView;
 import org.jboss.invocation.ImmediateInterceptorFactory;
 import org.jboss.invocation.Interceptor;
 import org.jboss.invocation.InterceptorContext;
 import org.jboss.invocation.InterceptorFactory;
-import org.jboss.invocation.InterceptorFactoryContext;
-import org.jboss.msc.value.InjectedValue;
-
-import java.util.HashMap;
 
 /**
  * Interceptors for methods defined on EjbLocalObject and EjbObject
@@ -63,33 +57,4 @@ public class EntityBeanInterceptors {
             return context.proceed();
         }
     });
-
-    public static class FindByPrimaryKeyInterceptor implements InterceptorFactory {
-
-
-        private final InjectedValue<ComponentView> viewToCreate = new InjectedValue<ComponentView>();
-
-        @Override
-        public Interceptor create(final InterceptorFactoryContext context) {
-            final EntityBeanComponent component = (EntityBeanComponent) context.getContextData().get(Component.class);
-            return new Interceptor() {
-                @Override
-                public Object processInvocation(final InterceptorContext context) throws Exception {
-                    return getLocalObject(context.getParameters()[0], component);
-                }
-
-            };
-        }
-
-        private Object getLocalObject(final Object result, final EntityBeanComponent component) {
-            final EntityBeanComponentInstance res = component.getCache().get(result);
-            final HashMap<Object, Object> create = new HashMap<Object, Object>();
-            create.put(ComponentInstance.class, res);
-            return viewToCreate.getValue().createInstance(create).createProxy();
-        }
-
-        public InjectedValue<ComponentView> getViewToCreate() {
-            return viewToCreate;
-        }
-    }
 }

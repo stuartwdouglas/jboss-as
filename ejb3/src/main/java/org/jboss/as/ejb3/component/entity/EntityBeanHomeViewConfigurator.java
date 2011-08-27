@@ -89,19 +89,7 @@ public class EntityBeanHomeViewConfigurator implements ViewConfigurator {
                 //add the interceptor
                 configuration.addViewInterceptor(method, factory, InterceptorOrder.View.HOME_CREATE_INTERCEPTOR);
 
-            } else if (method.getName().startsWith("findByPrimaryKey")) {
-
-                final ViewDescription createdView = componentDescription.getEjbLocalView();
-                final EntityBeanInterceptors.FindByPrimaryKeyInterceptor interceptorFactory = new EntityBeanInterceptors.FindByPrimaryKeyInterceptor();
-                componentConfiguration.getStartDependencies().add(new DependencyConfigurator<ComponentStartService>() {
-                    @Override
-                    public void configureDependency(final ServiceBuilder<?> serviceBuilder, final ComponentStartService service) throws DeploymentUnitProcessingException {
-                        serviceBuilder.addDependency(createdView.getServiceName(), ComponentView.class, interceptorFactory.getViewToCreate());
-                    }
-                });
-
-                configuration.addViewInterceptor(method, interceptorFactory, InterceptorOrder.View.COMPONENT_DISPATCHER);
-            } else if (method.getName().startsWith("find")) {
+            }  else if (method.getName().startsWith("find")) {
                 final Method ejbFind = resolveEjbFinderMethod("find", "ejbFind", componentConfiguration.getComponentClass(), deploymentReflectionIndex, method, componentConfiguration.getComponentName());
 
                 final ViewDescription createdView = componentDescription.getEjbLocalView();

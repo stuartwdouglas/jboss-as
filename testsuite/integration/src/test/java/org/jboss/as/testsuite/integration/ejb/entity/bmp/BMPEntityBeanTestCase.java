@@ -90,4 +90,20 @@ public class BMPEntityBeanTestCase {
             Assert.assertEquals("Collection", result.getMyField());
         }
     }
+
+    @Test
+    public void testRemoveEntityBean() throws Exception {
+        final BMPLocalHome home = (BMPLocalHome) iniCtx.lookup("java:module/SimpleBMP!" + BMPLocalHome.class.getName());
+        DataStore.DATA.put(56, "Remove");
+        BMPLocalInterface result = home.findByPrimaryKey(56);
+        Assert.assertEquals("Remove", result.getMyField());
+        result.remove();
+        Assert.assertFalse(DataStore.DATA.containsKey(56));
+        try {
+
+        } catch (EntityRe)
+        int handle = col.
+        for (BMPLocalInterface result : col) {
+        }
+    }
 }

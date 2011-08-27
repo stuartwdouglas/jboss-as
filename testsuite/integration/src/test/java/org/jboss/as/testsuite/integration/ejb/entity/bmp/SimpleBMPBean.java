@@ -77,6 +77,10 @@ public class SimpleBMPBean implements EntityBean {
         return null;
     }
 
+    public Integer ejbFindByPrimaryKey(Integer primaryKey) {
+        return DataStore.DATA.containsKey(primaryKey) ?  primaryKey : null;
+    }
+
     public Collection<Integer> ejbFindCollection() {
         final HashSet<Integer> set = new HashSet<Integer>();
         set.add(1000);

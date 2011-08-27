@@ -30,10 +30,14 @@ import org.jboss.invocation.InterceptorFactory;
 import org.jboss.invocation.InterceptorFactoryContext;
 import org.jboss.msc.value.InjectedValue;
 
+import javax.ejb.ObjectNotFoundException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 
 /**
@@ -45,11 +49,25 @@ import java.util.Set;
  */
 public class EntityBeanHomeFinderInterceptorFactory implements InterceptorFactory {
 
+    private enum ReturnType {
+        COLLECTION,
+        ENUMERATION,
+        SINGLE
+    }
+
     private final Method finderMethod;
+    private final ReturnType returnType;
     private final InjectedValue<ComponentView> viewToCreate = new InjectedValue<ComponentView>();
 
     public EntityBeanHomeFinderInterceptorFactory(final Method finderMethod) {
         this.finderMethod = finderMethod;
+        if (Collection.class.isAssignableFrom(finderMethod.getReturnType())) {
+            returnType = ReturnType.COLLECTION;
+        } else if (Enumeration.class.isAssignableFrom(finderMethod.getReturnType())) {
+            returnType = ReturnType.ENUMERATION;
+        } else {
+            returnType = ReturnType.SINGLE;
+        }
     }
 
     @Override
@@ -77,15 +95,46 @@ public class EntityBeanHomeFinderInterceptorFactory implements InterceptorFactor
                         context.setTarget(null);
                         context.putPrivateData(ComponentInstance.class, null);
                     }
-                    if (result instanceof Collection) {
-                        Collection keys = (Collection) result;
-                        final Set<Object> results = new HashSet<Object>();
-                        for (Object key : keys) {
-                            results.add(getLocalObject(key, component));
+                    switch (returnType) {
+                        case COLLECTION: {
+                            Collection keys = (Collection) result;
+                            final Set<Object> results = new HashSet<Object>();
+                            if (keys != null) {
+                                for (Object key : keys) {
+                                    results.add(getLocalObject(key, component));
+                                }
+                            }
+                            return results;
                         }
-                        return results;
-                    } else {
-                        return getLocalObject(result, component);
+                        case ENUMERATION: {
+                            Enumeration keys = (Enumeration) result;
+                            final Set<Object> results = new HashSet<Object>();
+                            if (keys != null) {
+                                while (keys.hasMoreElements()) {
+                                    Object key = keys.nextElement();
+                                    results.add(getLocalObject(key, component));
+                                }
+                            }
+                            final Iterator<Object> iterator = results.iterator();
+                            return new Enumeration<Object>() {
+
+                                @Override
+                                public boolean hasMoreElements() {
+                                    return iterator.hasNext();
+                                }
+
+                                @Override
+                                public Object nextElement() {
+                                    return iterator.next();
+                                }
+                            };
+                        }
+                        default: {
+                            if (result == null) {
+                                throw new ObjectNotFoundException("Could not find entity from " + finderMethod + " with params " + Arrays.toString(context.getParameters()));
+                            }
+                            return getLocalObject(result, component);
+                        }
                     }
 
                 } finally {
@@ -100,7 +149,7 @@ public class EntityBeanHomeFinderInterceptorFactory implements InterceptorFactor
         final EntityBeanComponentInstance res = component.getCache().get(result);
         final HashMap<Object, Object> create = new HashMap<Object, Object>();
         create.put(ComponentInstance.class, res);
-        return  viewToCreate.getValue().createInstance(create).createProxy();
+        return viewToCreate.getValue().createInstance(create).createProxy();
     }
 
     public InjectedValue<ComponentView> getViewToCreate() {
