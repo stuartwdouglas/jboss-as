@@ -33,7 +33,6 @@ import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
 import org.jboss.as.ejb3.component.AbstractEjbHomeViewDescription;
 import org.jboss.as.ejb3.component.EJBComponentDescription;
-import org.jboss.as.ejb3.component.session.SessionInvocationContextInterceptor;
 import org.jboss.as.ejb3.deployment.EjbJarDescription;
 import org.jboss.as.ejb3.tx.CMTTxInterceptorFactory;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
@@ -60,6 +59,12 @@ public class EntityBeanComponentDescription extends EJBComponentDescription {
     public EntityBeanComponentDescription(final String componentName, final String componentClassName, final EjbJarDescription ejbJarDescription, final ServiceName deploymentUnitServiceName) {
         super(componentName, componentClassName, ejbJarDescription, deploymentUnitServiceName);
         addSynchronizationInterceptor();
+        getConfigurators().add(new ComponentConfigurator() {
+            @Override
+            public void configure(final DeploymentPhaseContext context, final ComponentDescription description, final ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
+                configuration.addPostConstructInterceptor(EjbObjectInterceptors.POST_CONSTRUCT, InterceptorOrder.ComponentPostConstruct.SETUP_CONTEXT);
+            }
+        });
     }
 
     @Override
@@ -108,8 +113,9 @@ public class EntityBeanComponentDescription extends EJBComponentDescription {
 
         //now we need to figure out if this is a home or object view
         if(view instanceof AbstractEjbHomeViewDescription) {
-            final AbstractEjbHomeViewDescription home = (AbstractEjbHomeViewDescription)view;
-            home.getConfigurators().add(new EntityBeanHomeViewConfigurator());
+            view.getConfigurators().add(new EntityBeanHomeViewConfigurator());
+        } else {
+            view.getConfigurators().add(new EntityBeanObjectViewConfigurator());
         }
 
     }

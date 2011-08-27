@@ -29,6 +29,8 @@ import org.jboss.as.ee.component.interceptors.InterceptorOrder;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 
+import java.lang.reflect.Method;
+
 /**
  * configurator that sets up interceptors for an EJB's object view
  *
@@ -39,16 +41,21 @@ public class EntityBeanObjectViewConfigurator implements ViewConfigurator {
     @Override
     public void configure(final DeploymentPhaseContext context, final ComponentConfiguration componentConfiguration, final ViewDescription description, final ViewConfiguration configuration) throws DeploymentUnitProcessingException {
 
-        configuration.addClientPostConstructInterceptor(org.jboss.invocation.Interceptors.getTerminalInterceptorFactory(), InterceptorOrder.ClientPostConstruct.TERMINAL_INTERCEPTOR);
-        configuration.addClientPreDestroyInterceptor(org.jboss.invocation.Interceptors.getTerminalInterceptorFactory(), InterceptorOrder.ClientPreDestroy.TERMINAL_INTERCEPTOR);
-
-        configuration.addViewPostConstructInterceptor(org.jboss.invocation.Interceptors.getTerminalInterceptorFactory(), InterceptorOrder.ViewPostConstruct.TERMINAL_INTERCEPTOR);
-        configuration.addViewPreDestroyInterceptor(org.jboss.invocation.Interceptors.getTerminalInterceptorFactory(), InterceptorOrder.ViewPreDestroy.TERMINAL_INTERCEPTOR);
-
         final Object primaryKeyContextKey = new Object();
 
         configuration.addViewPostConstructInterceptor(new EntityBeanEjbCreateMethodInterceptorFactory(primaryKeyContextKey), InterceptorOrder.ViewPostConstruct.INSTANCE_CREATE);
         configuration.addViewInterceptor(new EntityBeanAssociatingInterceptorFactory(primaryKeyContextKey), InterceptorOrder.View.ASSOCIATING_INTERCEPTOR);
+
+
+        for (final Method method : configuration.getProxyFactory().getCachedMethods()) {
+
+            if (method.getName().equals("getPrimaryKey") && method.getParameterTypes().length == 0) {
+                configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
+                configuration.addViewInterceptor(method, EjbObjectInterceptors.GET_PRIMARY_KEY, InterceptorOrder.View.COMPONENT_DISPATCHER);
+            } else {
+
+            }
+        }
 
     }
 

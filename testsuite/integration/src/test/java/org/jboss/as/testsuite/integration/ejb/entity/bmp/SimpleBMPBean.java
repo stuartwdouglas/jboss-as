@@ -42,12 +42,14 @@ public class SimpleBMPBean implements EntityBean {
 
     public Integer ejbCreateEmpty() {
         int primaryKey = ID.incrementAndGet();
+        DataStore.DATA.put(primaryKey, myField);
         return primaryKey;
     }
 
     public Integer ejbCreateWithValue(String value) {
         int primaryKey = ID.incrementAndGet();
         myField = value;
+        DataStore.DATA.put(primaryKey, myField);
         return primaryKey;
     }
 

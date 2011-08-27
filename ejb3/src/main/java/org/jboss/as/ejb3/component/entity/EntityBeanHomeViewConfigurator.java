@@ -62,7 +62,7 @@ public class EntityBeanHomeViewConfigurator implements ViewConfigurator {
 
         for (final Method method : configuration.getProxyFactory().getCachedMethods()) {
 
-            configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.View.COMPONENT_DISPATCHER);
+            configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
 
             if (method.getName().equals("equals") && method.getParameterTypes().length == 1 && method.getParameterTypes()[0] == Object.class) {
                 //TODO:
@@ -86,7 +86,7 @@ public class EntityBeanHomeViewConfigurator implements ViewConfigurator {
                     }
                 });
                 //add the interceptor
-                configuration.addClientInterceptor(method, factory, InterceptorOrder.View.HOME_CREATE_INTERCEPTOR);
+                configuration.addViewInterceptor(method, factory, InterceptorOrder.View.HOME_CREATE_INTERCEPTOR);
 
             } else if (method.getName().startsWith("find")) {
 

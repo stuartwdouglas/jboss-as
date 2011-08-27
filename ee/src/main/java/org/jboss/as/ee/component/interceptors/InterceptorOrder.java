@@ -75,7 +75,8 @@ public class InterceptorOrder {
         public static final int USER_INTERCEPTORS = 0xB00;
         public static final int CDI_INTERCEPTORS = 0xC00;
         public static final int SFSB_INIT_METHOD = 0xD00;
-        public static final int TERMINAL_INTERCEPTOR = 0xE00;
+        public static final int SETUP_CONTEXT = 0xE00;
+        public static final int TERMINAL_INTERCEPTOR = 0xF00;
 
         private ComponentPostConstruct() {
         }

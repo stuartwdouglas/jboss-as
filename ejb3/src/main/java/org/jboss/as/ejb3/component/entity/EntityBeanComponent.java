@@ -63,10 +63,11 @@ public class EntityBeanComponent extends EJBComponent {
         cache = new ExpiringEntityCache<EntityBeanComponentInstance>(new AssociatedEntityBeanObjectFactory(pool), 1, TimeUnit.MINUTES, ejbComponentCreateService.getComponentName());
     }
 
+
+
     @Override
     protected BasicComponentInstance instantiateComponentInstance(final AtomicReference<ManagedReference> instanceReference, final Interceptor preDestroyInterceptor, final Map<Method, Interceptor> methodInterceptors, final InterceptorFactoryContext interceptorContext) {
         final EntityBeanComponentInstance instance =  new EntityBeanComponentInstance(this, instanceReference, preDestroyInterceptor, methodInterceptors);
-        instance.setupContext();
         return instance;
     }
 
