@@ -33,6 +33,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import javax.naming.InitialContext;
+import java.util.Collection;
 
 /**
  * Tests bean managed persistence
@@ -55,10 +56,38 @@ public class BMPEntityBeanTestCase {
     }
 
     @Test
-    public void testSimple() throws Exception {
+    public void testSimpleCreate() throws Exception {
         final BMPLocalHome home = (BMPLocalHome) iniCtx.lookup("java:module/SimpleBMP!" + BMPLocalHome.class.getName());
         final BMPLocalInterface ejbInstance = home.createWithValue("Hello");
-        final Integer pk = (Integer)ejbInstance.getPrimaryKey();
+        final Integer pk = (Integer) ejbInstance.getPrimaryKey();
         Assert.assertEquals("Hello", DataStore.DATA.get(pk));
+    }
+
+    @Test
+    public void testFindByPrimaryKey() throws Exception {
+        final BMPLocalHome home = (BMPLocalHome) iniCtx.lookup("java:module/SimpleBMP!" + BMPLocalHome.class.getName());
+        DataStore.DATA.put(1099, "VALUE1099");
+        BMPLocalInterface result = home.findByPrimaryKey(1099);
+        Assert.assertEquals("VALUE1099", result.getMyField());
+    }
+
+    @Test
+    public void testSingleResultFinderMethod() throws Exception {
+        final BMPLocalHome home = (BMPLocalHome) iniCtx.lookup("java:module/SimpleBMP!" + BMPLocalHome.class.getName());
+        DataStore.DATA.put(888, "VALUE888");
+        BMPLocalInterface result = home.findByValue("VALUE888");
+        Assert.assertEquals("VALUE888", result.getMyField());
+        Assert.assertEquals(888, result.getPrimaryKey());
+    }
+
+    @Test
+    public void testCollectionFinderMethod() throws Exception {
+        final BMPLocalHome home = (BMPLocalHome) iniCtx.lookup("java:module/SimpleBMP!" + BMPLocalHome.class.getName());
+        DataStore.DATA.put(1000, "Collection");
+        DataStore.DATA.put(1001, "Collection");
+        Collection<BMPLocalInterface> col = home.findCollection();
+        for (BMPLocalInterface result : col) {
+            Assert.assertEquals("Collection", result.getMyField());
+        }
     }
 }

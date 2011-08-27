@@ -51,7 +51,7 @@ public class EntityBeanObjectViewConfigurator implements ViewConfigurator {
 
             if (method.getName().equals("getPrimaryKey") && method.getParameterTypes().length == 0) {
                 configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
-                configuration.addViewInterceptor(method, EjbObjectInterceptors.GET_PRIMARY_KEY, InterceptorOrder.View.COMPONENT_DISPATCHER);
+                configuration.addViewInterceptor(method, EntityBeanInterceptors.GET_PRIMARY_KEY, InterceptorOrder.View.COMPONENT_DISPATCHER);
             } else {
 
             }

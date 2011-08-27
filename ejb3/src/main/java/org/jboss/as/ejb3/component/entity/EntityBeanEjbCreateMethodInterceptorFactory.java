@@ -22,6 +22,7 @@
 package org.jboss.as.ejb3.component.entity;
 
 import org.jboss.as.ee.component.Component;
+import org.jboss.as.ee.component.ComponentInstance;
 import org.jboss.invocation.Interceptor;
 import org.jboss.invocation.InterceptorContext;
 import org.jboss.invocation.InterceptorFactory;
@@ -53,7 +54,7 @@ public class EntityBeanEjbCreateMethodInterceptorFactory implements InterceptorF
     public Interceptor create(InterceptorFactoryContext context) {
         final AtomicReference<Object> primaryKeyReference = new AtomicReference<Object>();
         context.getContextData().put(this.primaryKeyContextKey, primaryKeyReference);
-
+        final EntityBeanComponentInstance existing = (EntityBeanComponentInstance) context.getContextData().get(ComponentInstance.class);
 
         final Method ejbCreate = (Method) context.getContextData().get(EntityBeanHomeCreateInterceptorFactory.EJB_CREATE_METHOD_KEY);
         final Method ejbPostCreate = (Method) context.getContextData().get(EntityBeanHomeCreateInterceptorFactory.EJB_POST_CREATE_METHOD_KEY);
@@ -62,6 +63,12 @@ public class EntityBeanEjbCreateMethodInterceptorFactory implements InterceptorF
         return new Interceptor() {
             @Override
             public Object processInvocation(final InterceptorContext context) throws Exception {
+
+                if(existing != null) {
+                    primaryKeyReference.set(existing.getPrimaryKey());
+                    return context.proceed();
+                }
+
                 final Component component = context.getPrivateData(Component.class);
                 if (!(component instanceof EntityBeanComponent)) {
                     throw new IllegalStateException("Unexpected component: " + component + " Expected " + EntityBeanComponent.class);

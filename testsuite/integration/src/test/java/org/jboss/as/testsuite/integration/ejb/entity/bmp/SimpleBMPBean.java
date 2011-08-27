@@ -26,6 +26,9 @@ import javax.ejb.EntityBean;
 import javax.ejb.EntityContext;
 import javax.ejb.RemoveException;
 import java.rmi.RemoteException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -63,6 +66,22 @@ public class SimpleBMPBean implements EntityBean {
 
     public int exampleHomeMethod() {
         return 100;
+    }
+
+    public Integer ejbFindByValue(String value) {
+        for(Map.Entry<Integer, String> entry : DataStore.DATA.entrySet()) {
+            if(entry.getValue().equals(value)) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    public Collection<Integer> ejbFindCollection() {
+        final HashSet<Integer> set = new HashSet<Integer>();
+        set.add(1000);
+        set.add(1001);
+        return set;
     }
 
 

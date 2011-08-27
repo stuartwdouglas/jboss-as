@@ -37,7 +37,9 @@ public interface BMPLocalHome extends EJBLocalHome {
 
     BMPLocalInterface findByPrimaryKey(Integer primaryKey);
 
-    Collection<BMPLocalInterface> findByValue(String value);
+    BMPLocalInterface findByValue(String value);
+
+    Collection<BMPLocalInterface> findCollection();
 
     int exampleHomeMethod();
 

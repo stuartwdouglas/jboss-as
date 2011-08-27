@@ -62,7 +62,7 @@ public class EntityBeanComponentDescription extends EJBComponentDescription {
         getConfigurators().add(new ComponentConfigurator() {
             @Override
             public void configure(final DeploymentPhaseContext context, final ComponentDescription description, final ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                configuration.addPostConstructInterceptor(EjbObjectInterceptors.POST_CONSTRUCT, InterceptorOrder.ComponentPostConstruct.SETUP_CONTEXT);
+                configuration.addPostConstructInterceptor(EntityBeanInterceptors.POST_CONSTRUCT, InterceptorOrder.ComponentPostConstruct.SETUP_CONTEXT);
             }
         });
     }

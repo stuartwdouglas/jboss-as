@@ -21,17 +21,24 @@
  */
 package org.jboss.as.ejb3.component.entity;
 
+import org.jboss.as.ee.component.Component;
 import org.jboss.as.ee.component.ComponentInstance;
+import org.jboss.as.ee.component.ComponentView;
 import org.jboss.invocation.ImmediateInterceptorFactory;
 import org.jboss.invocation.Interceptor;
 import org.jboss.invocation.InterceptorContext;
 import org.jboss.invocation.InterceptorFactory;
+import org.jboss.invocation.InterceptorFactoryContext;
+import org.jboss.msc.value.InjectedValue;
+
+import java.util.HashMap;
 
 /**
  * Interceptors for methods defined on EjbLocalObject and EjbObject
+ *
  * @author Stuart Douglas
  */
-public class EjbObjectInterceptors {
+public class EntityBeanInterceptors {
 
     /**
      * Interceptor for {@link javax.ejb.EJBObject#getPrimaryKey()}
@@ -39,20 +46,50 @@ public class EjbObjectInterceptors {
     public static final InterceptorFactory GET_PRIMARY_KEY = new ImmediateInterceptorFactory(new Interceptor() {
         @Override
         public Object processInvocation(final InterceptorContext context) throws Exception {
-            final EntityBeanComponentInstance instance = (EntityBeanComponentInstance)context.getPrivateData(ComponentInstance.class);
+            final EntityBeanComponentInstance instance = (EntityBeanComponentInstance) context.getPrivateData(ComponentInstance.class);
             return instance.getPrimaryKey();
         }
     });
 
+
     /**
      * Post construct interceptor that sets up the instances context
      */
-    public static final InterceptorFactory POST_CONSTRUCT =new ImmediateInterceptorFactory(new Interceptor() {
+    public static final InterceptorFactory POST_CONSTRUCT = new ImmediateInterceptorFactory(new Interceptor() {
         @Override
         public Object processInvocation(final InterceptorContext context) throws Exception {
-            final EntityBeanComponentInstance instance = (EntityBeanComponentInstance)context.getPrivateData(ComponentInstance.class);
+            final EntityBeanComponentInstance instance = (EntityBeanComponentInstance) context.getPrivateData(ComponentInstance.class);
             instance.setupContext();
             return context.proceed();
         }
     });
+
+    public static class FindByPrimaryKeyInterceptor implements InterceptorFactory {
+
+
+        private final InjectedValue<ComponentView> viewToCreate = new InjectedValue<ComponentView>();
+
+        @Override
+        public Interceptor create(final InterceptorFactoryContext context) {
+            final EntityBeanComponent component = (EntityBeanComponent) context.getContextData().get(Component.class);
+            return new Interceptor() {
+                @Override
+                public Object processInvocation(final InterceptorContext context) throws Exception {
+                    return getLocalObject(context.getParameters()[0], component);
+                }
+
+            };
+        }
+
+        private Object getLocalObject(final Object result, final EntityBeanComponent component) {
+            final EntityBeanComponentInstance res = component.getCache().get(result);
+            final HashMap<Object, Object> create = new HashMap<Object, Object>();
+            create.put(ComponentInstance.class, res);
+            return viewToCreate.getValue().createInstance(create).createProxy();
+        }
+
+        public InjectedValue<ComponentView> getViewToCreate() {
+            return viewToCreate;
+        }
+    }
 }
