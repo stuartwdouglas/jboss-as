@@ -46,6 +46,7 @@ public class EntityBeanComponentInstance extends BasicComponentInstance {
     private volatile Object primaryKey;
     private volatile boolean isDiscarded;
     private volatile BaseEntityContext entityContext;
+    private volatile boolean removed = false;
 
     protected EntityBeanComponentInstance(final BasicComponent component, final AtomicReference<ManagedReference> instanceReference, final Interceptor preDestroyInterceptor, final Map<Method, Interceptor> methodInterceptors) {
         super(component, instanceReference, preDestroyInterceptor, methodInterceptors);
@@ -130,5 +131,13 @@ public class EntityBeanComponentInstance extends BasicComponentInstance {
 
     public EJBLocalObject getEjbLocalObject() {
         throw new IllegalStateException("Not implemented yet");
+    }
+
+    public boolean isRemoved() {
+        return removed;
+    }
+
+    public void setRemoved(final boolean removed) {
+        this.removed = removed;
     }
 }

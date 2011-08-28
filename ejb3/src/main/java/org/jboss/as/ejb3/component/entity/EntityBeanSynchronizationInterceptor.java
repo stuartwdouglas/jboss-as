@@ -57,6 +57,11 @@ public class EntityBeanSynchronizationInterceptor extends AbstractEJBInterceptor
         final EntityBeanComponent component = getComponent(context, EntityBeanComponent.class);
         final EntityBeanComponentInstance instance = (EntityBeanComponentInstance) context.getPrivateData(ComponentInstance.class);
 
+        //we do not synchronize for instances that are not associated with an identity
+        if(instance.getPrimaryKey() == null) {
+            return context.proceed();
+        }
+
         final TransactionSynchronizationRegistry transactionSynchronizationRegistry = component.getTransactionSynchronizationRegistry();
         if (log.isTraceEnabled()) {
             log.trace("Trying to acquire lock: " + lock + " for entity bean " + instance + " during invocation: " + context);
@@ -121,7 +126,7 @@ public class EntityBeanSynchronizationInterceptor extends AbstractEJBInterceptor
     private void releaseInstance(final EntityBeanComponentInstance instance) {
         try {
             // mark the SFSB instance as no longer in use
-            instance.getComponent().getCache().release(instance);
+            instance.getComponent().getCache().release(instance.getPrimaryKey());
         } finally {
             // release the lock on the SFSB instance
             this.releaseLock();

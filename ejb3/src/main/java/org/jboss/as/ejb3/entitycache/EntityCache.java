@@ -59,7 +59,7 @@ public interface EntityCache<T> {
      *
      * @param obj the object
      */
-    void release(T obj);
+    void release(Object primaryKey);
 
     /**
      * Discard the object, called when an exception occurs

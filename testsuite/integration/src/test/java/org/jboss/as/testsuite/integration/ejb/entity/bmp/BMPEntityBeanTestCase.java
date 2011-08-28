@@ -34,6 +34,7 @@ import org.junit.runner.RunWith;
 
 import javax.ejb.NoSuchEJBException;
 import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import java.util.Collection;
 
 /**
@@ -58,7 +59,7 @@ public class BMPEntityBeanTestCase {
 
     @Test
     public void testSimpleCreate() throws Exception {
-        final BMPLocalHome home = (BMPLocalHome) iniCtx.lookup("java:module/SimpleBMP!" + BMPLocalHome.class.getName());
+        final BMPLocalHome home = getHome();
         final BMPLocalInterface ejbInstance = home.createWithValue("Hello");
         final Integer pk = (Integer) ejbInstance.getPrimaryKey();
         Assert.assertEquals("Hello", DataStore.DATA.get(pk));
@@ -66,7 +67,7 @@ public class BMPEntityBeanTestCase {
 
     @Test
     public void testFindByPrimaryKey() throws Exception {
-        final BMPLocalHome home = (BMPLocalHome) iniCtx.lookup("java:module/SimpleBMP!" + BMPLocalHome.class.getName());
+        final BMPLocalHome home = getHome();
         DataStore.DATA.put(1099, "VALUE1099");
         BMPLocalInterface result = home.findByPrimaryKey(1099);
         Assert.assertEquals("VALUE1099", result.getMyField());
@@ -74,16 +75,17 @@ public class BMPEntityBeanTestCase {
 
     @Test
     public void testSingleResultFinderMethod() throws Exception {
-        final BMPLocalHome home = (BMPLocalHome) iniCtx.lookup("java:module/SimpleBMP!" + BMPLocalHome.class.getName());
+        final BMPLocalHome home = getHome();
         DataStore.DATA.put(888, "VALUE888");
         BMPLocalInterface result = home.findByValue("VALUE888");
         Assert.assertEquals("VALUE888", result.getMyField());
         Assert.assertEquals(888, result.getPrimaryKey());
     }
 
+
     @Test
     public void testCollectionFinderMethod() throws Exception {
-        final BMPLocalHome home = (BMPLocalHome) iniCtx.lookup("java:module/SimpleBMP!" + BMPLocalHome.class.getName());
+        final BMPLocalHome home = getHome();
         DataStore.DATA.put(1000, "Collection");
         DataStore.DATA.put(1001, "Collection");
         Collection<BMPLocalInterface> col = home.findCollection();
@@ -94,7 +96,7 @@ public class BMPEntityBeanTestCase {
 
     @Test
     public void testRemoveEntityBean() throws Exception {
-        final BMPLocalHome home = (BMPLocalHome) iniCtx.lookup("java:module/SimpleBMP!" + BMPLocalHome.class.getName());
+        final BMPLocalHome home = getHome();
         DataStore.DATA.put(56, "Remove");
         BMPLocalInterface result = home.findByPrimaryKey(56);
         Assert.assertEquals("Remove", result.getMyField());
@@ -106,5 +108,10 @@ public class BMPEntityBeanTestCase {
         } catch (NoSuchEJBException expected) {
 
         }
+    }
+    
+
+    private BMPLocalHome getHome() throws NamingException {
+        return (BMPLocalHome) iniCtx.lookup("java:module/SimpleBMP!" + BMPLocalHome.class.getName());
     }
 }

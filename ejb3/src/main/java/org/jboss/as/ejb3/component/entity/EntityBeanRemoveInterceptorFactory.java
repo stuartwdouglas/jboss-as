@@ -79,7 +79,7 @@ public class EntityBeanRemoveInterceptorFactory implements InterceptorFactory {
                     context.putPrivateData(ComponentInstance.class, null);
                 }
                 //now un-associate the instance
-                component.getCache().remove(primaryKeyReference);
+                component.getCache().remove(primaryKey);
                 return null;
             }
         };

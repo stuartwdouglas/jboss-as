@@ -57,6 +57,7 @@ public class EntityBeanObjectViewConfigurator implements ViewConfigurator {
                 configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
                 configuration.addViewInterceptor(method, EntityBeanInterceptors.GET_PRIMARY_KEY, InterceptorOrder.View.COMPONENT_DISPATCHER);
             } else if(method.getName().equals("remove") && method.getParameterTypes().length == 0) {
+                configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
                 Method remove = resolveRemoveMethod(componentConfiguration.getComponentClass(), index, componentConfiguration.getComponentName());
                 configuration.addViewInterceptor(method, new EntityBeanRemoveInterceptorFactory(remove, primaryKeyContextKey), InterceptorOrder.View.COMPONENT_DISPATCHER);
             }

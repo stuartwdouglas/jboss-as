@@ -135,6 +135,7 @@ public class ExpiringEntityCache<T> implements EntityCache<T> {
             if (val == null) {
                 T instance = factory.createInstance(key);
                 val = new Entry(key, instance);
+                cache.put(key, val);
             }
             val.lastUsed = System.currentTimeMillis();
             val.state = State.IN_USE;
