@@ -22,7 +22,6 @@
 package org.jboss.as.ejb3.component.entity.interceptors;
 
 import org.jboss.as.ee.component.Component;
-import org.jboss.as.ee.component.ComponentInstance;
 import org.jboss.as.ejb3.component.entity.EntityBeanComponent;
 import org.jboss.as.ejb3.component.entity.EntityBeanComponentInstance;
 import org.jboss.invocation.Interceptor;
@@ -45,6 +44,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class EntityBeanEjbCreateMethodInterceptorFactory implements InterceptorFactory {
 
+    public static final Object EXISTING_ID_CONTEXT_KEY = new Object();
 
     private final Object primaryKeyContextKey;
 
@@ -54,9 +54,10 @@ public class EntityBeanEjbCreateMethodInterceptorFactory implements InterceptorF
 
     @Override
     public Interceptor create(InterceptorFactoryContext context) {
+        final Object existing =  context.getContextData().get(EXISTING_ID_CONTEXT_KEY);
+
         final AtomicReference<Object> primaryKeyReference = new AtomicReference<Object>();
         context.getContextData().put(this.primaryKeyContextKey, primaryKeyReference);
-        final EntityBeanComponentInstance existing = (EntityBeanComponentInstance) context.getContextData().get(ComponentInstance.class);
 
         final Method ejbCreate = (Method) context.getContextData().get(EntityBeanHomeCreateInterceptorFactory.EJB_CREATE_METHOD_KEY);
         final Method ejbPostCreate = (Method) context.getContextData().get(EntityBeanHomeCreateInterceptorFactory.EJB_POST_CREATE_METHOD_KEY);
@@ -67,7 +68,7 @@ public class EntityBeanEjbCreateMethodInterceptorFactory implements InterceptorF
             public Object processInvocation(final InterceptorContext context) throws Exception {
 
                 if(existing != null) {
-                    primaryKeyReference.set(existing.getPrimaryKey());
+                    primaryKeyReference.set(existing);
                     return context.proceed();
                 }
 

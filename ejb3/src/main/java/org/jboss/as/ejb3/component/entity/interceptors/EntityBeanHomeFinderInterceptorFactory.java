@@ -41,6 +41,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Interceptor that hooks up finder methods for BMP entity beans
@@ -148,9 +149,8 @@ public class EntityBeanHomeFinderInterceptorFactory implements InterceptorFactor
     }
 
     private Object getLocalObject(final Object result, final EntityBeanComponent component) {
-        final EntityBeanComponentInstance res = component.getCache().get(result);
         final HashMap<Object, Object> create = new HashMap<Object, Object>();
-        create.put(ComponentInstance.class, res);
+        create.put(EntityBeanEjbCreateMethodInterceptorFactory.EXISTING_ID_CONTEXT_KEY, result);
         return viewToCreate.getValue().createInstance(create).createProxy();
     }
 

@@ -21,9 +21,7 @@
  */
 package org.jboss.as.ejb3.component.entity.interceptors;
 
-import org.jboss.as.ee.component.Component;
 import org.jboss.as.ee.component.ComponentView;
-import org.jboss.as.ejb3.component.entity.EntityBeanComponent;
 import org.jboss.invocation.Interceptor;
 import org.jboss.invocation.InterceptorContext;
 import org.jboss.invocation.InterceptorFactory;
@@ -42,8 +40,6 @@ public class EntityBeanGetHomeInterceptorFactory implements InterceptorFactory {
 
     @Override
     public Interceptor create(final InterceptorFactoryContext context) {
-
-        final EntityBeanComponent component = (EntityBeanComponent) context.getContextData().get(Component.class);
 
         return new Interceptor() {
             @Override
