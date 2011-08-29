@@ -110,6 +110,11 @@ public class BMPEntityBeanTestCase {
         }
     }
     
+    @Test
+    public void testEjbHomeMethod() throws Exception {
+        final BMPLocalHome home = getHome();
+        Assert.assertEquals(SimpleBMPBean.HOME_METHOD_RETURN, home.exampleHomeMethod());
+    }
 
     private BMPLocalHome getHome() throws NamingException {
         return (BMPLocalHome) iniCtx.lookup("java:module/SimpleBMP!" + BMPLocalHome.class.getName());

@@ -37,7 +37,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class SimpleBMPBean implements EntityBean {
 
     private static final AtomicInteger ID = new AtomicInteger();
-    
+    public static final int HOME_METHOD_RETURN = 100;
+
     private String myField;
     private EntityContext entityContext;
     private boolean ejbPostCreateCalled;
@@ -64,8 +65,8 @@ public class SimpleBMPBean implements EntityBean {
         ejbPostCreateCalled = true;
     }
 
-    public int exampleHomeMethod() {
-        return 100;
+    public int ejbHomeExampleHomeMethod() {
+        return HOME_METHOD_RETURN;
     }
 
     public Integer ejbFindByValue(String value) {
