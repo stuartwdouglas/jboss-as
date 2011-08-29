@@ -61,6 +61,7 @@ public class BMPEntityBeanTestCase {
 
     @Test
     public void testSimpleCreate() throws Exception {
+        DataStore.DATA.clear();
         final BMPLocalHome home = getHome();
         final BMPLocalInterface ejbInstance = home.createWithValue("Hello");
         final Integer pk = (Integer) ejbInstance.getPrimaryKey();
@@ -69,6 +70,7 @@ public class BMPEntityBeanTestCase {
 
     @Test
     public void testFindByPrimaryKey() throws Exception {
+        DataStore.DATA.clear();
         final BMPLocalHome home = getHome();
         DataStore.DATA.put(1099, "VALUE1099");
         BMPLocalInterface result = home.findByPrimaryKey(1099);
@@ -77,6 +79,7 @@ public class BMPEntityBeanTestCase {
 
     @Test
     public void testSingleResultFinderMethod() throws Exception {
+        DataStore.DATA.clear();
         final BMPLocalHome home = getHome();
         DataStore.DATA.put(888, "VALUE888");
         BMPLocalInterface result = home.findByValue("VALUE888");
@@ -87,6 +90,7 @@ public class BMPEntityBeanTestCase {
 
     @Test
     public void testCollectionFinderMethod() throws Exception {
+        DataStore.DATA.clear();
         final BMPLocalHome home = getHome();
         DataStore.DATA.put(1000, "Collection");
         DataStore.DATA.put(1001, "Collection");
@@ -98,6 +102,7 @@ public class BMPEntityBeanTestCase {
 
     @Test
     public void testRemoveEntityBean() throws Exception {
+        DataStore.DATA.clear();
         final BMPLocalHome home = getHome();
         DataStore.DATA.put(56, "Remove");
         BMPLocalInterface result = home.findByPrimaryKey(56);
@@ -110,6 +115,19 @@ public class BMPEntityBeanTestCase {
         } catch (NoSuchEJBException expected) {
 
         }
+    }
+
+    @Test
+    public void testIsIdentical() throws Exception {
+        DataStore.DATA.clear();
+        final BMPLocalHome home = getHome();
+        DataStore.DATA.put(40, "1");
+        DataStore.DATA.put(41, "2");
+        BMPLocalInterface bean1 = home.findByPrimaryKey(40);
+        BMPLocalInterface bean1_2 = home.findByPrimaryKey(40);
+        BMPLocalInterface bean2 = home.findByPrimaryKey(41);
+        Assert.assertTrue(bean1.isIdentical(bean1_2));
+        Assert.assertFalse(bean1.isIdentical(bean2));
     }
 
     @Test

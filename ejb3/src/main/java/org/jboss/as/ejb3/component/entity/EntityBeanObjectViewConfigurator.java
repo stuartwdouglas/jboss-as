@@ -31,6 +31,8 @@ import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.reflect.ClassReflectionIndex;
 import org.jboss.as.server.deployment.reflect.DeploymentReflectionIndex;
 
+import javax.ejb.EJBLocalObject;
+import javax.ejb.EJBObject;
 import java.lang.reflect.Method;
 
 /**
@@ -60,6 +62,10 @@ public class EntityBeanObjectViewConfigurator implements ViewConfigurator {
                 configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
                 Method remove = resolveRemoveMethod(componentConfiguration.getComponentClass(), index, componentConfiguration.getComponentName());
                 configuration.addViewInterceptor(method, new EntityBeanRemoveInterceptorFactory(remove, primaryKeyContextKey), InterceptorOrder.View.COMPONENT_DISPATCHER);
+            } else if(method.getName().equals("isIdentical") && method.getParameterTypes().length == 1 &&
+                    (method.getParameterTypes()[0] == EJBLocalObject.class || method.getParameterTypes()[0] == EJBObject.class)) {
+                configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
+                configuration.addViewInterceptor(method, new EntityIsIdenticalInterceptorFactory(primaryKeyContextKey), InterceptorOrder.View.COMPONENT_DISPATCHER);
             }
         }
 
