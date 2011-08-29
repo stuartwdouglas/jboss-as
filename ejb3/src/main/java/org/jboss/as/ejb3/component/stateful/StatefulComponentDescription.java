@@ -262,7 +262,7 @@ public class StatefulComponentDescription extends SessionBeanComponentDescriptio
                     if ((method.getName().equals("hashCode") && method.getParameterTypes().length == 0) ||
                             method.getName().equals("equals") && method.getParameterTypes().length == 1 &&
                                     method.getParameterTypes()[0] == Object.class) {
-                        viewConfiguration.addViewInterceptor(method, new StatefulIdentityInterceptorFactory(sessionIdContextKey), InterceptorOrder.View.SESSION_BEAN_EQUALS_HASHCODE);
+                        viewConfiguration.addViewInterceptor(method, new StatefulIdentityInterceptorFactory(sessionIdContextKey), InterceptorOrder.View.EJB_EQUALS_HASHCODE);
                     }
                 }
             }

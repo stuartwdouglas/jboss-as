@@ -29,6 +29,7 @@ import org.jboss.as.ee.component.ViewConfiguration;
 import org.jboss.as.ee.component.ViewConfigurator;
 import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
+import org.jboss.as.ejb3.component.ComponentTypeIdentityInterceptorFactory;
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
@@ -66,9 +67,11 @@ public class EntityBeanHomeViewConfigurator implements ViewConfigurator {
             configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
 
             if (method.getName().equals("equals") && method.getParameterTypes().length == 1 && method.getParameterTypes()[0] == Object.class) {
-                //TODO:
+                configuration.addViewInterceptor(method, ComponentTypeIdentityInterceptorFactory.INSTANCE, InterceptorOrder.View.EJB_EQUALS_HASHCODE);
             } else if (method.getName().equals("hashCode") && method.getParameterTypes().length == 0) {
-                //TODO
+                configuration.addViewInterceptor(method, ComponentTypeIdentityInterceptorFactory.INSTANCE, InterceptorOrder.View.EJB_EQUALS_HASHCODE);
+            } else if (method.getName().equals("toString") && method.getParameterTypes().length == 0) {
+                //TODO: toString
             } else if (method.getName().startsWith("create")) {
                 //we have a create method.
                 //lets resolve the corresponding ejbCreate method
@@ -106,12 +109,6 @@ public class EntityBeanHomeViewConfigurator implements ViewConfigurator {
 
             } else if (method.getName().equals("remove") && method.getParameterTypes().length == 1 && method.getParameterTypes()[0] == Object.class) {
                 //TODO: remove by pk
-            } else if (method.getName().equals("toString") && method.getParameterTypes().length == 0) {
-                //TODO: toString
-            } else if (method.getName().equals("equals") && method.getParameterTypes().length == 1 && method.getParameterTypes()[0] == Object.class) {
-                //TODO: equals and hashCode interceptors
-            } else if (method.getName().equals("hashCode") && method.getParameterTypes().length == 0) {
-                //TODO: equals and hashCode interceptors
             } else {
                 //we have a home business method
                 Method home = resolveEjbHomeBusinessMethod(componentConfiguration.getComponentClass(), deploymentReflectionIndex, method, componentConfiguration.getComponentName());

@@ -32,7 +32,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import javax.ejb.EJBException;
 import javax.ejb.NoSuchEJBException;
+import javax.ejb.RemoveException;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import java.util.Collection;
@@ -109,11 +111,56 @@ public class BMPEntityBeanTestCase {
 
         }
     }
-    
+
     @Test
     public void testEjbHomeMethod() throws Exception {
         final BMPLocalHome home = getHome();
         Assert.assertEquals(SimpleBMPBean.HOME_METHOD_RETURN, home.exampleHomeMethod());
+    }
+
+    @Test
+    public void testHomeInterfaceEquality() throws Exception {
+        final BMPLocalHome home1 = getHome();
+        final BMPLocalHome home2 = getHome();
+        Assert.assertEquals(home1, home2);
+        Assert.assertEquals(home1.hashCode(), home2.hashCode());
+        Assert.assertNotSame(home1, new BMPLocalHome() {
+
+            @Override
+            public BMPLocalInterface createEmpty() {
+                return null;
+            }
+
+            @Override
+            public BMPLocalInterface createWithValue(final String value) {
+                return null;
+            }
+
+            @Override
+            public BMPLocalInterface findByPrimaryKey(final Integer primaryKey) {
+                return null;
+            }
+
+            @Override
+            public BMPLocalInterface findByValue(final String value) {
+                return null;
+            }
+
+            @Override
+            public Collection<BMPLocalInterface> findCollection() {
+                return null;
+            }
+
+            @Override
+            public int exampleHomeMethod() {
+                return 0;
+            }
+
+            @Override
+            public void remove(final Object primaryKey) throws RemoveException, EJBException {
+
+            }
+        });
     }
 
     private BMPLocalHome getHome() throws NamingException {
