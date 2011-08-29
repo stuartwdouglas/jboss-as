@@ -24,6 +24,7 @@ package org.jboss.as.testsuite.integration.ejb.entity.bmp;
 import javax.ejb.EJBException;
 import javax.ejb.EntityBean;
 import javax.ejb.EntityContext;
+import javax.ejb.NoSuchEJBException;
 import javax.ejb.RemoveException;
 import java.rmi.RemoteException;
 import java.util.Collection;
@@ -117,6 +118,9 @@ public class SimpleBMPBean implements EntityBean {
 
     @Override
     public void ejbLoad() throws EJBException, RemoteException {
+        if(!DataStore.DATA.containsKey(entityContext.getPrimaryKey())) {
+            throw new NoSuchEJBException("no EJB with id" + entityContext.getPrimaryKey());
+        }
         this.myField = DataStore.DATA.get(entityContext.getPrimaryKey());
     }
 

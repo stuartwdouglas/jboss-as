@@ -54,7 +54,7 @@ public class EntityBeanEjbCreateMethodInterceptorFactory implements InterceptorF
 
     @Override
     public Interceptor create(InterceptorFactoryContext context) {
-        final Object existing =  context.getContextData().get(EXISTING_ID_CONTEXT_KEY);
+        final Object existing = context.getContextData().get(EXISTING_ID_CONTEXT_KEY);
 
         final AtomicReference<Object> primaryKeyReference = new AtomicReference<Object>();
         context.getContextData().put(this.primaryKeyContextKey, primaryKeyReference);
@@ -67,7 +67,7 @@ public class EntityBeanEjbCreateMethodInterceptorFactory implements InterceptorF
             @Override
             public Object processInvocation(final InterceptorContext context) throws Exception {
 
-                if(existing != null) {
+                if (existing != null) {
                     primaryKeyReference.set(existing);
                     return context.proceed();
                 }
@@ -86,6 +86,11 @@ public class EntityBeanEjbCreateMethodInterceptorFactory implements InterceptorF
                 ejbPostCreate.invoke(instance.getInstance(), params);
                 primaryKeyReference.set(primaryKey);
 
+                //now add the instance to the cache, so it is usable
+                //note that we do not release it back to the pool
+                //the cache will do that when it is expired or removed
+                entityBeanComponent.getCache().create(instance);
+
                 //if a transaction is active we register a sync
                 //and if the transaction is rolled back we release the instance back into the pool
 
@@ -99,20 +104,12 @@ public class EntityBeanEjbCreateMethodInterceptorFactory implements InterceptorF
 
                         @Override
                         public void afterCompletion(final int status) {
-                            if (status == Status.STATUS_COMMITTED) {
-
-                                //now add the instance to the cache, so it is usable
-                                //note that we do not release it back to the pool
-                                //the cache will do that when it is expired or removed
-                                entityBeanComponent.getCache().create(primaryKey, instance);
-                            } else {
+                            if (status != Status.STATUS_COMMITTED) {
                                 //if the transaction is rolled back we release the instance back into the pool
                                 entityBeanComponent.getPool().release(instance);
                             }
                         }
                     });
-                } else {
-                    entityBeanComponent.getCache().create(primaryKey, instance);
                 }
 
                 return context.proceed();

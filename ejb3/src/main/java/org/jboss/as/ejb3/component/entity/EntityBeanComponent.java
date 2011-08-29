@@ -23,8 +23,8 @@ package org.jboss.as.ejb3.component.entity;
 
 import org.jboss.as.ee.component.BasicComponentInstance;
 import org.jboss.as.ejb3.component.EJBComponent;
-import org.jboss.as.ejb3.entitycache.EntityCache;
-import org.jboss.as.ejb3.entitycache.ExpiringEntityCache;
+import org.jboss.as.ejb3.component.entity.entitycache.ReadyEntityCache;
+import org.jboss.as.ejb3.component.entity.entitycache.TransactionLocalEntityCache;
 import org.jboss.as.ejb3.pool.InfinitePool;
 import org.jboss.as.ejb3.pool.Pool;
 import org.jboss.as.ejb3.pool.StatelessObjectFactory;
@@ -34,7 +34,6 @@ import org.jboss.invocation.InterceptorFactoryContext;
 
 import java.lang.reflect.Method;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -43,7 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class EntityBeanComponent extends EJBComponent {
 
     private final Pool<EntityBeanComponentInstance> pool;
-    private final EntityCache<EntityBeanComponentInstance> cache;
+    private final ReadyEntityCache cache;
 
     protected EntityBeanComponent(final EntityBeanComponentCreateService ejbComponentCreateService) {
         super(ejbComponentCreateService);
@@ -60,7 +59,7 @@ public class EntityBeanComponent extends EJBComponent {
             }
         };
         pool = new InfinitePool<EntityBeanComponentInstance>(factory);
-        cache = new ExpiringEntityCache<EntityBeanComponentInstance>(new AssociatedEntityBeanObjectFactory(pool), 1, TimeUnit.MINUTES, ejbComponentCreateService.getComponentName());
+        cache = new TransactionLocalEntityCache(this);
     }
 
 
@@ -71,7 +70,7 @@ public class EntityBeanComponent extends EJBComponent {
         return instance;
     }
 
-    public EntityCache<EntityBeanComponentInstance> getCache() {
+    public ReadyEntityCache getCache() {
         return cache;
     }
 

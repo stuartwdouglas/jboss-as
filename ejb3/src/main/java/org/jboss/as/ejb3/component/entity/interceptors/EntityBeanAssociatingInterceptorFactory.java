@@ -68,6 +68,10 @@ public class EntityBeanAssociatingInterceptorFactory implements InterceptorFacto
 
                 final EntityBeanComponentInstance instance = component.getCache().get(primaryKey);
 
+                if(instance.isRemoved()) {
+                    throw new NoSuchEJBException("Instance of " + component.getComponentName() + " with primary key " + primaryKey + " has been removed");
+                }
+
                 try {
                     context.putPrivateData(ComponentInstance.class, instance);
                     return context.proceed();
@@ -83,18 +87,18 @@ public class EntityBeanAssociatingInterceptorFactory implements InterceptorFacto
                     if (ex instanceof RuntimeException || ex instanceof RemoteException) {
                         if (log.isTraceEnabled())
                             log.trace("Discarding bean " + primaryKey + " because of exception", ex);
-                        component.getCache().discard(primaryKey);
+                        component.getCache().discard(instance);
                     }
                     throw ex;
                 } catch (final Error e) {
                     if (log.isTraceEnabled())
                         log.trace("Discarding bean " + primaryKey + " because of error", e);
-                    component.getCache().discard(primaryKey);
+                    component.getCache().discard(instance);
                     throw e;
                 } catch (final Throwable t) {
                     if (log.isTraceEnabled())
                         log.trace("Discarding bean " + primaryKey + " because of Throwable", t);
-                    component.getCache().discard(primaryKey);
+                    component.getCache().discard(instance);
                     throw new RuntimeException(t);
                 } finally {
                     // the StatefulSessionSynchronizationInterceptor will take care of releasing

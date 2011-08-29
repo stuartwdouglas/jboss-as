@@ -70,7 +70,7 @@ public class EntityBeanComponentInstance extends BasicComponentInstance {
     protected void discard() {
         if (!isDiscarded) {
             isDiscarded = true;
-            getComponent().getCache().discard(primaryKey);
+            getComponent().getCache().discard(this);
         }
     }
 
@@ -101,11 +101,31 @@ public class EntityBeanComponentInstance extends BasicComponentInstance {
         }
     }
 
-    public synchronized void deassociate() {
+    /**
+     * Invokes the ejbStore method
+     */
+    public synchronized void store() {
         EntityBean instance = getInstance();
         try {
-            instance.ejbStore();
-            instance.ejbPassivate();
+            if(!removed) {
+                instance.ejbStore();
+            }
+        } catch (RemoteException e) {
+            throw new WrappedRemoteException(e);
+        }
+    }
+
+    /**
+     * Prepares the instance for release by calling the ejbPassivate method.
+     *
+     * This method does not actually release this instance into the pool
+     */
+    public synchronized void passivate() {
+        EntityBean instance = getInstance();
+        try {
+            if(!removed) {
+                instance.ejbPassivate();
+            }
         } catch (RemoteException e) {
             throw new WrappedRemoteException(e);
         }

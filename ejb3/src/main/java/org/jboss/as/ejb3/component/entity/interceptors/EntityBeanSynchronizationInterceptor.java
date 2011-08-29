@@ -29,6 +29,7 @@ import org.jboss.invocation.InterceptorContext;
 import org.jboss.logging.Logger;
 
 import javax.ejb.EJBException;
+import javax.transaction.Status;
 import javax.transaction.Synchronization;
 import javax.transaction.TransactionSynchronizationRegistry;
 import java.util.concurrent.locks.ReentrantLock;
@@ -114,7 +115,8 @@ public class EntityBeanSynchronizationInterceptor extends AbstractEJBInterceptor
             // SFSB instance as "no longer in use". If it registered a tx SessionSynchronization, then releasing the lock is
             // taken care off by a tx synchronization callbacks.
             if (!wasTxSyncRegistered) {
-                releaseInstance(instance);
+                instance.store();
+                releaseInstance(instance, true);
             }
         }
     }
@@ -124,11 +126,12 @@ public class EntityBeanSynchronizationInterceptor extends AbstractEJBInterceptor
      * instance, this method releases the lock, held by this thread, on the stateful component instance.
      *
      * @param instance The stateful component instance
+     * @param b
      */
-    private void releaseInstance(final EntityBeanComponentInstance instance) {
+    private void releaseInstance(final EntityBeanComponentInstance instance, final boolean success) {
         try {
             // mark the SFSB instance as no longer in use
-            instance.getComponent().getCache().release(instance.getPrimaryKey());
+            instance.getComponent().getCache().release(instance, success);
         } finally {
             // release the lock on the SFSB instance
             this.releaseLock();
@@ -155,6 +158,8 @@ public class EntityBeanSynchronizationInterceptor extends AbstractEJBInterceptor
 
         @Override
         public void beforeCompletion() {
+            //invoke the EJB store method within the transaction
+            componentInstance.store();
         }
 
         @Override
@@ -163,7 +168,7 @@ public class EntityBeanSynchronizationInterceptor extends AbstractEJBInterceptor
             //This must be set to null before the lock is released.
             transactionKey = null;
             // tx has completed, so mark the SFSB instance as no longer in use
-            releaseInstance(componentInstance);
+            releaseInstance(componentInstance, status == Status.STATUS_COMMITTED);
         }
 
     }

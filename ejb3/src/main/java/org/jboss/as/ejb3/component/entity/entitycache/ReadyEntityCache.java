@@ -19,16 +19,18 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.ejb3.entitycache;
+package org.jboss.as.ejb3.component.entity.entitycache;
+
+import org.jboss.as.ejb3.component.entity.EntityBeanComponentInstance;
 
 import javax.ejb.NoSuchEntityException;
 
 /**
- * A cache for stateful objects who's state is maintained externally, namely entity beans.
+ * A cache for entity beans that are in the ready state.
  *
  * @author Stuart Douglas
  */
-public interface EntityCache<T> {
+public interface ReadyEntityCache {
 
 
     /**
@@ -41,40 +43,44 @@ public interface EntityCache<T> {
      *
      * @param instance The new instance
      */
-    void create(Object key, T instance);
+    void create(EntityBeanComponentInstance instance);
 
     /**
-     * Get the specified object from cache. This will mark
-     * the object as being in use. If the object is not found one will be
-     * created and initialized with the identity
+     * Gets an entity bean instance for the given primary key. This may return a cached instance,
+     * or may associate the given ket with a pooled entity.
+     *
+     * Implementors of this method must ensure that repeated calls to get within the same transaction
+     * return the same instance for a given primary key. This must also take into account entity beans
+     * created in the same transaction using the {@link #create(org.jboss.as.ejb3.component.entity.EntityBeanComponentInstance)}
+     * method.
+     *
+     * Implementations are free to use a 1 to 1 instance -> pk mapping, or create multiple instances per
+     * primary key.
      *
      * @param key the identifier of the object
      * @return the object
      * @throws javax.ejb.NoSuchEntityException if the object identity association failed
      */
-    T get(Object key) throws NoSuchEntityException;
+    EntityBeanComponentInstance get(Object key) throws NoSuchEntityException;
 
     /**
-     * Release the object from use.
+     * Release the object from use. This will be called at transaction commit time.
      *
-     * @param obj the object
+     * If the entity bean has been removed it should be released back into the pool.
+     *
+     * This method is called before the lock on the instance has been released.
+     *
+     * @param instance The entity
+     * @param transactionSuccess True if the transaction succeeded
      */
-    void release(Object primaryKey);
+    void release(EntityBeanComponentInstance instance, boolean transactionSuccess);
 
     /**
      * Discard the object, called when an exception occurs
-     * @param primaryKey
-     */
-    void discard(Object primaryKey);
-
-    /**
-     * Remove the specified object. This corresponds to an entity being
-     * deleted from the database, and as such the object should be releaed
-     * back into the pool immediately.
      *
-     * @param key the identifier of the object
+     * @param instance The instance to discard
      */
-    void remove(Object key);
+    void discard(EntityBeanComponentInstance instance);
 
     /**
      * Start the cache.
