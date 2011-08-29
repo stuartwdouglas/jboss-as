@@ -19,31 +19,26 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.ejb3.component.entity;
+package org.jboss.as.ejb3.component.entity.interceptors;
 
 import org.jboss.as.ee.component.Component;
-import org.jboss.as.ee.component.ComponentInstance;
+import org.jboss.as.ee.component.ComponentView;
+import org.jboss.as.ejb3.component.entity.EntityBeanComponent;
 import org.jboss.invocation.Interceptor;
 import org.jboss.invocation.InterceptorContext;
 import org.jboss.invocation.InterceptorFactory;
 import org.jboss.invocation.InterceptorFactoryContext;
-
-import java.lang.reflect.Method;
+import org.jboss.msc.value.InjectedValue;
 
 /**
- * Interceptor that hooks up home business methods for entity beans
- * <p/>
- * This is a view level interceptor that should be attached to business methods on the home interface.
+ * Interceptor that can return a home interface for an eJB
  *
  * @author Stuart Douglas
  */
-public class EntityBeanHomeMethodInterceptorFactory implements InterceptorFactory {
+public class EntityBeanGetHomeInterceptorFactory implements InterceptorFactory {
 
-    private final Method businessMethod;
 
-    public EntityBeanHomeMethodInterceptorFactory(final Method businessMethod) {
-        this.businessMethod = businessMethod;
-    }
+    private final InjectedValue<ComponentView> viewToCreate = new InjectedValue<ComponentView>();
 
     @Override
     public Interceptor create(final InterceptorFactoryContext context) {
@@ -53,28 +48,13 @@ public class EntityBeanHomeMethodInterceptorFactory implements InterceptorFactor
         return new Interceptor() {
             @Override
             public Object processInvocation(final InterceptorContext context) throws Exception {
-
-                //grab a bean from the pool to invoke the business method on
-                final EntityBeanComponentInstance instance = component.getPool().get();
-                final Object result;
-                try {
-                    //forward the invocation to the component interceptor chain
-                    Method oldMethod = context.getMethod();
-                    try {
-                        context.putPrivateData(ComponentInstance.class, instance);
-                        context.setMethod(businessMethod);
-                        context.setTarget(instance.getInstance());
-                        return  instance.getInterceptor(businessMethod).processInvocation(context);
-                    } finally {
-                        context.setMethod(oldMethod);
-                        context.setTarget(null);
-                        context.putPrivateData(ComponentInstance.class, null);
-                    }
-                } finally {
-                    component.getPool().release(instance);
-                }
+                return viewToCreate.getValue().createInstance().createProxy();
             }
-
         };
+    }
+
+
+    public InjectedValue<ComponentView> getViewToCreate() {
+        return viewToCreate;
     }
 }

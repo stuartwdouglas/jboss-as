@@ -137,6 +137,16 @@ public class BMPEntityBeanTestCase {
     }
 
     @Test
+    public void testGetEJBLocalHome() throws Exception {
+        DataStore.DATA.clear();
+        final BMPLocalHome home = getHome();
+        DataStore.DATA.put(23, "23");
+        BMPLocalInterface result = home.findByPrimaryKey(23);
+        final BMPLocalHome home2 = (BMPLocalHome) result.getEJBLocalHome();
+        Assert.assertEquals(SimpleBMPBean.HOME_METHOD_RETURN, home2.exampleHomeMethod());
+    }
+
+    @Test
     public void testHomeInterfaceEquality() throws Exception {
         final BMPLocalHome home1 = getHome();
         final BMPLocalHome home2 = getHome();

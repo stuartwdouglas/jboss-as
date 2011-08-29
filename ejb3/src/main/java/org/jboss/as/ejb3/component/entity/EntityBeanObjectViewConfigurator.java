@@ -22,14 +22,23 @@
 package org.jboss.as.ejb3.component.entity;
 
 import org.jboss.as.ee.component.ComponentConfiguration;
+import org.jboss.as.ee.component.ComponentStartService;
+import org.jboss.as.ee.component.ComponentView;
+import org.jboss.as.ee.component.DependencyConfigurator;
 import org.jboss.as.ee.component.ViewConfiguration;
 import org.jboss.as.ee.component.ViewConfigurator;
 import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
+import org.jboss.as.ejb3.component.entity.interceptors.EntityBeanAssociatingInterceptorFactory;
+import org.jboss.as.ejb3.component.entity.interceptors.EntityBeanEjbCreateMethodInterceptorFactory;
+import org.jboss.as.ejb3.component.entity.interceptors.EntityBeanGetHomeInterceptorFactory;
+import org.jboss.as.ejb3.component.entity.interceptors.EntityBeanRemoveInterceptorFactory;
+import org.jboss.as.ejb3.component.entity.interceptors.EntityIsIdenticalInterceptorFactory;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.reflect.ClassReflectionIndex;
 import org.jboss.as.server.deployment.reflect.DeploymentReflectionIndex;
+import org.jboss.msc.service.ServiceBuilder;
 
 import javax.ejb.EJBLocalObject;
 import javax.ejb.EJBObject;
@@ -66,6 +75,21 @@ public class EntityBeanObjectViewConfigurator implements ViewConfigurator {
                     (method.getParameterTypes()[0] == EJBLocalObject.class || method.getParameterTypes()[0] == EJBObject.class)) {
                 configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
                 configuration.addViewInterceptor(method, new EntityIsIdenticalInterceptorFactory(primaryKeyContextKey), InterceptorOrder.View.COMPONENT_DISPATCHER);
+            } else if(method.getName().equals("getEJBLocalHome") && method.getParameterTypes().length == 0) {
+                configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
+
+                final EntityBeanGetHomeInterceptorFactory factory = new EntityBeanGetHomeInterceptorFactory();
+
+                configuration.addViewInterceptor(method, factory , InterceptorOrder.View.COMPONENT_DISPATCHER);
+
+                final EntityBeanComponentDescription entityBeanComponentDescription = (EntityBeanComponentDescription)componentConfiguration.getComponentDescription();
+
+                componentConfiguration.getStartDependencies().add(new DependencyConfigurator<ComponentStartService>() {
+                    @Override
+                    public void configureDependency(final ServiceBuilder<?> serviceBuilder, final ComponentStartService service) throws DeploymentUnitProcessingException {
+                        serviceBuilder.addDependency(entityBeanComponentDescription.getEjbLocalHomeView().getServiceName(), ComponentView.class, factory.getViewToCreate());
+                    }
+                });
             }
         }
 
