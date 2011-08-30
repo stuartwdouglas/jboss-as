@@ -66,7 +66,7 @@ public class MessageDrivenComponent extends EJBComponent implements MessageDrive
     private final ActivationSpec activationSpec;
     private final MessageEndpointFactory endpointFactory;
     private final Class<?> messageListenerInterface;
-    private ResourceAdapter resourceAdapter;
+    private volatile ResourceAdapter resourceAdapter;
 
     /**
      * Construct a new instance.

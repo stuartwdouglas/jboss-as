@@ -101,6 +101,15 @@ public class EntityBeanComponentInstance extends BasicComponentInstance {
         }
     }
 
+    public synchronized void load() {
+        EntityBean instance = getInstance();
+        try {
+            instance.ejbLoad();
+        } catch (RemoteException e) {
+            throw new WrappedRemoteException(e);
+        }
+    }
+
     /**
      * Invokes the ejbStore method
      */

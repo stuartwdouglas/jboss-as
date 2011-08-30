@@ -102,6 +102,8 @@ public class EntityBeanSynchronizationInterceptor extends AbstractEJBInterceptor
                         log.trace("Registered tx synchronization: " + statefulSessionSync + " for tx: " + currentTransactionKey +
                                 " associated with stateful component instance: " + instance);
                     }
+                    //as this is the first time the entity bean has been access inside this transaction we need to call ejbLoad
+                    instance.load();
                 }
             }
             // proceed with the invocation
