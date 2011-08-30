@@ -47,13 +47,10 @@ import java.util.Map;
  */
 public class EntityInvocationContextInterceptor implements Interceptor {
 
-    public static final InterceptorFactory FACTORY = new ImmediateInterceptorFactory(new EntityInvocationContextInterceptor(false));
-    public static final InterceptorFactory LIFECYCLE_FACTORY = new ImmediateInterceptorFactory(new EntityInvocationContextInterceptor(true));
+    public static final InterceptorFactory FACTORY = new ImmediateInterceptorFactory(new EntityInvocationContextInterceptor());
 
-    private final boolean lifecycleCallback;
 
-    private EntityInvocationContextInterceptor(final boolean lifecycleCallback) {
-        this.lifecycleCallback = lifecycleCallback;
+    private EntityInvocationContextInterceptor() {
     }
 
     @Override
