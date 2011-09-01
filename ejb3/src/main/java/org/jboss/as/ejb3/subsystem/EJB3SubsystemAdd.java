@@ -139,9 +139,6 @@ class EJB3SubsystemAdd extends AbstractBoottimeAddStepHandler implements Descrip
 
                     processorTarget.addDeploymentProcessor(Phase.POST_MODULE, Phase.POST_MODULE_EJB_ASYNCHRONOUS_MERGE, new AsynchronousMergingProcessor());
 
-                    logger.debug("Add support for Home Interfaces");
-                    processorTarget.addDeploymentProcessor(Phase.POST_MODULE, Phase.POST_MODULE_LOCAL_HOME, new LocalHomeProcessor());
-
                     logger.debug("Add support for Entity Beans");
                     processorTarget.addDeploymentProcessor(Phase.PARSE, Phase.PARSE_ENTITY_BEAN_CREATE_COMPONENT_DESCRIPTIONS, new EntityBeanComponentDescriptionFactory());
                 }
