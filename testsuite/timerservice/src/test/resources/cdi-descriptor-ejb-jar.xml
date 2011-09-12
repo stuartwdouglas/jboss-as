@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ejb-jar xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    version="3.1" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/ejb-jar_3_1.xsd">
+    <enterprise-beans>
+        <session>
+            <ejb-name>DescriptorScheduleBean</ejb-name>
+            <local-bean />
+            <ejb-class>org.jboss.as.testsuite.timerservice.simple.cdi.CDIDeploymentDescriptorBean</ejb-class>
+            <session-type>Stateless</session-type>
+            <timeout-method>
+                <method-name>time</method-name>
+            </timeout-method>
+        </session>
+    </enterprise-beans>
+</ejb-jar>
