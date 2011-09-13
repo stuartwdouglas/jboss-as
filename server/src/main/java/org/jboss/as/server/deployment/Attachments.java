@@ -40,6 +40,7 @@ import org.jboss.as.server.deployment.reflect.ProxyMetadataSource;
 import org.jboss.as.server.moduleservice.ExternalModuleService;
 import org.jboss.as.server.moduleservice.ServiceModuleLoader;
 import org.jboss.as.server.services.security.AbstractVaultReader;
+import org.jboss.as.server.suspend.SuspendManager;
 import org.jboss.jandex.Index;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
@@ -184,6 +185,19 @@ public final class Attachments {
     public static final AttachmentKey<AttachmentList<String>> INDEX_IGNORE_PATHS = AttachmentKey.createList(String.class);
 
     /**
+<<<<<<< HEAD
+=======
+     * Flag to determine whether to process the child annotation indexes as part of the parent deployment.
+     * Ex.  An EAR deployment should not processes nested JAR index when checking for deployable annotations.
+     * It should rely on the child actually being deployed.  WARs and RARs on the other hand should process all the
+     * children as though the are all one index.
+     */
+    public static final AttachmentKey<Boolean> PROCESS_CHILD_ANNOTATION_INDEX = AttachmentKey.create(Boolean.class);
+
+    public static final AttachmentKey<SuspendManager> SUSPEND_MANAGER_ATTACHMENT_KEY = AttachmentKey.create(SuspendManager.class);
+
+    /**
+>>>>>>> WIP rebase old shutdown branch
      * Sub deployment services
      */
     public static final AttachmentKey<AttachmentList<DeploymentUnit>> SUB_DEPLOYMENTS = AttachmentKey.createList(DeploymentUnit.class);

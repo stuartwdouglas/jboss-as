@@ -96,6 +96,7 @@ public interface ServerLogger extends BasicLogger {
 
     /**
      * Log message for when a jboss-deployment-structure.xml file is ignored
+     *
      * @param file name of the ignored file
      */
     @LogMessage(level = WARN)
@@ -104,6 +105,7 @@ public interface ServerLogger extends BasicLogger {
 
     /**
      * Message for when a pre-computed annotation index cannot be loaded
+     *
      * @param index name of the annotation index
      */
     @LogMessage(level = ERROR)
@@ -301,7 +303,7 @@ public interface ServerLogger extends BasicLogger {
     /**
      * Logs an informational message indicating the server is starting.
      *
-     * @param prettyVersion  the server version.
+     * @param prettyVersion the server version.
      */
     @LogMessage(level = INFO)
     @Message(id = 15899, value = "%s starting")
@@ -310,27 +312,27 @@ public interface ServerLogger extends BasicLogger {
     /**
      * Logs an informational message indicating the server is stopped.
      *
-     * @param prettyVersion  the server version.
-     * @param time     the time it took to stop.
+     * @param prettyVersion the server version.
+     * @param time          the time it took to stop.
      */
     @LogMessage(level = INFO)
     @Message(id = 15950, value = "%s stopped in %dms")
     void serverStopped(String prettyVersion, int time);
 
     @LogMessage(level = INFO)
-    @Message(id = 15951, value= "Admin console listening on http://%s:%d")
+    @Message(id = 15951, value = "Admin console listening on http://%s:%d")
     void logHttpConsole(String httpAddr, int httpPort);
 
     @LogMessage(level = INFO)
-    @Message(id = 15952, value= "Admin console listening on https://%s:%d")
+    @Message(id = 15952, value = "Admin console listening on https://%s:%d")
     void logHttpsConsole(String httpsAddr, int httpsPort);
 
     @LogMessage(level = INFO)
-    @Message(id = 15953, value= "Admin console listening on http://%s:%d and https://%s:%d")
+    @Message(id = 15953, value = "Admin console listening on http://%s:%d and https://%s:%d")
     void logHttpAndHttpsConsole(String httpAddr, int httpPort, String httpsAddr, int httpsPort);
 
     @LogMessage(level = INFO)
-    @Message(id = 15954, value= "Admin console is not enabled")
+    @Message(id = 15954, value = "Admin console is not enabled")
     void logNoConsole();
 
     @LogMessage(level = Logger.Level.ERROR)
@@ -362,19 +364,19 @@ public interface ServerLogger extends BasicLogger {
     void classPathEntryNotValid(String classPathEntry, String resourceRoot);
 
     @LogMessage(level = INFO)
-    @Message(id = 15961, value= "Http management interface listening on http://%s:%d/management")
+    @Message(id = 15961, value = "Http management interface listening on http://%s:%d/management")
     void logHttpManagement(String httpAddr, int httpPort);
 
     @LogMessage(level = INFO)
-    @Message(id = 15962, value= "Http management interface listening on https://%s:%d/management")
+    @Message(id = 15962, value = "Http management interface listening on https://%s:%d/management")
     void logHttpsManagement(String httpsAddr, int httpsPort);
 
     @LogMessage(level = INFO)
-    @Message(id = 15963, value= "Http management interface listening on http://%s:%d/management and https://%s:%d/management")
+    @Message(id = 15963, value = "Http management interface listening on http://%s:%d/management and https://%s:%d/management")
     void logHttpAndHttpsManagement(String httpAddr, int httpPort, String httpsAddr, int httpsPort);
 
     @LogMessage(level = INFO)
-    @Message(id = 15964, value= "Http management interface is not enabled")
+    @Message(id = 15964, value = "Http management interface is not enabled")
     void logNoHttpManagement();
 
     @LogMessage(level = WARN)
@@ -386,8 +388,34 @@ public interface ServerLogger extends BasicLogger {
     void failedToUnmountContentOverride(@Cause Throwable cause);
 
     @LogMessage(level = WARN)
-    @Message(id = 15967, value= "Cannot install reflection index for unresolved bundle: %s")
+    @Message(id = 15967, value = "Cannot install reflection index for unresolved bundle: %s")
     void warnCannotInstallReflectionIndexForUnresolvedBundle(String bundle);
 
-    // NOTE
+    @LogMessage(level = WARN)
+    @Message(id = 15968, value = "Suspend command ignored as suspend is already in progress")
+    void suspendIgnoredAlreadyInProgress();
+
+    @LogMessage(level = WARN)
+    @Message(id = 15969, value = "Suspend command ignored as server is already suspended")
+    void suspendIgnoredAlreadySuspended();
+
+    @LogMessage(level = INFO)
+    @Message(id = 15970, value = "Suspending server operations")
+    void suspendingServerOperations();
+
+    @LogMessage(level = ERROR)
+    @Message(id = 15971, value = "Suspend listener %s threw exception in %s")
+    void suspendListenerThrewException(@Cause Throwable cause, final String listener, final String method);
+
+    @LogMessage(level = INFO)
+    @Message(id = 15972, value = "Server has been suspended")
+    void serverSuspended();
+
+    @LogMessage(level = ERROR)
+    @Message(id = 15973, value = "Could not shut down permit manager %s due to exception")
+    void couldNotShutDownPermitManager(@Cause Throwable cause, final String permitManager);
+
+    @LogMessage(level = ERROR)
+    @Message(id = 15974, value = "Could not resume permit manager %s due to exception")
+    void couldNotResumePermitManager(@Cause Throwable cause, final String permitManager);
 }

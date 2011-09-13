@@ -217,6 +217,7 @@ public enum Phase {
     public static final int STRUCTURE_MODULE_IDENTIFIERS                = 0x1A00;
     public static final int STRUCTURE_EE_MODULE_INIT                    = 0x1B00;
     public static final int STRUCTURE_EE_RESOURCE_INJECTION_REGISTRY    = 0x1C00;
+    public static final int STRUCTURE_SUSPEND_MANAGER                   = 0x1D00;
 
     // PARSE
     public static final int PARSE_EE_DEPLOYMENT_PROPERTIES              = 0x0001;

@@ -57,6 +57,7 @@ import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
 import org.jboss.as.server.deployment.SetupAction;
+import org.jboss.as.server.suspend.SuspendManager;
 import org.jboss.as.web.VirtualHost;
 import org.jboss.as.web.WebDeploymentDefinition;
 import org.jboss.as.web.WebSubsystemServices;
@@ -145,7 +146,10 @@ public class WarDeploymentProcessor implements DeploymentUnitProcessor {
         }
         final ClassLoader classLoader = module.getClassLoader();
         final JBossWebMetaData metaData = warMetaData.getMergedJBossWebMetaData();
-        final List<SetupAction> setupActions = deploymentUnit.getAttachmentList(org.jboss.as.ee.component.Attachments.WEB_SETUP_ACTIONS);
+
+        //make a copy as we modify this
+        final List<SetupAction> setupActions = new ArrayList<SetupAction>(deploymentUnit
+                .getAttachmentList(org.jboss.as.ee.component.Attachments.WEB_SETUP_ACTIONS));
 
         // Resolve the context factory
         WebContextFactory contextFactory = deploymentUnit.getAttachment(WebContextFactory.ATTACHMENT);
@@ -159,6 +163,14 @@ public class WarDeploymentProcessor implements DeploymentUnitProcessor {
 
         // Add SecurityAssociationValve right at the beginning
         webContext.addValve(new SecurityContextAssociationValve(deploymentUnit));
+
+        //setup the suspend manager for this web deployment
+        final WebSuspendManagerService suspendManagerService = new WebSuspendManagerService(deploymentUnit.getName());
+        serviceTarget.addService(deploymentUnit.getServiceName().append(WebSuspendManagerService.SERVICE_NAME), suspendManagerService)
+                .addDependency(SuspendManager.SERVICE_NAME, SuspendManager.class, suspendManagerService.getSuspendManager())
+                .install();
+
+        webContext.addValve(new SuspendValve(suspendManagerService));
 
         // Set the deployment root
         try {

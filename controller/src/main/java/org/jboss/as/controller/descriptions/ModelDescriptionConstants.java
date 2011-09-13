@@ -223,6 +223,7 @@ public class ModelDescriptionConstants {
     public static final String RESTART = "restart";
     public static final String RESTART_REQUIRED = "restart-required";
     public static final String RESULT = "result";
+    public static final String RESUME = "resume";
     public static final String ROLLBACK_ACROSS_GROUPS = "rollback-across-groups";
     public static final String ROLLBACK_FAILURE_DESCRIPTION = "rollback-failure-description";
     public static final String ROLLBACK_ON_RUNTIME_FAILURE = "rollback-on-runtime-failure";
@@ -275,6 +276,7 @@ public class ModelDescriptionConstants {
     public static final String SUBDEPLOYMENT = "subdeployment";
     public static final String SUBSYSTEM = "subsystem";
     public static final String SUCCESS = "success";
+    public static final String SUSPEND = "suspend";
     public static final String SYSTEM_PROPERTY = "system-property";
     public static final String SYSTEM_PROPERTIES = "system-properties";
     public static final String TAIL_COMMENT_ALLOWED = "tail-comment-allowed";

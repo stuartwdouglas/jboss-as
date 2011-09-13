@@ -33,12 +33,12 @@ import org.jboss.dmr.ModelNode;
  * in the domain-level model.
  *
  * @author Brian Stansberry
- *
  */
 public final class ServerDescriptionProviders {
 
     // Prevent instantiation
-    private ServerDescriptionProviders() {}
+    private ServerDescriptionProviders() {
+    }
 
     /**
      * Provider for the host model root.

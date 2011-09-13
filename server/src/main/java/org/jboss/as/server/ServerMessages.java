@@ -43,6 +43,7 @@ import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.MountType;
 import org.jboss.as.server.deployment.Phase;
 import org.jboss.as.server.services.security.VaultReaderException;
+import org.jboss.as.server.suspend.SuspendPermit;
 import org.jboss.dmr.ModelNode;
 import org.jboss.invocation.proxy.MethodIdentifier;
 import org.jboss.logging.Cause;
@@ -636,4 +637,7 @@ public interface ServerMessages {
 
     @Message(id = 18777, value = "Wildcard character * is only allowed at the beginning or end of the deployment name %s")
     OperationFailedException wildcardOnlyAllowedAtStartOrEnd(String str);
+
+    @Message(id = 18778, value = "Suspend permit %s has been returned twice")
+    IllegalArgumentException permitReturnedTwice(SuspendPermit permit);
 }

@@ -63,6 +63,7 @@ import org.jboss.as.server.deployment.DeploymentUnitProcessor;
 import org.jboss.as.server.deployment.Phase;
 import org.jboss.as.server.deployment.ServiceLoaderProcessor;
 import org.jboss.as.server.deployment.SubDeploymentProcessor;
+import org.jboss.as.server.deployment.SuspendManagerProcessor;
 import org.jboss.as.server.deployment.annotation.AnnotationIndexProcessor;
 import org.jboss.as.server.deployment.annotation.CleanupAnnotationIndexProcessor;
 import org.jboss.as.server.deployment.annotation.CompositeIndexProcessor;
@@ -96,6 +97,7 @@ import org.jboss.as.server.moduleservice.ExtensionIndexService;
 import org.jboss.as.server.moduleservice.ExternalModuleService;
 import org.jboss.as.server.moduleservice.ServiceModuleLoader;
 import org.jboss.as.server.services.security.AbstractVaultReader;
+import org.jboss.as.server.suspend.SuspendManager;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceBuilder;
@@ -105,6 +107,8 @@ import org.jboss.msc.service.ServiceTarget;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
+import org.jboss.msc.service.ValueService;
+import org.jboss.msc.value.ImmediateValue;
 import org.jboss.msc.value.InjectedValue;
 import org.jboss.threads.JBossThreadFactory;
 
@@ -136,7 +140,7 @@ public final class ServerService extends AbstractControllerService {
      * Construct a new instance.
      *
      * @param configuration the bootstrap configuration
-     * @param prepareStep the prepare step to use
+     * @param prepareStep   the prepare step to use
      */
     ServerService(final Bootstrap.Configuration configuration, final ControlledProcessState processState,
                   final OperationStepHandler prepareStep, final BootstrapListener bootstrapListener,
@@ -154,14 +158,14 @@ public final class ServerService extends AbstractControllerService {
     static ProcessType getProcessType(ServerEnvironment serverEnvironment) {
         if (serverEnvironment != null) {
             switch (serverEnvironment.getLaunchType()) {
-            case DOMAIN:
-                return ProcessType.DOMAIN_SERVER;
-            case STANDALONE:
-                return ProcessType.STANDALONE_SERVER;
-            case EMBEDDED:
-                return ProcessType.EMBEDDED_SERVER;
-            case APPCLIENT:
-                return ProcessType.APPLICATION_CLIENT;
+                case DOMAIN:
+                    return ProcessType.DOMAIN_SERVER;
+                case STANDALONE:
+                    return ProcessType.STANDALONE_SERVER;
+                case EMBEDDED:
+                    return ProcessType.EMBEDDED_SERVER;
+                case APPCLIENT:
+                    return ProcessType.APPLICATION_CLIENT;
             }
         }
 
@@ -190,7 +194,7 @@ public final class ServerService extends AbstractControllerService {
 
         ServerService service = new ServerService(configuration, processState, null, bootstrapListener, runningModeControl, vaultReader, remoteFileRepository);
         ServiceBuilder<?> serviceBuilder = serviceTarget.addService(Services.JBOSS_SERVER_CONTROLLER, service);
-        serviceBuilder.addDependency(DeploymentMountProvider.SERVICE_NAME,DeploymentMountProvider.class, service.injectedDeploymentRepository);
+        serviceBuilder.addDependency(DeploymentMountProvider.SERVICE_NAME, DeploymentMountProvider.class, service.injectedDeploymentRepository);
         serviceBuilder.addDependency(ContentRepository.SERVICE_NAME, ContentRepository.class, service.injectedContentRepository);
         serviceBuilder.addDependency(Services.JBOSS_SERVICE_MODULE_LOADER, ServiceModuleLoader.class, service.injectedModuleLoader);
         serviceBuilder.addDependency(Services.JBOSS_EXTERNAL_MODULE_SERVICE, ExternalModuleService.class,
@@ -242,6 +246,9 @@ public final class ServerService extends AbstractControllerService {
                     context.removeAttachment(Attachments.SERVICE_MODULE_LOADER);
                 }
             });
+            final SuspendManager suspendManager = new SuspendManager();
+            serviceTarget.addService(SuspendManager.SERVICE_NAME, new ValueService<Object>(new ImmediateValue<Object>(suspendManager)))
+                    .install();
 
 
             // Activate core processors for jar deployment
@@ -256,6 +263,7 @@ public final class ServerService extends AbstractControllerService {
             DeployerChainAddHandler.addDeploymentProcessor(SERVER_NAME, Phase.STRUCTURE, Phase.STRUCTURE_PARSE_JBOSS_ALL_XML, new JBossAllXMLParsingProcessor());
             DeployerChainAddHandler.addDeploymentProcessor(SERVER_NAME, Phase.STRUCTURE, Phase.STRUCTURE_JBOSS_DEPLOYMENT_STRUCTURE, new DeploymentStructureDescriptorParser());
             DeployerChainAddHandler.addDeploymentProcessor(SERVER_NAME, Phase.STRUCTURE, Phase.STRUCTURE_CLASS_PATH, new ManifestClassPathProcessor());
+            DeployerChainAddHandler.addDeploymentProcessor(SERVER_NAME, Phase.STRUCTURE, Phase.STRUCTURE_SUSPEND_MANAGER, new SuspendManagerProcessor());
             DeployerChainAddHandler.addDeploymentProcessor(SERVER_NAME, Phase.PARSE, Phase.PARSE_DEPENDENCIES_MANIFEST, new ManifestDependencyProcessor());
             DeployerChainAddHandler.addDeploymentProcessor(SERVER_NAME, Phase.PARSE, Phase.PARSE_COMPOSITE_ANNOTATION_INDEX, new CompositeIndexProcessor());
             DeployerChainAddHandler.addDeploymentProcessor(SERVER_NAME, Phase.PARSE, Phase.PARSE_EXTENSION_LIST, new ManifestExtensionListProcessor());
@@ -328,19 +336,21 @@ public final class ServerService extends AbstractControllerService {
                 extensibleConfigurationPersister, configuration.getServerEnvironment(), processState,
                 runningModeControl, vaultReader, configuration.getExtensionRegistry(),
                 getExecutorServiceInjector().getOptionalValue() != null, remoteFileRepository,
-                (PathManagerService)injectedPathManagerService.getValue());
+                (PathManagerService) injectedPathManagerService.getValue());
 
         // TODO maybe make creating of empty nodes part of the MNR description
         rootResource.registerChild(PathElement.pathElement(ModelDescriptionConstants.CORE_SERVICE, ModelDescriptionConstants.MANAGEMENT), Resource.Factory.create());
         rootResource.registerChild(PathElement.pathElement(ModelDescriptionConstants.CORE_SERVICE, ModelDescriptionConstants.SERVICE_CONTAINER), Resource.Factory.create());
         rootResource.registerChild(ServerEnvironmentResourceDescription.RESOURCE_PATH, Resource.Factory.create());
-        ((PathManagerService)injectedPathManagerService.getValue()).addPathManagerResources(rootResource);
+        ((PathManagerService) injectedPathManagerService.getValue()).addPathManagerResources(rootResource);
 
         // Platform MBeans
         rootResource.registerChild(PlatformMBeanConstants.ROOT_PATH, new RootPlatformMBeanResource());
     }
 
-    /** Temporary replacement for QueuelessThreadPoolService */
+    /**
+     * Temporary replacement for QueuelessThreadPoolService
+     */
     private static class ServerExecutorService implements Service<ExecutorService> {
 
         private final ThreadFactory threadFactory;

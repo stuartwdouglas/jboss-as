@@ -64,11 +64,13 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.REP
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.REQUEST_PROPERTIES;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.REQUIRED;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.RESTART;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.RESUME;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SCHEMA_LOCATIONS;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SHUTDOWN;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SOCKET_BINDING_GROUP;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.STEPS;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUBSYSTEM;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUSPEND;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SYSTEM_PROPERTY;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.TAIL_COMMENT_ALLOWED;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.TYPE;
@@ -247,6 +249,30 @@ public class ServerRootDescription {
         node.get(REQUEST_PROPERTIES, RESTART, DEFAULT).set(false);
         node.get(REQUEST_PROPERTIES, RESTART, REQUIRED).set(false);
         node.get(REQUEST_PROPERTIES, RESTART, NILLABLE).set(true);
+        node.get(REPLY_PROPERTIES).setEmptyObject();
+        return node;
+    }
+
+    /** {@inheritDoc} */
+    public static ModelNode getSuspendOperationDescription(final Locale locale) {
+        ResourceBundle bundle = getResourceBundle(locale);
+
+        ModelNode node = new ModelNode();
+        node.get(OPERATION_NAME).set(SUSPEND);
+        node.get(DESCRIPTION).set(bundle.getString(SUSPEND));
+        node.get(REQUEST_PROPERTIES).setEmptyObject();
+        node.get(REPLY_PROPERTIES).setEmptyObject();
+        return node;
+    }
+
+        /** {@inheritDoc} */
+    public static ModelNode getResumeOperationDescription(final Locale locale) {
+        ResourceBundle bundle = getResourceBundle(locale);
+
+        ModelNode node = new ModelNode();
+        node.get(OPERATION_NAME).set(RESUME);
+        node.get(DESCRIPTION).set(bundle.getString(RESUME));
+        node.get(REQUEST_PROPERTIES).setEmptyObject();
         node.get(REPLY_PROPERTIES).setEmptyObject();
         return node;
     }
