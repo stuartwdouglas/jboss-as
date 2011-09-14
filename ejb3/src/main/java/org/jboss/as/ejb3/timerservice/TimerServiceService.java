@@ -50,13 +50,18 @@ public class TimerServiceService extends ForwardingTimerService implements Servi
     private volatile org.jboss.as.ejb3.timerservice.api.TimerService timerService;
     private final InjectedValue<TimerServiceFactory> timerServiceFactoryInjectedValue = new InjectedValue<TimerServiceFactory>();
     private final InjectedValue<EJBComponent> ejbComponentInjectedValue = new InjectedValue<EJBComponent>();
+    private final InjectedValue<TimerServiceManager> timerServiceManagerInjectedValue = new InjectedValue<TimerServiceManager>();
 
     private final Map<Method, List<AutoTimer>> autoTimers;
-    private final ClassLoader classLoader;
+    private final String deploymentName;
+    private final String subDeploymentName;
+    private final String componentName;
 
-    public TimerServiceService(final Map<Method, List<AutoTimer>> autoTimers, final ClassLoader classLoader) {
+    public TimerServiceService(final Map<Method, List<AutoTimer>> autoTimers, final String deploymentName, final String subDeploymentName, final String componentName) {
         this.autoTimers = autoTimers;
-        this.classLoader = classLoader;
+        this.deploymentName = deploymentName;
+        this.subDeploymentName = subDeploymentName;
+        this.componentName = componentName;
     }
 
     @Override
@@ -80,11 +85,13 @@ public class TimerServiceService extends ForwardingTimerService implements Servi
         timerServiceFactory.restoreTimerService(timerService, timers);
 
         this.timerService = timerService;
+        timerServiceManagerInjectedValue.getValue().addTimerService(this);
     }
 
     @Override
     public synchronized void stop(final StopContext context) {
         timerServiceFactoryInjectedValue.getValue().suspendTimerService(timerService);
+        timerServiceManagerInjectedValue.getValue().removeTimerService(this);
         timerService = null;
     }
 
@@ -108,5 +115,21 @@ public class TimerServiceService extends ForwardingTimerService implements Servi
 
     public InjectedValue<EJBComponent> getEjbComponentInjectedValue() {
         return ejbComponentInjectedValue;
+    }
+
+    public InjectedValue<TimerServiceManager> getTimerServiceManagerInjectedValue() {
+        return timerServiceManagerInjectedValue;
+    }
+
+    public String getDeploymentName() {
+        return deploymentName;
+    }
+
+    public String getComponentName() {
+        return componentName;
+    }
+
+    public String getSubDeploymentName() {
+        return subDeploymentName;
     }
 }

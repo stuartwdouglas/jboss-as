@@ -44,10 +44,10 @@ import java.util.Locale;
 
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.DESCRIBE;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
-import static org.jboss.as.ejb3.subsystem.EJB3SubsystemModel.*;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.*;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.REMOVE;
+import static org.jboss.as.ejb3.subsystem.EJB3SubsystemModel.DEFAULT_MDB_INSTANCE_POOL;
+import static org.jboss.as.ejb3.subsystem.EJB3SubsystemModel.DEFAULT_RESOURCE_ADAPTER_NAME;
+import static org.jboss.as.ejb3.subsystem.EJB3SubsystemModel.DEFAULT_SLSB_INSTANCE_POOL;
 
 /**
  * @author Emanuel Muckenhuber
@@ -101,6 +101,7 @@ public class EJB3Extension implements Extension {
         timerService.registerReadWriteAttribute(EJB3SubsystemModel.RELATIVE_TO, null,  WriteAttributeHandlers.WriteAttributeOperationHandler.INSTANCE, AttributeAccess.Storage.CONFIGURATION);
         timerService.registerReadWriteAttribute(EJB3SubsystemModel.CORE_THREADS, null,  WriteAttributeHandlers.WriteAttributeOperationHandler.INSTANCE, AttributeAccess.Storage.CONFIGURATION);
         timerService.registerReadWriteAttribute(EJB3SubsystemModel.MAX_THREADS, null,  WriteAttributeHandlers.WriteAttributeOperationHandler.INSTANCE, AttributeAccess.Storage.CONFIGURATION);
+        timerService.registerReadOnlyAttribute(EJB3SubsystemModel.ACTIVE_TIMERS, ActiveTimersReadHandler.INSTANCE, AttributeAccess.Storage.RUNTIME);
 
     }
 

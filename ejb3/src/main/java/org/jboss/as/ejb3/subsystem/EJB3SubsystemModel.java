@@ -44,6 +44,7 @@ public interface EJB3SubsystemModel {
     String MAX_THREADS = "max-threads";
     String RELATIVE_TO = "relative-to";
     String PATH = "path";
+    String ACTIVE_TIMERS = "active-timers";
 
     String SERVICE = "service";
     String TIMER_SERVICE = "timer-service";

@@ -65,6 +65,7 @@ import org.jboss.as.ejb3.deployment.processors.merging.StartupMergingProcessor;
 import org.jboss.as.ejb3.deployment.processors.merging.StatefulTimeoutMergingProcessor;
 import org.jboss.as.ejb3.deployment.processors.merging.TransactionAttributeMergingProcessor;
 import org.jboss.as.ejb3.deployment.processors.merging.TransactionManagementMergingProcessor;
+import org.jboss.as.ejb3.timerservice.TimerServiceManager;
 import org.jboss.as.security.service.SimpleSecurityManager;
 import org.jboss.as.security.service.SimpleSecurityManagerService;
 import org.jboss.as.server.AbstractDeploymentChainStep;
@@ -79,6 +80,8 @@ import org.jboss.jca.core.spi.rar.ResourceAdapterRepository;
 import org.jboss.logging.Logger;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceTarget;
+import org.jboss.msc.service.ValueService;
+import org.jboss.msc.value.ImmediateValue;
 
 import javax.transaction.TransactionManager;
 import javax.transaction.TransactionSynchronizationRegistry;
@@ -214,6 +217,9 @@ class EJB3SubsystemAdd extends AbstractBoottimeAddStepHandler implements Descrip
             newControllers.add(serviceTarget.addService(org.jboss.as.ejb3.component.session.SessionBeanComponent.ASYNC_EXECUTOR_SERVICE_NAME, threadPoolService)
                     .addListener(verificationHandler)
                     .install());
+
+            //add the timer service manager, that is used to track active timer services to run management operations on them
+            newControllers.add(serviceTarget.addService(TimerServiceManager.SERVICE_NAME, new ValueService<TimerServiceManager>(new ImmediateValue<TimerServiceManager>(new TimerServiceManager()))).install());
         }
 
     }
