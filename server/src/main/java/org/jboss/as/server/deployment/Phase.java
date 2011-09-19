@@ -223,6 +223,7 @@ public enum Phase {
     public static final int PARSE_SESSION_BEAN_CREATE_COMPONENT_DESCRIPTIONS     = 0x1150;
     public static final int PARSE_MDB_CREATE_COMPONENT_DESCRIPTIONS     = 0x1151;
     public static final int PARSE_ENTITY_BEAN_CREATE_COMPONENT_DESCRIPTIONS = 0x1152;
+    public static final int PARSE_CMP_ENTITY_BEAN_CREATE_COMPONENT_DESCRIPTIONS = 0x1153;
     public static final int PARSE_EJB_SESSION_BEAN_DD                   = 0x1200;
     // create and attach the component description out of EJB annotations
     public static final int PARSE_WS_EJB_INTEGRATION                    = 0x1701;
@@ -271,11 +272,12 @@ public enum Phase {
     public static final int DEPENDENCIES_WS                             = 0x0C00;
     public static final int DEPENDENCIES_JAXRS                          = 0x0D00;
     public static final int DEPENDENCIES_SUB_DEPLOYMENTS                = 0x0E00;
-    public static final int DEPENDENCIES_JPA = 0x1000;
+    public static final int DEPENDENCIES_JPA                            = 0x1000;
     public static final int DEPENDENCIES_GLOBAL_MODULES                 = 0x1100;
     public static final int DEPENDENCIES_JDK                            = 0x1200;
+    public static final int DEPENDENCIES_CMP                            = 0x1300;
     //must be last
-    public static final int DEPENDENCIES_MODULE_INFO_SERVICE            = 0x1300;
+    public static final int DEPENDENCIES_MODULE_INFO_SERVICE            = 0x1400;
 
     // CONFIGURE_MODULE
     public static final int CONFIGURE_MODULE_SPEC                       = 0x0100;
@@ -329,6 +331,10 @@ public enum Phase {
     public static final int POST_MODULE_JAXRS_CDI_INTEGRATION           = 0x1C00;
     public static final int POST_MODULE_EJB_CLIENT_CONTEXT_SETUP        = 0x1D00;
     public static final int POST_MODULE_LOCAL_HOME                      = 0x1E00;
+    public static final int POST_MODULE_CMP_PARSE                       = 0x1F00;
+    public static final int POST_MODULE_CMP_ENTITY_METADATA             = 0x1F01;
+    public static final int POST_MODULE_CMP_STORE_MANAGER               = 0x1F02;
+
 
     // INSTALL
     public static final int INSTALL_JNDI_DEPENDENCY_SETUP               = 0x0100;

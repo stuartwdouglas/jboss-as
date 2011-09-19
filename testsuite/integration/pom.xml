@@ -113,9 +113,7 @@
         <profile>
             <id>preview</id>
             <activation>
-                <property>
-                    <name>preview</name>
-                </property>
+                <activeByDefault>true</activeByDefault>
             </activation>
             <dependencies>
                 <dependency>

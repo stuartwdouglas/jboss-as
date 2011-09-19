@@ -38,10 +38,12 @@ import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.reflect.ClassReflectionIndex;
 import org.jboss.as.server.deployment.reflect.DeploymentReflectionIndex;
+import org.jboss.invocation.InterceptorFactory;
 import org.jboss.msc.service.ServiceBuilder;
 
 import javax.ejb.EJBLocalObject;
 import javax.ejb.EJBObject;
+import javax.persistence.Basic;
 import java.lang.reflect.Method;
 
 /**
@@ -58,7 +60,8 @@ public class EntityBeanObjectViewConfigurator implements ViewConfigurator {
         final DeploymentReflectionIndex index = context.getDeploymentUnit().getAttachment(org.jboss.as.server.deployment.Attachments.REFLECTION_INDEX);
         final Object primaryKeyContextKey = new Object();
 
-        configuration.addClientPostConstructInterceptor(new EntityBeanEjbCreateMethodInterceptorFactory(primaryKeyContextKey), InterceptorOrder.ClientPostConstruct.INSTANCE_CREATE);
+        configuration.addClientPostConstructInterceptor(getEjbCreateInterceptorFactory(primaryKeyContextKey), InterceptorOrder.ClientPostConstruct.INSTANCE_CREATE);
+
         configuration.addViewInterceptor(new EntityBeanAssociatingInterceptorFactory(primaryKeyContextKey), InterceptorOrder.View.ASSOCIATING_INTERCEPTOR);
 
 
@@ -93,6 +96,10 @@ public class EntityBeanObjectViewConfigurator implements ViewConfigurator {
             }
         }
 
+    }
+
+    protected InterceptorFactory getEjbCreateInterceptorFactory(final Object primaryKeyContextKey) {
+        return new EntityBeanEjbCreateMethodInterceptorFactory(primaryKeyContextKey);
     }
 
     private Method resolveRemoveMethod( final Class<?> componentClass, final DeploymentReflectionIndex index, final String ejbName) throws DeploymentUnitProcessingException {

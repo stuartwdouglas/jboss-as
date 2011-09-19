@@ -233,6 +233,7 @@
         <module>arquillian</module>
         <module>cli</module>
         <module>clustering</module>
+        <module>cmp</module>
         <module>connector</module>
         <module>controller</module>
         <module>controller-client</module>
@@ -672,6 +673,12 @@
             <dependency>
                 <groupId>org.jboss.as</groupId>
                 <artifactId>jboss-as-clustering-web-infinispan</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jboss.as</groupId>
+                <artifactId>jboss-as-cmp</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

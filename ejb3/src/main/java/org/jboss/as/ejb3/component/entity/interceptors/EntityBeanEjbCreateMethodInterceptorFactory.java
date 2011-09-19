@@ -111,7 +111,6 @@ public class EntityBeanEjbCreateMethodInterceptorFactory implements InterceptorF
                         }
                     });
                 }
-
                 return context.proceed();
             }
         };

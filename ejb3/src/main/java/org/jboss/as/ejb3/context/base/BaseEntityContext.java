@@ -21,6 +21,7 @@
  */
 package org.jboss.as.ejb3.context.base;
 
+import org.jboss.as.ejb3.component.entity.EntityBeanComponent;
 import org.jboss.as.ejb3.component.entity.EntityBeanComponentInstance;
 import org.jboss.as.ejb3.context.spi.EntityContext;
 import org.jboss.as.ejb3.context.spi.MessageDrivenBeanComponent;
@@ -41,8 +42,8 @@ public class BaseEntityContext extends BaseEJBContext implements EntityContext {
     }
 
     @Override
-    public MessageDrivenBeanComponent getComponent() {
-        return (MessageDrivenBeanComponent) super.getComponent();
+    public EntityBeanComponent getComponent() {
+        return (EntityBeanComponent) super.getComponent();
     }
 
     @Override

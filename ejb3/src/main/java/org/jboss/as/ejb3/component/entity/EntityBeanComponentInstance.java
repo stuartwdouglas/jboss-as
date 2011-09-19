@@ -134,7 +134,7 @@ public class EntityBeanComponentInstance extends BasicComponentInstance {
 
     public void setupContext() {
         try {
-            this.entityContext = new BaseEntityContext(this);
+            setEntityContext(new BaseEntityContext(this));
             getInstance().setEntityContext(entityContext);
         } catch (RemoteException e) {
             throw new WrappedRemoteException(e);
@@ -143,6 +143,10 @@ public class EntityBeanComponentInstance extends BasicComponentInstance {
 
     public BaseEntityContext getEntityContext() {
         return entityContext;
+    }
+
+    protected void setEntityContext(BaseEntityContext entityContext) {
+        this.entityContext = entityContext;
     }
 
     public EJBObject getEjbObject() {

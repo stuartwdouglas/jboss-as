@@ -117,14 +117,18 @@ public class EntityBeanComponentDescription extends EJBComponentDescription {
         if(view instanceof AbstractEjbHomeViewDescription) {
             view.getConfigurators().add(new EntityBeanHomeViewConfigurator());
         } else {
-            view.getConfigurators().add(new EntityBeanObjectViewConfigurator());
+            view.getConfigurators().add(getObjectViewConfigurator());
         }
 
     }
 
+    protected EntityBeanObjectViewConfigurator getObjectViewConfigurator() {
+        return new EntityBeanObjectViewConfigurator();
+    }
 
 
-    private void addSynchronizationInterceptor() {
+
+    protected void addSynchronizationInterceptor() {
         // we must run before the DefaultFirstConfigurator
         getConfigurators().addFirst(new ComponentConfigurator() {
             @Override
@@ -138,7 +142,6 @@ public class EntityBeanComponentDescription extends EJBComponentDescription {
                 configuration.addComponentInterceptor(interceptorFactory, InterceptorOrder.Component.SYNCHRONIZATION_INTERCEPTOR, false);
             }
         });
-
     }
 
     public String getPrimaryKeyType() {
