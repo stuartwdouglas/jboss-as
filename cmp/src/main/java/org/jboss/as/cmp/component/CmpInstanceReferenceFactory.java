@@ -36,9 +36,9 @@ public class CmpInstanceReferenceFactory implements ManagedReferenceFactory {
     private final InjectedValue<CmpEntityBeanComponent> component = new InjectedValue<CmpEntityBeanComponent>();
     private final ProxyFactory<?> proxyFactory;
 
-    public CmpInstanceReferenceFactory(final Class<?> beanClass) {
+    public CmpInstanceReferenceFactory(final Class<?> beanClass, final Class<?>... homeClasses) {
         this.beanClass = beanClass;
-        proxyFactory = CmpProxyFactory.createProxyFactory(beanClass);
+        proxyFactory = CmpProxyFactory.createProxyFactory(beanClass, homeClasses);
     }
 
     public ManagedReference getReference() {

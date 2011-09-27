@@ -22,14 +22,12 @@
 
 package org.jboss.as.cmp.jdbc;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import javax.ejb.RemoveException;
 import javax.sql.DataSource;
 import org.jboss.as.cmp.CmpConfig;
-import org.jboss.as.cmp.GenericEntityObjectFactory;
 import org.jboss.as.cmp.bridge.EntityBridgeInvocationHandler;
 import org.jboss.as.cmp.component.CmpEntityBeanComponent;
 import org.jboss.as.cmp.context.CmpEntityBeanContext;
@@ -105,8 +103,7 @@ public interface JDBCEntityPersistenceStore {
      */
     Object findEntity(Method finderMethod,
                       Object[] args,
-                      CmpEntityBeanContext instance,
-                      GenericEntityObjectFactory factory)
+                      CmpEntityBeanContext instance)
             throws Exception;
 
     /**
@@ -124,7 +121,7 @@ public interface JDBCEntityPersistenceStore {
      * @throws java.rmi.RemoteException thrown if some system exception occurs
      * @throws Exception                thrown if some heuristic problem occurs
      */
-    Collection findEntities(Method finderMethod, Object[] args, CmpEntityBeanContext instance, GenericEntityObjectFactory factory) throws Exception;
+    Collection findEntities(Method finderMethod, Object[] args, CmpEntityBeanContext instance) throws Exception;
 
     /**
      * This method is called when an entity shall be activated.

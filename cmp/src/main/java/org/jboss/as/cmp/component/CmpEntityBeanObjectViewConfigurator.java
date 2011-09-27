@@ -22,7 +22,9 @@
 
 package org.jboss.as.cmp.component;
 
+import java.lang.reflect.Method;
 import org.jboss.as.cmp.component.interceptors.CmpEntityBeanEjbCreateMethodInterceptorFactory;
+import org.jboss.as.cmp.component.interceptors.CmpEntityBeanRemoveInterceptorFactory;
 import org.jboss.as.ejb3.component.entity.EntityBeanObjectViewConfigurator;
 import org.jboss.invocation.InterceptorFactory;
 
@@ -32,5 +34,9 @@ import org.jboss.invocation.InterceptorFactory;
 public class CmpEntityBeanObjectViewConfigurator extends EntityBeanObjectViewConfigurator {
     protected InterceptorFactory getEjbCreateInterceptorFactory(Object primaryKeyContextKey) {
         return new CmpEntityBeanEjbCreateMethodInterceptorFactory(primaryKeyContextKey);
+    }
+
+    protected InterceptorFactory getEjbRemoveInterceptorFactory(Method remove, Object primaryKeyContextKey) {
+        return new CmpEntityBeanRemoveInterceptorFactory(remove, primaryKeyContextKey);
     }
 }

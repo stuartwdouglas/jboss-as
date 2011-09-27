@@ -24,7 +24,6 @@ package org.jboss.as.cmp.jdbc;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import javax.ejb.FinderException;
-import org.jboss.as.cmp.GenericEntityObjectFactory;
 import org.jboss.as.cmp.context.CmpEntityBeanContext;
 
 /**
@@ -34,10 +33,7 @@ import org.jboss.as.cmp.context.CmpEntityBeanContext;
  * @version $Revision: 81030 $
  */
 public interface JDBCQueryCommand {
-    Collection execute(Method finderMethod,
-                              Object[] args,
-                              CmpEntityBeanContext ctx,
-                              GenericEntityObjectFactory factory) throws FinderException;
+    Collection execute(Method finderMethod, Object[] args, CmpEntityBeanContext ctx) throws FinderException;
 
     JDBCStoreManager getSelectManager();
 }

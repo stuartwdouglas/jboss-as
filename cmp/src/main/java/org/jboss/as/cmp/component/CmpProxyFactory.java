@@ -37,12 +37,17 @@ import org.jboss.invocation.proxy.ProxyFactory;
 public class CmpProxyFactory<T> extends ProxyFactory<T> {
     private static final AtomicInteger PROXY_ID = new AtomicInteger(0);
 
-    public static <T> ProxyFactory<T> createProxyFactory(final Class<T> beanClass) {
+    public static <T> ProxyFactory<T> createProxyFactory(final Class<T> beanClass, final Class<?>[] homeClasses) {
         final ProxyConfiguration<T> proxyConfiguration = new ProxyConfiguration<T>();
         proxyConfiguration.setProxyName(beanClass.getName() + "$$$cmp" + PROXY_ID.incrementAndGet());
         proxyConfiguration.setClassLoader(beanClass.getClassLoader());
         proxyConfiguration.setProtectionDomain(beanClass.getProtectionDomain());
         proxyConfiguration.setSuperClass(beanClass);
+        if (homeClasses != null) for (Class<?> homeClass : homeClasses) {
+            if (homeClass != null) {
+                proxyConfiguration.addAdditionalInterface(homeClass);
+            }
+        }
         proxyConfiguration.addAdditionalInterface(CmpProxy.class);
         return new CmpProxyFactory<T>(proxyConfiguration);
     }

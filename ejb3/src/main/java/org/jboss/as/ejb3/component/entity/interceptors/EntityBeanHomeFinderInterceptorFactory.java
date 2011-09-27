@@ -52,7 +52,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class EntityBeanHomeFinderInterceptorFactory implements InterceptorFactory {
 
-    private enum ReturnType {
+    protected enum ReturnType {
         COLLECTION,
         ENUMERATION,
         SINGLE
@@ -87,17 +87,7 @@ public class EntityBeanHomeFinderInterceptorFactory implements InterceptorFactor
                 final Object result;
                 try {
                     //forward the invocation to the component interceptor chain
-                    Method oldMethod = context.getMethod();
-                    try {
-                        context.putPrivateData(ComponentInstance.class, instance);
-                        context.setMethod(finderMethod);
-                        context.setTarget(instance.getInstance());
-                        result = instance.getInterceptor(finderMethod).processInvocation(context);
-                    } finally {
-                        context.setMethod(oldMethod);
-                        context.setTarget(null);
-                        context.putPrivateData(ComponentInstance.class, null);
-                    }
+                    result = invokeFind(context, instance);
                     switch (returnType) {
                         case COLLECTION: {
                             Collection keys = (Collection) result;
@@ -148,7 +138,21 @@ public class EntityBeanHomeFinderInterceptorFactory implements InterceptorFactor
         };
     }
 
-    private Object getLocalObject(final Object result, final EntityBeanComponent component) {
+    protected Object invokeFind(final InterceptorContext context, final EntityBeanComponentInstance instance) throws Exception {
+        Method oldMethod = context.getMethod();
+        try {
+            context.putPrivateData(ComponentInstance.class, instance);
+            context.setMethod(finderMethod);
+            context.setTarget(instance.getInstance());
+            return instance.getInterceptor(finderMethod).processInvocation(context);
+        } finally {
+            context.setMethod(oldMethod);
+            context.setTarget(null);
+            context.putPrivateData(ComponentInstance.class, null);
+        }
+    }
+
+    protected Object getLocalObject(final Object result, final EntityBeanComponent component) {
         final HashMap<Object, Object> create = new HashMap<Object, Object>();
         create.put(EntityBeanEjbCreateMethodInterceptorFactory.EXISTING_ID_CONTEXT_KEY, result);
         return viewToCreate.getValue().createInstance(create).createProxy();
@@ -156,5 +160,9 @@ public class EntityBeanHomeFinderInterceptorFactory implements InterceptorFactor
 
     public InjectedValue<ComponentView> getViewToCreate() {
         return viewToCreate;
+    }
+
+    public ReturnType getReturnType() {
+        return returnType;
     }
 }

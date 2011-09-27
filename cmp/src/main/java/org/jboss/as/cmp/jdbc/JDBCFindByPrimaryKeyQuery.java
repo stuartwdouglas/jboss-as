@@ -26,7 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import javax.ejb.FinderException;
-import org.jboss.as.cmp.GenericEntityObjectFactory;
+import org.jboss.as.cmp.context.CmpEntityBeanContext;
 import org.jboss.as.cmp.jdbc.bridge.JDBCAbstractCMPFieldBridge;
 import org.jboss.as.cmp.jdbc.bridge.JDBCEntityBridge;
 import org.jboss.as.cmp.jdbc.bridge.JDBCFieldBridge;
@@ -34,7 +34,6 @@ import org.jboss.as.cmp.jdbc.metadata.JDBCFunctionMappingMetaData;
 import org.jboss.as.cmp.jdbc.metadata.JDBCQueryMetaData;
 import org.jboss.as.cmp.jdbc.metadata.JDBCReadAheadMetaData;
 import org.jboss.as.cmp.jdbc.metadata.JDBCTypeMappingMetaData;
-import org.jboss.as.cmp.context.CmpEntityBeanContext;
 
 /**
  * JDBCBeanExistsCommand is a JDBC query that checks if an id exists
@@ -122,8 +121,7 @@ public final class JDBCFindByPrimaryKeyQuery extends JDBCAbstractQueryCommand {
         setParameterList(QueryParameter.createPrimaryKeyParameters(0, entity));
     }
 
-    public Collection execute(Method finderMethod, Object[] args, CmpEntityBeanContext ctx, GenericEntityObjectFactory factory)
-            throws FinderException {
+    public Collection execute(Method finderMethod, Object[] args, CmpEntityBeanContext ctx) throws FinderException {
         // Check in readahead cache.
         if (manager.getReadAheadCache().getPreloadDataMap(args[0], false) != null) {
             // copy pk [JBAS-1361]
@@ -135,9 +133,8 @@ public final class JDBCFindByPrimaryKeyQuery extends JDBCAbstractQueryCommand {
                 pk = pkField.setPrimaryKeyValue(pk, fieldValue);
             }
 
-            final Object ejbObject = factory.getEntityEJBObject(pk);
-            return Collections.singletonList(ejbObject);
+            return Collections.singletonList(pk);
         }
-        return super.execute(finderMethod, args, ctx, factory);
+        return super.execute(finderMethod, args, ctx);
     }
 }

@@ -115,7 +115,7 @@ public class EntityBeanComponentDescription extends EJBComponentDescription {
 
         //now we need to figure out if this is a home or object view
         if(view instanceof AbstractEjbHomeViewDescription) {
-            view.getConfigurators().add(new EntityBeanHomeViewConfigurator());
+            view.getConfigurators().add(getHomeViewConfigurator());
         } else {
             view.getConfigurators().add(getObjectViewConfigurator());
         }
@@ -126,7 +126,9 @@ public class EntityBeanComponentDescription extends EJBComponentDescription {
         return new EntityBeanObjectViewConfigurator();
     }
 
-
+    protected EntityBeanHomeViewConfigurator getHomeViewConfigurator() {
+        return new EntityBeanHomeViewConfigurator();
+    }
 
     protected void addSynchronizationInterceptor() {
         // we must run before the DefaultFirstConfigurator

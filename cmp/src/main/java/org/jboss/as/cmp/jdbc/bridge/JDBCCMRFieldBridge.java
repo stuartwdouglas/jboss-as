@@ -678,12 +678,10 @@ public final class JDBCCMRFieldBridge extends JDBCAbstractCMRFieldBridge {
         EJBLocalObject relatedLocalObject = null;
         final CmpEntityBeanComponent relatedContainer = getRelatedComponent();
 
-        if (hasFKFieldsMappedToCMPFields
-                && relatedManager.getReadAheadCache().getPreloadDataMap(fk, false) == null // not in preload cache
-                ) {
+        if (hasFKFieldsMappedToCMPFields && relatedManager.getReadAheadCache().getPreloadDataMap(fk, false) == null) {  // not in preload cache
             EJBLocalHome relatedHome = relatedContainer.getEJBLocalHome();
             try {
-                relatedLocalObject = (EJBLocalObject) relatedFindByPrimaryKey.invoke(relatedHome, new Object[]{fk});
+                relatedLocalObject = (EJBLocalObject)relatedFindByPrimaryKey.invoke(relatedHome, new Object[]{fk});
             } catch (Exception ignore) {
                 // no such entity. it is ok to ignore
             }

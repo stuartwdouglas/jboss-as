@@ -19,32 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+package org.jboss.as.testsuite.integration.ejb.entity.cmp.simple;
 
-package org.jboss.as.cmp;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-/**
- * @author John Bailey
- */
-public interface GenericEntityObjectFactory {
-    Object getEntityEJBObject(Object id);
-
-    class UTIL {
-        private UTIL() {
-        }
-
-        public static Collection<Object> getEntityCollection(GenericEntityObjectFactory factory, Collection<Object> ids) {
-            List<Object> result = new ArrayList<Object>();
-            if (!ids.isEmpty()) {
-                for (Object id : ids) {
-                    result.add(factory.getEntityEJBObject(id));
-                }
-            }
-            return result;
-        }
-    }
+public interface Middle extends Top {
 }
-

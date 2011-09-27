@@ -34,6 +34,7 @@ import org.jboss.as.ee.component.DependencyConfigurator;
 import org.jboss.as.ee.component.EEApplicationDescription;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
 import org.jboss.as.ejb3.component.entity.EntityBeanComponentDescription;
+import org.jboss.as.ejb3.component.entity.EntityBeanHomeViewConfigurator;
 import org.jboss.as.ejb3.component.entity.EntityBeanObjectViewConfigurator;
 import org.jboss.as.ejb3.deployment.EjbJarDescription;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
@@ -55,7 +56,7 @@ public class CmpEntityBeanComponentDescription extends EntityBeanComponentDescri
 
         getConfigurators().addFirst(new ComponentConfigurator() {
             public void configure(final DeploymentPhaseContext context, final ComponentDescription description, final ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                final CmpInstanceReferenceFactory factory = new CmpInstanceReferenceFactory(configuration.getComponentClass());
+                final CmpInstanceReferenceFactory factory = new CmpInstanceReferenceFactory(configuration.getComponentClass(), ((CmpEntityBeanComponentDescription)description).getEntityMetaData().getLocalHomeClass(), ((CmpEntityBeanComponentDescription)description).getEntityMetaData().getHomeClass());
                 configuration.getStartDependencies().add(new DependencyConfigurator<ComponentStartService>() {
                     public void configureDependency(final ServiceBuilder<?> serviceBuilder, final ComponentStartService service) throws DeploymentUnitProcessingException {
                         serviceBuilder.addDependency(description.getCreateServiceName(), CmpEntityBeanComponent.class, factory.getComponentInjector());
@@ -75,6 +76,10 @@ public class CmpEntityBeanComponentDescription extends EntityBeanComponentDescri
 
     protected EntityBeanObjectViewConfigurator getObjectViewConfigurator() {
         return new CmpEntityBeanObjectViewConfigurator();
+    }
+
+    protected EntityBeanHomeViewConfigurator getHomeViewConfigurator() {
+        return new CmpEntityBeanHomeViewConfigurator();
     }
 
     protected void addSynchronizationInterceptor() {

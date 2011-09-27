@@ -98,13 +98,9 @@ public class EntityBeanHomeViewConfigurator implements ViewConfigurator {
 
             } else if (method.getName().startsWith("find")) {
                 final Method ejbFind = resolveEjbFinderMethod(componentConfiguration.getComponentClass(), deploymentReflectionIndex, method, componentConfiguration.getComponentName(), componentDescription.getPersistenceType());
-                if(ejbFind == null) {
-                    continue;
-                }
-
                 final ViewDescription createdView = componentDescription.getEjbLocalView();
 
-                final EntityBeanHomeFinderInterceptorFactory interceptorFactory = new EntityBeanHomeFinderInterceptorFactory(ejbFind);
+                final EntityBeanHomeFinderInterceptorFactory interceptorFactory = createHomeFindInterceptorFactor(ejbFind);
                 componentConfiguration.getStartDependencies().add(new DependencyConfigurator<ComponentStartService>() {
                     @Override
                     public void configureDependency(final ServiceBuilder<?> serviceBuilder, final ComponentStartService service) throws DeploymentUnitProcessingException {
@@ -124,6 +120,10 @@ public class EntityBeanHomeViewConfigurator implements ViewConfigurator {
         }
     }
 
+    protected EntityBeanHomeFinderInterceptorFactory createHomeFindInterceptorFactor(Method ejbFind) {
+        return new EntityBeanHomeFinderInterceptorFactory(ejbFind);
+    }
+
 
     private Method resolveEjbMethod(final String userName, final String ejbMethodName, final String returnType, final Class<?> componentClass, final DeploymentReflectionIndex index, final Method method, final String ejbName) throws DeploymentUnitProcessingException {
 
@@ -140,7 +140,7 @@ public class EntityBeanHomeViewConfigurator implements ViewConfigurator {
         throw new DeploymentUnitProcessingException("Could not resolve corresponding " + ejbMethodName + " for home interface method " + method + " on EJB " + ejbName);
     }
 
-    private Method resolveEjbFinderMethod(final Class<?> componentClass, final DeploymentReflectionIndex index, final Method method, final String ejbName, final PersistenceType persistenceType) throws DeploymentUnitProcessingException {
+    protected Method resolveEjbFinderMethod(final Class<?> componentClass, final DeploymentReflectionIndex index, final Method method, final String ejbName, final PersistenceType persistenceType) throws DeploymentUnitProcessingException {
         final String name = method.getName().replaceFirst("find", "ejbFind");
         Class<?> clazz = componentClass;
         while (clazz != Object.class) {
@@ -154,10 +154,10 @@ public class EntityBeanHomeViewConfigurator implements ViewConfigurator {
         if(PersistenceType.Bean == persistenceType) {
             throw new DeploymentUnitProcessingException("Could not resolve corresponding ejbFind method for home interface method " + method + " on EJB " + ejbName);
         }
-        return null;
+        return method;
     }
 
-    private Method resolveEjbHomeBusinessMethod(final Class<?> componentClass, final DeploymentReflectionIndex index, final Method method, final String ejbName) throws DeploymentUnitProcessingException {
+    protected Method resolveEjbHomeBusinessMethod(final Class<?> componentClass, final DeploymentReflectionIndex index, final Method method, final String ejbName) throws DeploymentUnitProcessingException {
         final String name = "ejbHome" + Character.toUpperCase(method.getName().charAt(0)) + method.getName().substring(1);
         Class<?> clazz = componentClass;
         while (clazz != Object.class) {

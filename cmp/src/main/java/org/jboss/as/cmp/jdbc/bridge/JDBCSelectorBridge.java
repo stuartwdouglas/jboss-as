@@ -30,7 +30,6 @@ import javax.ejb.FinderException;
 import javax.ejb.ObjectNotFoundException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-import org.jboss.as.cmp.GenericEntityObjectFactory;
 import org.jboss.as.cmp.bridge.SelectorBridge;
 import org.jboss.as.cmp.component.CmpEntityBeanComponent;
 import org.jboss.as.cmp.context.CmpEntityBeanContext;
@@ -98,22 +97,7 @@ public class JDBCSelectorBridge implements SelectorBridge {
         try {
             JDBCQueryCommand query = manager.getQueryManager().getQueryCommand(method);
             final CmpEntityBeanComponent selectedComponent = query.getSelectManager().getComponent();
-            GenericEntityObjectFactory factory;
-            if (queryMetaData.isResultTypeMappingLocal() && selectedComponent.getLocalHomeClass() != null) {
-                factory = new GenericEntityObjectFactory() {
-                    public Object getEntityEJBObject(Object id) {
-                        return selectedComponent.getEntityEJBLocalObject(id);
-                    }
-                };
-            } else {
-                factory = new GenericEntityObjectFactory() {
-                    public Object getEntityEJBObject(Object id) {
-                        return selectedComponent.getEntityEJBObject(id);
-                    }
-                };
-            }
-
-            retVal = query.execute(method, args, null, factory);
+            retVal = query.execute(method, args, null);
         } catch (FinderException e) {
             throw e;
         } catch (EJBException e) {

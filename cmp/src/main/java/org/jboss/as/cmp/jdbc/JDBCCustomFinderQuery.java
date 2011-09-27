@@ -29,7 +29,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import javax.ejb.FinderException;
-import org.jboss.as.cmp.GenericEntityObjectFactory;
 import org.jboss.as.cmp.context.CmpEntityBeanContext;
 import org.jboss.as.cmp.jdbc.metadata.JDBCReadAheadMetaData;
 import org.jboss.logging.Logger;
@@ -87,11 +86,7 @@ public final class JDBCCustomFinderQuery implements JDBCQueryCommand {
         return manager;
     }
 
-    public Collection execute(Method unused,
-                              Object[] args,
-                              CmpEntityBeanContext ctx,
-                              GenericEntityObjectFactory factory)
-            throws FinderException {
+    public Collection execute(Method unused, Object[] args, CmpEntityBeanContext ctx) throws FinderException {
         try {
             // invoke implementation method on ejb instance
             Object value = finderMethod.invoke(ctx.getComponent().getCache().get(ctx.getPrimaryKey()), args);
@@ -105,7 +100,7 @@ public final class JDBCCustomFinderQuery implements JDBCQueryCommand {
                     result.add(enumeration.nextElement());
                 }
                 cacheResults(result);
-                return GenericEntityObjectFactory.UTIL.getEntityCollection(factory, result);
+                return result;
             } else if (value instanceof Collection) {
                 List result;
                 if (value instanceof List)
@@ -113,10 +108,10 @@ public final class JDBCCustomFinderQuery implements JDBCQueryCommand {
                 else
                     result = new ArrayList((Collection) value);
                 cacheResults(result);
-                return GenericEntityObjectFactory.UTIL.getEntityCollection(factory, result);
+                return result;
             } else {
                 // Don't bother trying to cache this
-                return Collections.singleton(factory.getEntityEJBObject(value));
+                return Collections.singleton(value);
             }
         } catch (IllegalAccessException e) {
             log.error("Error invoking custom finder " + finderMethod.getName(), e);

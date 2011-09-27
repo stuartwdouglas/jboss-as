@@ -24,9 +24,11 @@ package org.jboss.as.cmp.component;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.ejb.EJBLocalHome;
 import javax.ejb.EJBLocalObject;
 import javax.ejb.EJBObject;
 import javax.transaction.Transaction;
@@ -50,8 +52,8 @@ public class CmpEntityBeanComponent extends EntityBeanComponent {
     public CmpEntityBeanComponent(final CmpEntityBeanComponentCreateService ejbComponentCreateService) {
         super(ejbComponentCreateService);
 
-        this.homeClass = null; // TODO: wire in
-        this.localHomeClass = null; // TODO: wire in
+        this.homeClass = ejbComponentCreateService.getHomeClass();
+        this.localHomeClass = ejbComponentCreateService.getLocalHomeClass();
 
         storeManager = ejbComponentCreateService.getStoreManager();
         storeManager.init(this);
@@ -68,6 +70,8 @@ public class CmpEntityBeanComponent extends EntityBeanComponent {
     public Class<?> getLocalHomeClass() {
         return localHomeClass;
     }
+
+
 
     public Collection<Object> getEntityLocalCollection(List<Object> idList) {
         return null;  // TODO: jeb - This should return proxy instances to local entities
@@ -87,6 +91,10 @@ public class CmpEntityBeanComponent extends EntityBeanComponent {
 
     public static void synchronizeEntitiesWithinTransaction(Transaction transaction) {
         // TODO: jeb - run sync of all the entities in the transaction
+    }
+
+    public EJBLocalHome getEJBLocalHome() throws IllegalStateException {
+        return (EJBLocalHome)createViewInstanceProxy(getLocalHomeClass(), Collections.emptyMap());
     }
 
     public JDBCEntityPersistenceStore getStoreManager() {

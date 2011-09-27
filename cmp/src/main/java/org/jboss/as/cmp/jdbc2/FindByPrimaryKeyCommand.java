@@ -21,19 +21,17 @@
  */
 package org.jboss.as.cmp.jdbc2;
 
-import org.jboss.as.cmp.GenericEntityObjectFactory;
-import org.jboss.as.cmp.jdbc2.bridge.JDBCEntityBridge2;
-import org.jboss.as.cmp.jdbc2.bridge.JDBCCMPFieldBridge2;
-import org.jboss.as.cmp.jdbc2.schema.Schema;
-import org.jboss.as.cmp.jdbc.QueryParameter;
-import org.jboss.as.cmp.jdbc.JDBCEntityPersistenceStore;
-import org.jboss.as.cmp.jdbc.JDBCTypeFactory;
-import org.jboss.as.cmp.jdbc.metadata.JDBCTypeMappingMetaData;
-import org.jboss.as.cmp.jdbc.metadata.JDBCFunctionMappingMetaData;
-import org.jboss.logging.Logger;
-
 import javax.ejb.FinderException;
 import javax.ejb.ObjectNotFoundException;
+import org.jboss.as.cmp.jdbc.JDBCEntityPersistenceStore;
+import org.jboss.as.cmp.jdbc.JDBCTypeFactory;
+import org.jboss.as.cmp.jdbc.QueryParameter;
+import org.jboss.as.cmp.jdbc.metadata.JDBCFunctionMappingMetaData;
+import org.jboss.as.cmp.jdbc.metadata.JDBCTypeMappingMetaData;
+import org.jboss.as.cmp.jdbc2.bridge.JDBCCMPFieldBridge2;
+import org.jboss.as.cmp.jdbc2.bridge.JDBCEntityBridge2;
+import org.jboss.as.cmp.jdbc2.schema.Schema;
+import org.jboss.logging.Logger;
 
 
 /**
@@ -85,7 +83,7 @@ public class FindByPrimaryKeyCommand
         setEntityReader(entity, false);
     }
 
-    public Object fetchOne(Schema schema, GenericEntityObjectFactory factory, Object[] args) throws FinderException {
+    public Object fetchOne(Schema schema, Object[] args) throws FinderException {
         Object pk = args[0];
         if (pk == null) {
             throw new IllegalArgumentException("Null argument for findByPrimaryKey");
@@ -94,12 +92,12 @@ public class FindByPrimaryKeyCommand
         Object instance;
         boolean cached = entity.getTable().hasRow(pk);
         if (!cached) {
-            instance = super.executeFetchOne(args, factory);
+            instance = super.executeFetchOne(args);
             if (instance == null) {
                 throw new ObjectNotFoundException("Instance not find: entity=" + entity.getEntityName() + ", pk=" + pk);
             }
         } else {
-            instance = factory.getEntityEJBObject(pk);
+            instance = pk;
         }
 
         return instance;

@@ -26,7 +26,6 @@ import java.util.Collection;
 import javax.ejb.FinderException;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
-import org.jboss.as.cmp.GenericEntityObjectFactory;
 import org.jboss.as.cmp.bridge.SelectorBridge;
 import org.jboss.as.cmp.component.CmpEntityBeanComponent;
 import org.jboss.as.cmp.context.CmpEntityBeanContext;
@@ -92,25 +91,11 @@ public class EJBSelectBridge implements SelectorBridge {
     public Object execute(Object[] args) throws FinderException {
         JDBCStoreManager2 manager = command.getStoreManager();
         final CmpEntityBeanComponent selectedComponent = manager.getComponent();
-        GenericEntityObjectFactory factory;
-        if (metadata.isResultTypeMappingLocal()) {
-            factory = new GenericEntityObjectFactory() {
-                public Object getEntityEJBObject(Object id) {
-                    return selectedComponent.getEntityEJBLocalObject(id);
-                }
-            };
-        } else {
-            factory = new GenericEntityObjectFactory() {
-                public Object getEntityEJBObject(Object id) {
-                    return selectedComponent.getEntityEJBObject(id);
-                }
-            };
-        }
 
         Object result;
         switch (returnType) {
             case SINGLE:
-                result = command.fetchOne(schema, factory, args);
+                result = command.fetchOne(schema, args);
                 if (result == null && getMethod().getReturnType().isPrimitive()) {
                     throw new FinderException(
                             "Cannot return null as a value of primitive type " + getMethod().getReturnType().getName()
@@ -118,7 +103,7 @@ public class EJBSelectBridge implements SelectorBridge {
                 }
                 break;
             case COLLECTION:
-                result = command.fetchCollection(schema, factory, args);
+                result = command.fetchCollection(schema, args);
                 break;
             default:
                 throw new IllegalStateException("Unexpected return type: " + returnType);

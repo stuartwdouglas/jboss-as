@@ -25,7 +25,6 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import javax.ejb.FinderException;
 import javax.ejb.ObjectNotFoundException;
-import org.jboss.as.cmp.GenericEntityObjectFactory;
 import org.jboss.as.cmp.context.CmpEntityBeanContext;
 
 
@@ -49,12 +48,11 @@ public final class JDBCFindEntityCommand {
         this.manager = manager;
     }
 
-    public Object execute(Method finderMethod, Object[] args, CmpEntityBeanContext ctx, GenericEntityObjectFactory factory)
-            throws FinderException {
+    public Object execute(Method finderMethod, Object[] args, CmpEntityBeanContext ctx) throws FinderException {
 
         JDBCQueryCommand query = manager.getQueryManager().getQueryCommand(finderMethod);
 
-        Collection result = query.execute(finderMethod, args, ctx, factory);
+        Collection result = query.execute(finderMethod, args, ctx);
         if (result.isEmpty()) {
             throw new ObjectNotFoundException(NO_SUCH_ENTITY);
         } else if (result.size() == 1) {

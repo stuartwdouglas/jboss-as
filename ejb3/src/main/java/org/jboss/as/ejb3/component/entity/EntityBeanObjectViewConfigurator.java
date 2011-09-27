@@ -73,7 +73,7 @@ public class EntityBeanObjectViewConfigurator implements ViewConfigurator {
             } else if(method.getName().equals("remove") && method.getParameterTypes().length == 0) {
                 configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
                 Method remove = resolveRemoveMethod(componentConfiguration.getComponentClass(), index, componentConfiguration.getComponentName());
-                configuration.addViewInterceptor(method, new EntityBeanRemoveInterceptorFactory(remove, primaryKeyContextKey), InterceptorOrder.View.COMPONENT_DISPATCHER);
+                configuration.addViewInterceptor(method, getEjbRemoveInterceptorFactory(remove, primaryKeyContextKey), InterceptorOrder.View.COMPONENT_DISPATCHER);
             } else if(method.getName().equals("isIdentical") && method.getParameterTypes().length == 1 &&
                     (method.getParameterTypes()[0] == EJBLocalObject.class || method.getParameterTypes()[0] == EJBObject.class)) {
                 configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
@@ -100,6 +100,10 @@ public class EntityBeanObjectViewConfigurator implements ViewConfigurator {
 
     protected InterceptorFactory getEjbCreateInterceptorFactory(final Object primaryKeyContextKey) {
         return new EntityBeanEjbCreateMethodInterceptorFactory(primaryKeyContextKey);
+    }
+
+    protected InterceptorFactory getEjbRemoveInterceptorFactory(final Method remove, final Object primaryKeyContextKey) {
+        return new EntityBeanRemoveInterceptorFactory(remove, primaryKeyContextKey);
     }
 
     private Method resolveRemoveMethod( final Class<?> componentClass, final DeploymentReflectionIndex index, final String ejbName) throws DeploymentUnitProcessingException {

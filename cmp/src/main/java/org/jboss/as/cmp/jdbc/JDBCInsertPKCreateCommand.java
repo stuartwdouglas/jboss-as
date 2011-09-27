@@ -68,8 +68,8 @@ public abstract class JDBCInsertPKCreateCommand extends JDBCAbstractCreateComman
             PreparedStatement ps = null;
             ResultSet rs = null;
             try {
-                if (debug)
-                    log.debug("Executing SQL: " + existsSQL);
+                //if (debug)
+                log.info("Executing SQL: " + existsSQL);
 
                 c = entity.getDataSource().getConnection();
                 ps = c.prepareStatement(existsSQL);

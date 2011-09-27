@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Set;
 import javax.ejb.FinderException;
 import javax.ejb.ObjectNotFoundException;
-import org.jboss.as.cmp.GenericEntityObjectFactory;
 import org.jboss.as.cmp.ejbql.SelectFunction;
 import org.jboss.as.cmp.jdbc.JDBCUtil;
 import org.jboss.as.cmp.jdbc.QueryParameter;
@@ -110,16 +109,16 @@ public abstract class AbstractQueryCommand implements QueryCommand {
         return (JDBCStoreManager2) entity.getManager();
     }
 
-    public Collection fetchCollection(Schema schema, GenericEntityObjectFactory factory, Object[] args)
+    public Collection fetchCollection(Schema schema, Object[] args)
             throws FinderException {
         int offset = toInt(args, offsetParam, offsetValue);
         int limit = toInt(args, limitParam, limitValue);
-        return fetchCollection(entity, sql, params, offset, limit, collectionStrategy, schema, factory, args, log);
+        return fetchCollection(entity, sql, params, offset, limit, collectionStrategy, schema, args, log);
     }
 
-    public Object fetchOne(Schema schema, GenericEntityObjectFactory factory, Object[] args) throws FinderException {
+    public Object fetchOne(Schema schema, Object[] args) throws FinderException {
         schema.flush();
-        return executeFetchOne(args, factory);
+        return executeFetchOne(args);
     }
 
     public void setOffsetValue(int offsetValue) {
@@ -148,8 +147,8 @@ public abstract class AbstractQueryCommand implements QueryCommand {
         return arg.intValue();
     }
 
-    protected Object executeFetchOne(Object[] args, GenericEntityObjectFactory factory) throws FinderException {
-        return fetchOne(entity, sql, params, resultReader, args, factory, log);
+    protected Object executeFetchOne(Object[] args) throws FinderException {
+        return fetchOne(entity, sql, params, resultReader, args, log);
     }
 
     static Collection fetchCollection(JDBCEntityBridge2 entity,
@@ -159,7 +158,6 @@ public abstract class AbstractQueryCommand implements QueryCommand {
                                       int limit,
                                       CollectionStrategy collectionStrategy,
                                       Schema schema,
-                                      GenericEntityObjectFactory factory,
                                       Object[] args,
                                       Logger log)
             throws FinderException {
@@ -220,7 +218,7 @@ public abstract class AbstractQueryCommand implements QueryCommand {
             throw fe;
         }
 
-        result = collectionStrategy.readResultSet(con, ps, rs, limit, count, factory);
+        result = collectionStrategy.readResultSet(con, ps, rs, limit, count);
 
         return result;
     }
@@ -230,7 +228,6 @@ public abstract class AbstractQueryCommand implements QueryCommand {
                            QueryParameter[] params,
                            ResultReader resultReader,
                            Object[] args,
-                           GenericEntityObjectFactory factory,
                            Logger log)
             throws FinderException {
         Object pk;
@@ -269,13 +266,13 @@ public abstract class AbstractQueryCommand implements QueryCommand {
 
             rs = ps.executeQuery();
             if (rs.next()) {
-                pk = resultReader.readRow(rs, factory);
+                pk = resultReader.readRow(rs);
                 if (rs.next()) {
                     List list = new ArrayList();
                     list.add(pk);
-                    list.add(resultReader.readRow(rs, factory));
+                    list.add(resultReader.readRow(rs));
                     while (rs.next()) {
-                        list.add(resultReader.readRow(rs, factory));
+                        list.add(resultReader.readRow(rs));
                     }
                     throw new FinderException("More than one instance matches the single-object finder criteria: " + list);
                 }
@@ -322,7 +319,7 @@ public abstract class AbstractQueryCommand implements QueryCommand {
     }
 
     static interface ResultReader {
-        Object readRow(ResultSet rs, GenericEntityObjectFactory factory) throws SQLException;
+        Object readRow(ResultSet rs) throws SQLException;
     }
 
     static class EntityReader implements ResultReader {
@@ -334,9 +331,9 @@ public abstract class AbstractQueryCommand implements QueryCommand {
             this.searchableOnly = searchableOnly;
         }
 
-        public Object readRow(ResultSet rs, GenericEntityObjectFactory factory) {
+        public Object readRow(ResultSet rs) {
             final Object pk = entity.getTable().loadRow(rs, searchableOnly);
-            return pk == null ? null : factory.getEntityEJBObject(pk);
+            return pk == null ? null : pk;
         }
     }
 
@@ -349,7 +346,7 @@ public abstract class AbstractQueryCommand implements QueryCommand {
             this.field = field;
         }
 
-        public Object readRow(ResultSet rs, GenericEntityObjectFactory factory) throws SQLException {
+        public Object readRow(ResultSet rs) throws SQLException {
             return field.loadArgumentResults(rs, 1);
         }
     }
@@ -361,13 +358,13 @@ public abstract class AbstractQueryCommand implements QueryCommand {
             this.function = function;
         }
 
-        public Object readRow(ResultSet rs, GenericEntityObjectFactory factory) throws SQLException {
+        public Object readRow(ResultSet rs) throws SQLException {
             return function.readResult(rs);
         }
     }
 
     interface CollectionStrategy {
-        Collection readResultSet(Connection con, PreparedStatement ps, ResultSet rs, int limit, int count, GenericEntityObjectFactory factory)
+        Collection readResultSet(Connection con, PreparedStatement ps, ResultSet rs, int limit, int count)
                 throws FinderException;
     }
 
@@ -387,17 +384,16 @@ public abstract class AbstractQueryCommand implements QueryCommand {
         public Collection readResultSet(Connection con,
                                         PreparedStatement ps,
                                         ResultSet rs,
-                                        int limit, int count,
-                                        GenericEntityObjectFactory factory)
+                                        int limit, int count)
                 throws FinderException {
             Collection result;
             try {
                 if ((limit == 0 || count-- > 0) && rs.next()) {
                     result = collectionFactory.newCollection();
-                    Object instance = resultReader.readRow(rs, factory);
+                    Object instance = resultReader.readRow(rs);
                     result.add(instance);
                     while ((limit == 0 || count-- > 0) && rs.next()) {
-                        instance = resultReader.readRow(rs, factory);
+                        instance = resultReader.readRow(rs);
                         result.add(instance);
                     }
                 } else {

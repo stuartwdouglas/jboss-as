@@ -35,7 +35,6 @@ import javax.ejb.FinderException;
 import javax.ejb.RemoveException;
 import javax.sql.DataSource;
 import org.jboss.as.cmp.CmpConfig;
-import org.jboss.as.cmp.GenericEntityObjectFactory;
 import org.jboss.as.cmp.bridge.EntityBridgeInvocationHandler;
 import org.jboss.as.cmp.bridge.FieldBridge;
 import org.jboss.as.cmp.component.CmpEntityBeanComponent;
@@ -257,20 +256,18 @@ public class JDBCStoreManager2 implements JDBCEntityPersistenceStore {
 
     public Object findEntity(Method finderMethod,
                              Object[] args,
-                             CmpEntityBeanContext instance,
-                             GenericEntityObjectFactory factory)
+                             CmpEntityBeanContext instance)
             throws FinderException {
         QueryCommand query = queryFactory.getQueryCommand(finderMethod);
-        return query.fetchOne(schema, factory, args);
+        return query.fetchOne(schema, args);
     }
 
     public Collection findEntities(Method finderMethod,
                                    Object[] args,
-                                   CmpEntityBeanContext instance,
-                                   GenericEntityObjectFactory factory)
+                                   CmpEntityBeanContext instance)
             throws FinderException {
         QueryCommand query = queryFactory.getQueryCommand(finderMethod);
-        return query.fetchCollection(schema, factory, args);
+        return query.fetchCollection(schema, args);
     }
 
     public void activateEntity(CmpEntityBeanContext ctx) {

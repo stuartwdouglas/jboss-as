@@ -38,7 +38,7 @@ import java.util.StringTokenizer;
 import javax.ejb.EJBException;
 import javax.ejb.FinderException;
 import javax.transaction.Synchronization;
-import org.jboss.as.cmp.GenericEntityObjectFactory;
+import org.jboss.as.cmp.context.CmpEntityBeanContext;
 import org.jboss.as.cmp.ejbql.SelectFunction;
 import org.jboss.as.cmp.jdbc.bridge.JDBCCMPFieldBridge;
 import org.jboss.as.cmp.jdbc.bridge.JDBCCMRFieldBridge;
@@ -47,7 +47,6 @@ import org.jboss.as.cmp.jdbc.bridge.JDBCFieldBridge;
 import org.jboss.as.cmp.jdbc.metadata.JDBCLeftJoinMetaData;
 import org.jboss.as.cmp.jdbc.metadata.JDBCQueryMetaData;
 import org.jboss.as.cmp.jdbc.metadata.JDBCRelationMetaData;
-import org.jboss.as.cmp.context.CmpEntityBeanContext;
 import org.jboss.logging.Logger;
 
 /**
@@ -124,8 +123,7 @@ public abstract class JDBCAbstractQueryCommand implements JDBCQueryCommand {
 
     public Collection execute(Method finderMethod,
                               Object[] args,
-                              CmpEntityBeanContext ctx,
-                              GenericEntityObjectFactory factory)
+                              CmpEntityBeanContext ctx)
             throws FinderException {
         int offset = toInt(args, offsetParam, offsetValue);
         int limit = toInt(args, limitParam, limitValue);
@@ -141,7 +139,6 @@ public abstract class JDBCAbstractQueryCommand implements JDBCQueryCommand {
                 parameters,
                 onFindCMRList,
                 queryMetaData,
-                factory,
                 log);
     }
 
@@ -165,7 +162,6 @@ public abstract class JDBCAbstractQueryCommand implements JDBCQueryCommand {
                                  List parameters,
                                  List onFindCMRList,
                                  JDBCQueryMetaData queryMetaData,
-                                 GenericEntityObjectFactory factory,
                                  Logger log)
             throws FinderException {
         int count = offset;
@@ -244,8 +240,7 @@ public abstract class JDBCAbstractQueryCommand implements JDBCQueryCommand {
                 selectFunction,
                 selectManager,
                 onFindCMRList,
-                eagerLoadMask,
-                factory);
+                eagerLoadMask);
     }
 
     protected Logger getLog() {
@@ -592,8 +587,7 @@ public abstract class JDBCAbstractQueryCommand implements JDBCQueryCommand {
                                     SelectFunction selectFunction,
                                     JDBCStoreManager selectManager,
                                     List onFindCMRList,
-                                    boolean[] eagerLoadMask,
-                                    GenericEntityObjectFactory factory)
+                                    boolean[] eagerLoadMask)
                 throws FinderException;
     }
 
@@ -608,8 +602,7 @@ public abstract class JDBCAbstractQueryCommand implements JDBCQueryCommand {
                                            SelectFunction selectFunction,
                                            JDBCStoreManager selectManager,
                                            List onFindCMRList,
-                                           boolean[] eagerLoadMask,
-                                           GenericEntityObjectFactory factory)
+                                           boolean[] eagerLoadMask)
                 throws FinderException {
             try {
                 List results = new ArrayList();
@@ -632,7 +625,7 @@ public abstract class JDBCAbstractQueryCommand implements JDBCQueryCommand {
                         boolean addPk = (loadOnFindCmr ? !pk.equals(prevPk) : true);
                         if (addPk) {
                             ids.add(pk);
-                            results.add(factory.getEntityEJBObject(pk));
+                            results.add(pk);
                             prevPk = pk;
                         }
 
@@ -703,8 +696,7 @@ public abstract class JDBCAbstractQueryCommand implements JDBCQueryCommand {
                                            SelectFunction selectFunction,
                                            JDBCStoreManager selectManager,
                                            List onFindCMRList,
-                                           boolean[] eagerLoadMask,
-                                           GenericEntityObjectFactory factory)
+                                           boolean[] eagerLoadMask)
                 throws FinderException {
             return new LazyCollection(con,
                     ps,
@@ -715,8 +707,7 @@ public abstract class JDBCAbstractQueryCommand implements JDBCQueryCommand {
                     selectField,
                     selectFunction,
                     selectManager,
-                    eagerLoadMask,
-                    factory);
+                    eagerLoadMask);
         }
 
         private class LazyCollection extends AbstractCollection {
@@ -730,7 +721,6 @@ public abstract class JDBCAbstractQueryCommand implements JDBCQueryCommand {
             private final SelectFunction selectFunction;
             private final JDBCStoreManager selectManager;
             private final boolean[] eagerLoadMask;
-            private final GenericEntityObjectFactory factory;
 
             private Object prevPk;
             private Object curPk;
@@ -754,8 +744,7 @@ public abstract class JDBCAbstractQueryCommand implements JDBCQueryCommand {
                                   JDBCCMPFieldBridge selectField,
                                   SelectFunction selectFunction,
                                   JDBCStoreManager selectManager,
-                                  boolean[] eagerLoadMask,
-                                  GenericEntityObjectFactory factory) {
+                                  boolean[] eagerLoadMask) {
                 this.con = con;
                 this.ps = ps;
                 this.rs = rs;
@@ -766,7 +755,6 @@ public abstract class JDBCAbstractQueryCommand implements JDBCQueryCommand {
                 this.selectFunction = selectFunction;
                 this.selectManager = selectManager;
                 this.eagerLoadMask = eagerLoadMask;
-                this.factory = factory;
                 loadOnFindCmr = !onFindCMRList.isEmpty();
 
                 firstIterator = getFirstIterator();
@@ -867,7 +855,7 @@ public abstract class JDBCAbstractQueryCommand implements JDBCQueryCommand {
                         boolean addPk = (loadOnFindCmr ? !curPk.equals(prevPk) : true);
                         if (addPk) {
                             prevPk = curPk;
-                            currentResult = factory.getEntityEJBObject(curPk);
+                            currentResult = curPk;
                         }
 
                         // read the preload fields

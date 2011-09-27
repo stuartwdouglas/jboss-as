@@ -41,7 +41,6 @@ import javax.transaction.Status;
 import javax.transaction.Transaction;
 import javax.transaction.TransactionManager;
 import org.jboss.as.cmp.CmpConfig;
-import org.jboss.as.cmp.GenericEntityObjectFactory;
 import org.jboss.as.cmp.bridge.EntityBridgeInvocationHandler;
 import org.jboss.as.cmp.bridge.FieldBridge;
 import org.jboss.as.cmp.bridge.SelectorBridge;
@@ -430,8 +429,7 @@ public final class JDBCStoreManager implements JDBCEntityPersistenceStore, Servi
         initEntityCommand.execute(ctx);
     }
 
-    public Object createEntity(Method createMethod, Object[] args, CmpEntityBeanContext ctx)
-            throws CreateException {
+    public Object createEntity(Method createMethod, Object[] args, CmpEntityBeanContext ctx) throws CreateException {
         Object pk = createEntityCommand.execute(createMethod, args, ctx);
         if (pk == null)
             throw new CreateException("Primary key for created instance is null.");
@@ -444,18 +442,16 @@ public final class JDBCStoreManager implements JDBCEntityPersistenceStore, Servi
 
     public Object findEntity(Method finderMethod,
                              Object[] args,
-                             CmpEntityBeanContext ctx,
-                             GenericEntityObjectFactory factory)
+                             CmpEntityBeanContext ctx)
             throws FinderException {
-        return findEntityCommand.execute(finderMethod, args, ctx, factory);
+        return findEntityCommand.execute(finderMethod, args, ctx);
     }
 
     public Collection findEntities(Method finderMethod,
                                    Object[] args,
-                                   CmpEntityBeanContext ctx,
-                                   GenericEntityObjectFactory factory)
+                                   CmpEntityBeanContext ctx)
             throws FinderException {
-        return findEntitiesCommand.execute(finderMethod, args, ctx, factory);
+        return findEntitiesCommand.execute(finderMethod, args, ctx);
     }
 
     public void activateEntity(CmpEntityBeanContext ctx) {

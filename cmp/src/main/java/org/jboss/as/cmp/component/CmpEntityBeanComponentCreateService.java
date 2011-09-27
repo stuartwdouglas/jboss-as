@@ -22,6 +22,7 @@
 
 package org.jboss.as.cmp.component;
 
+import java.lang.reflect.Method;
 import org.jboss.as.cmp.jdbc.JDBCEntityPersistenceStore;
 import org.jboss.as.cmp.jdbc.metadata.JDBCEntityMetaData;
 import org.jboss.as.ee.component.BasicComponent;
@@ -31,12 +32,11 @@ import org.jboss.as.ee.component.ComponentCreateServiceFactory;
 import org.jboss.as.ejb3.component.EJBComponentCreateServiceFactory;
 import org.jboss.as.ejb3.component.entity.EntityBeanComponentCreateService;
 import org.jboss.as.ejb3.deployment.EjbJarConfiguration;
+import org.jboss.invocation.Interceptors;
 import org.jboss.msc.inject.Injector;
 import org.jboss.msc.value.InjectedValue;
 
 /**
- * TODO: merge with EntityBeanComponentCreateService
- *
  * @author John Bailey
  */
 public class CmpEntityBeanComponentCreateService extends EntityBeanComponentCreateService {
@@ -49,10 +49,16 @@ public class CmpEntityBeanComponentCreateService extends EntityBeanComponentCrea
 
     private final InjectedValue<JDBCEntityPersistenceStore> storeManager = new InjectedValue<JDBCEntityPersistenceStore>();
     private final JDBCEntityMetaData entityMetaData;
+    private final Class<?> homeClass;
+    private final Class<?> localHomeClass;
 
     public CmpEntityBeanComponentCreateService(final ComponentConfiguration componentConfiguration, final EjbJarConfiguration ejbJarConfiguration) {
         super(componentConfiguration, ejbJarConfiguration);
-        entityMetaData = CmpEntityBeanComponentDescription.class.cast(componentConfiguration.getComponentDescription()).getEntityMetaData();
+        final CmpEntityBeanComponentDescription cmpDescription = CmpEntityBeanComponentDescription.class.cast(componentConfiguration.getComponentDescription());
+        entityMetaData = cmpDescription.getEntityMetaData();
+
+        homeClass = entityMetaData.getHomeClass();
+        localHomeClass = entityMetaData.getLocalHomeClass();
     }
 
     @Override
@@ -70,5 +76,13 @@ public class CmpEntityBeanComponentCreateService extends EntityBeanComponentCrea
 
     public Injector<JDBCEntityPersistenceStore> getStoreManagerInjector() {
         return storeManager;
+    }
+
+    public Class<?> getHomeClass() {
+        return homeClass;
+    }
+
+    public Class<?> getLocalHomeClass() {
+        return localHomeClass;
     }
 }

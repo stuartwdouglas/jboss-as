@@ -19,7 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.testsuite.integration.ejb.entity.cmp;
+package org.jboss.as.testsuite.integration.ejb.entity.cmp.simple;
 
 import java.math.BigDecimal;
 import java.sql.Time;
@@ -68,9 +68,9 @@ public class SimpleUnitTestCase {
 
         JavaArchive jar = ShrinkWrap.create(JavaArchive.class, ARCHIVE_NAME);
         jar.addPackage(SimpleUnitTestCase.class.getPackage());
-        jar.addAsManifestResource("ejb/entity/cmp/ejb-jar.xml", "ejb-jar.xml");
-        jar.addAsManifestResource("ejb/entity/cmp/jboss.xml", "jboss.xml");
-        jar.addAsManifestResource("ejb/entity/cmp/jbosscmp-jdbc.xml", "jbosscmp-jdbc.xml");
+        jar.addAsManifestResource("ejb/entity/cmp/simple/ejb-jar.xml", "ejb-jar.xml");
+        jar.addAsManifestResource("ejb/entity/cmp/simple/jboss.xml", "jboss.xml");
+        jar.addAsManifestResource("ejb/entity/cmp/simple/jbosscmp-jdbc.xml", "jbosscmp-jdbc.xml");
         return jar;
     }
 
@@ -85,7 +85,7 @@ public class SimpleUnitTestCase {
         c.set(Calendar.HOUR_OF_DAY, 22);
         c.set(Calendar.MINUTE, 33);
         c.set(Calendar.SECOND, 44);
-// java.sql.Time does not have a millisecond component
+        // java.sql.Time does not have a millisecond component
         timeValue = new java.sql.Time(c.getTime().getTime());
 
         objectValue = new HashMap();
@@ -106,7 +106,7 @@ public class SimpleUnitTestCase {
 
     private SimpleHome getSimpleHome() {
         try {
-            return (SimpleHome) iniCtx.lookup("java:module/SimpleEJB!org.jboss.as.testsuite.integration.ejb.entity.cmp.SimpleHome");
+            return (SimpleHome) iniCtx.lookup("java:module/SimpleEJB!org.jboss.as.testsuite.integration.ejb.entity.cmp.simple.SimpleHome");
         } catch (Exception e) {
             log.error("failed", e);
             fail("Exception in getSimpleHome: " + e.getMessage());
@@ -145,62 +145,77 @@ public class SimpleUnitTestCase {
         assertEquals(booleanPrimitive, simple.getBooleanPrimitive());
     }
 
+    @Test
     public void testBooleanObject() throws Exception {
         assertEquals(booleanObject, simple.getBooleanObject());
     }
 
+    @Test
     public void testBytePrimitive() throws Exception {
         assertEquals(bytePrimitive, simple.getBytePrimitive());
     }
 
+    @Test
     public void testByteObject() throws Exception {
         assertEquals(byteObject, simple.getByteObject());
     }
 
+    @Test
     public void testShortPrimitive() throws Exception {
         assertEquals(shortPrimitive, simple.getShortPrimitive());
     }
 
+    @Test
     public void testShortObject() throws Exception {
         assertEquals(shortObject, simple.getShortObject());
     }
 
+    @Test
     public void testIntegerPrimitive() throws Exception {
         assertEquals(integerPrimitive, simple.getIntegerPrimitive());
     }
 
+    @Test
     public void testIntegerObject() throws Exception {
         assertEquals(integerObject, simple.getIntegerObject());
     }
 
+    @Test
     public void testLongPrimitive() throws Exception {
         assertEquals(longPrimitive, simple.getLongPrimitive());
     }
 
+    @Test
     public void testLongObject() throws Exception {
         assertEquals(longObject, simple.getLongObject());
     }
 
+    @Test
     public void testFloatPrimitive() throws Exception {
         assertEquals(floatPrimitive, simple.getFloatPrimitive(), 0);
     }
 
+    @Test
     public void testFloatObject() throws Exception {
         assertEquals(floatObject, simple.getFloatObject());
     }
 
+    @Test
     public void testDoublePrimitive() throws Exception {
         assertEquals(doublePrimitive, simple.getDoublePrimitive(), 0);
     }
 
+    @Test
     public void testDoubleObject() throws Exception {
         assertEquals(doubleObject, simple.getDoubleObject());
     }
 
+    @Test
     public void testStringValue() throws Exception {
         assertEquals(stringValue, simple.getStringValue());
     }
 
+    @Test
     public void testUtilDateValue() throws Exception {
         assertTrue(
                 "expected :<" + simple.getUtilDateValue() + "> but was <" +
@@ -208,6 +223,7 @@ public class SimpleUnitTestCase {
                 utilDateValue.compareTo(simple.getUtilDateValue()) == 0);
     }
 
+    @Test
     public void testSqlDateValue() throws Exception {
         assertTrue(
                 "expected :<" + simple.getSqlDateValue() + "> but was <" +
@@ -215,6 +231,7 @@ public class SimpleUnitTestCase {
                 sqlDateValue.compareTo(simple.getSqlDateValue()) == 0);
     }
 
+    @Test
     public void testTimeValue() throws Exception {
         assertTrue(
                 "expected :<" + simple.getTimeValue() + "> but was <" +
@@ -222,6 +239,7 @@ public class SimpleUnitTestCase {
                 timeValue.compareTo(simple.getTimeValue()) == 0);
     }
 
+    @Test
     public void testTimestampValue() throws Exception {
         assertTrue(
                 "expected :<" + simple.getTimestampValue() + "> but was <" +
@@ -229,6 +247,7 @@ public class SimpleUnitTestCase {
                 timestampValue.compareTo(simple.getTimestampValue()) == 0);
     }
 
+    @Test
     public void testBigDecimalValue() throws Exception {
         assertTrue(
                 "expected :<" + simple.getBigDecimalValue() + "> but was <" +
@@ -236,6 +255,7 @@ public class SimpleUnitTestCase {
                 bigDecimalValue.compareTo(simple.getBigDecimalValue()) == 0);
     }
 
+    @Test
     public void testByteArrayValue() throws Exception {
         byte[] array = simple.getByteArrayValue();
         assertEquals(byteArrayValue.length, array.length);
@@ -244,6 +264,7 @@ public class SimpleUnitTestCase {
         }
     }
 
+    @Test
     public void testValueClass() throws Exception {
         ValueClass vc = simple.getValueClass();
         log.info("getValueClass class: " + vc.getClass().getName());
@@ -253,6 +274,7 @@ public class SimpleUnitTestCase {
         assertEquals(valueClass, vc);
     }
 
+    @Test
     public void testObjectValue() throws Exception {
         Object v = simple.getObjectValue();
         log.info("getObjectValue class: " + v.getClass().getName());
@@ -262,6 +284,7 @@ public class SimpleUnitTestCase {
         assertEquals(objectValue, v);
     }
 
+    @Test
     public void testLiteralToLiteral() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c;
@@ -288,6 +311,7 @@ public class SimpleUnitTestCase {
         assertTrue(c.size() == 1);
     }
 
+    @Test
     public void testUtilDateBetween() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c;
@@ -302,6 +326,7 @@ public class SimpleUnitTestCase {
         assertTrue(c.size() == 1);
     }
 
+    @Test
     public void testSQLDateBetween() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c;
@@ -327,6 +352,7 @@ public class SimpleUnitTestCase {
         assertTrue(c.size() == 1);
     }
 
+    @Test
     public void testTimeBetween() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c;
@@ -357,6 +383,7 @@ public class SimpleUnitTestCase {
 
     }
 
+    @Test
     public void testTimestampBetween() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c;
@@ -371,6 +398,7 @@ public class SimpleUnitTestCase {
         assertTrue(c.size() == 1);
     }
 
+    @Test
     public void testTimestampComparison() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c;
@@ -385,6 +413,7 @@ public class SimpleUnitTestCase {
         assertTrue(c.size() == 1);
     }
 
+    @Test
     public void testTimestampIn() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c;
@@ -400,6 +429,7 @@ public class SimpleUnitTestCase {
     }
 
 
+    @Test
     public void testStringBetween() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c;
@@ -412,6 +442,7 @@ public class SimpleUnitTestCase {
         assertTrue(c.size() == 1);
     }
 
+    @Test
     public void testStringComparison() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c;
@@ -425,6 +456,7 @@ public class SimpleUnitTestCase {
         assertTrue(c.size() == 1);
     }
 
+    @Test
     public void testStringIn() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c;
@@ -438,6 +470,7 @@ public class SimpleUnitTestCase {
         assertTrue(c.size() == 1);
     }
 
+    @Test
     public void testLike() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c;
@@ -450,6 +483,7 @@ public class SimpleUnitTestCase {
         assertTrue(c.size() == 1);
     }
 
+    @Test
     public void testNumericIn() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c;
@@ -463,6 +497,7 @@ public class SimpleUnitTestCase {
         assertTrue(c.size() == 1);
     }
 
+    @Test
     public void testNumbericComparison() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c;
@@ -476,6 +511,7 @@ public class SimpleUnitTestCase {
         assertTrue(c.size() == 1);
     }
 
+    @Test
     public void testConcatFunction() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c;
@@ -492,6 +528,7 @@ public class SimpleUnitTestCase {
         assertTrue(c.size() == 1);
     }
 
+    @Test
     public void testLengthFunction() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c;
@@ -507,6 +544,7 @@ public class SimpleUnitTestCase {
         assertTrue(c.size() == 1);
     }
 
+    @Test
     public void testSelectValueClass() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c = simpleHome.selectValueClass();
@@ -516,6 +554,7 @@ public class SimpleUnitTestCase {
         assertEquals(valueClass, v);
     }
 
+    @Test
     public void testLocateFunction() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c;
@@ -556,37 +595,35 @@ public class SimpleUnitTestCase {
         assertTrue(c.size() == 1);
     }
 
-    /* Uncomment when we upgrade to Hypersonic 1.7
-    public void testSubstringFunction() throws Exception
-    {
-       SimpleHome simpleHome = getSimpleHome();
-       Collection c;
+    public void testSubstringFunction() throws Exception {
+        SimpleHome simpleHome = getSimpleHome();
+        Collection c;
 
-       c = simpleHome.selectDynamic(
-             "SELECT OBJECT(s) " +
-             "FROM simple s " +
-             "WHERE SUBSTRING(?1, ?2, ?3) = ?4",
-             new Object[]{
-                "1234587890",
-                new Integer(5),
-                new Integer(3),
-                "567"}
-             );
-       assertTrue(c.size() == 1);
+        c = simpleHome.selectDynamic(
+                "SELECT OBJECT(s) " +
+                        "FROM simple s " +
+                        "WHERE SUBSTRING(?1, ?2, ?3) = ?4",
+                new Object[]{
+                        "1234587890",
+                        new Integer(5),
+                        new Integer(3),
+                        "567"}
+        );
+        assertTrue(c.size() == 1);
 
-       c = simpleHome.selectDynamic(
-             "SELECT OBJECT(s) " +
-             "FROM simple s " +
-             "WHERE SUBSTRING(?1, ?2) = ?3",
-             new Object[]{
-                "1234587890",
-                new Integer(5),
-                "567890"}
-             );
-       assertTrue(c.size() == 1);
+        c = simpleHome.selectDynamic(
+                "SELECT OBJECT(s) " +
+                        "FROM simple s " +
+                        "WHERE SUBSTRING(?1, ?2) = ?3",
+                new Object[]{
+                        "1234587890",
+                        new Integer(5),
+                        "567890"}
+        );
+        assertTrue(c.size() == 1);
     }
-    */
 
+    @Test
     public void testFindWithByteArray() throws Exception {
         SimpleHome simpleHome = getSimpleHome();
         Collection c = simpleHome.findWithByteArray(byteArrayValue);
@@ -641,6 +678,7 @@ public class SimpleUnitTestCase {
         assertEquals(objectValue, simple.getObjectValue());
     }
 
+    @Test
     public void testDuplicateKey() throws Exception {
         try {
             SimpleHome simpleHome = getSimpleHome();
@@ -651,6 +689,7 @@ public class SimpleUnitTestCase {
         }
     }
 
+    @Test
     public void testHashtable() throws Exception {
         simple.addToHashtable("key1", "value1");
         simple.addToHashtable("key2", "value2");
@@ -658,9 +697,10 @@ public class SimpleUnitTestCase {
         assertEquals(2, result.size());
     }
 
+    @Test
     public void testOptionAUpdate() throws Exception {
         InitialContext ctx = new InitialContext();
-        SimpleHome home = (SimpleHome) ctx.lookup("cmp2/simple/SimpleA");
+        SimpleHome home = (SimpleHome) ctx.lookup("java:module/SimpleEJBWithOptionA!org.jboss.as.testsuite.integration.ejb.entity.cmp.simple.SimpleHome");
         Simple simpleA = null;
         try {
             simpleA = home.findByPrimaryKey("simpleA");
@@ -719,6 +759,6 @@ public class SimpleUnitTestCase {
 
     @After
     public void tearDown() throws Exception {
-//        simple.remove();
+        simple.remove();
     }
 }

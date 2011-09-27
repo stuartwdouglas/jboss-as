@@ -19,7 +19,8 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.testsuite.integration.ejb.entity.cmp;
+package org.jboss.as.testsuite.integration.ejb.entity.cmp.simple;
 
-public interface Middle extends Top {
+public interface Top {
+    String getId();
 }

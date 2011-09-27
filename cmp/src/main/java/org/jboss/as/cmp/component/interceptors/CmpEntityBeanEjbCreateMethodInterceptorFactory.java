@@ -24,6 +24,8 @@ package org.jboss.as.cmp.component.interceptors;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicReference;
+import javax.ejb.DuplicateKeyException;
+import javax.ejb.EJBException;
 import javax.transaction.Status;
 import javax.transaction.Synchronization;
 import javax.transaction.TransactionSynchronizationRegistry;
@@ -31,6 +33,7 @@ import org.jboss.as.cmp.component.CmpEntityBeanComponent;
 import org.jboss.as.cmp.component.CmpEntityBeanComponentInstance;
 import org.jboss.as.cmp.jdbc.JDBCEntityPersistenceStore;
 import org.jboss.as.ee.component.Component;
+import org.jboss.as.ejb3.component.entity.interceptors.EntityBeanEjbCreateMethodInterceptorFactory;
 import org.jboss.as.ejb3.component.entity.interceptors.EntityBeanHomeCreateInterceptorFactory;
 import org.jboss.invocation.Interceptor;
 import org.jboss.invocation.InterceptorContext;
@@ -42,8 +45,6 @@ import org.jboss.invocation.InterceptorFactoryContext;
  */
 public class CmpEntityBeanEjbCreateMethodInterceptorFactory implements InterceptorFactory {
 
-    public static final Object EXISTING_ID_CONTEXT_KEY = new Object();
-
     private final Object primaryKeyContextKey;
 
     public CmpEntityBeanEjbCreateMethodInterceptorFactory(final Object primaryKeyContextKey) {
@@ -51,7 +52,7 @@ public class CmpEntityBeanEjbCreateMethodInterceptorFactory implements Intercept
     }
 
     public Interceptor create(InterceptorFactoryContext context) {
-        final Object existing = context.getContextData().get(EXISTING_ID_CONTEXT_KEY);
+        final Object existing = context.getContextData().get(EntityBeanEjbCreateMethodInterceptorFactory.EXISTING_ID_CONTEXT_KEY);
 
         final AtomicReference<Object> primaryKeyReference = new AtomicReference<Object>();
         context.getContextData().put(this.primaryKeyContextKey, primaryKeyReference);
@@ -78,22 +79,30 @@ public class CmpEntityBeanEjbCreateMethodInterceptorFactory implements Intercept
 
                 final JDBCEntityPersistenceStore storeManager = entityBeanComponent.getStoreManager();
 
-                storeManager.initEntity(instance.getEntityContext());
-
                 //call the ejbCreate method
-                ejbCreate.invoke(instance.getInstance(), params);
+                try {
+                    storeManager.initEntity(instance.getEntityContext());
+                    ejbCreate.invoke(instance.getInstance(), params);
 
-                final Object primaryKey = storeManager.createEntity(context.getMethod(), context.getParameters(), instance.getEntityContext());
-                instance.associate(primaryKey);
+                    final Object primaryKey = storeManager.createEntity(context.getMethod(), context.getParameters(), instance.getEntityContext());
+                    instance.associate(primaryKey);
 
+                    storeManager.postCreateEntity(context.getMethod(), context.getParameters(), instance.getEntityContext());
 
-                storeManager.postCreateEntity(context.getMethod(), context.getParameters(), instance.getEntityContext());
+                    ejbPostCreate.invoke(instance.getInstance(), params);
+                    primaryKeyReference.set(primaryKey);
 
-                ejbPostCreate.invoke(instance.getInstance(), params);
-                primaryKeyReference.set(primaryKey);
-
-                if (((CmpEntityBeanComponent) component).getStoreManager().getCmpConfig().isInsertAfterEjbPostCreate()) {
-                    storeManager.createEntity(context.getMethod(), context.getParameters(), instance.getEntityContext());
+                    if (((CmpEntityBeanComponent) component).getStoreManager().getCmpConfig().isInsertAfterEjbPostCreate()) {
+                        storeManager.createEntity(context.getMethod(), context.getParameters(), instance.getEntityContext());
+                    }
+                } catch (DuplicateKeyException e) {
+                    throw e;
+                } catch (Exception e) {
+                    throw new EJBException(e);
+                } catch (Throwable t) {
+                    final EJBException ex = new EJBException("Failed to create entity - " + component.getComponentClass());
+                    ex.initCause(t);
+                    throw ex;
                 }
 
                 //now add the instance to the cache, so it is usable

@@ -98,8 +98,7 @@ public abstract class JDBCAbstractCreateCommand implements JDBCCreateCommand {
     }
 
     protected void initEntityCommand(JDBCEntityCommandMetaData entityCommand) {
-        String objectName = entityCommand.getAttribute("SQLExceptionProcessor");
-        exceptionProcessor = new SQLExceptionProcessor();  // TODO: jeb - Wire correct processor
+        exceptionProcessor = null;
     }
 
     public Object execute(Method m, Object[] args, CmpEntityBeanContext ctx) throws CreateException {
