@@ -641,6 +641,7 @@ public class JDBCMetaDataParser extends MetaDataElementParser {
                 }
                 case FOREIGN_KEY_MAPPING: {
                     metaData.setMappingStyle(JDBCRelationMetaData.MappingStyle.FOREIGN_KEY);
+                    getElementText(reader);
                     break;
                 }
                 case RELATION_TABLE_MAPPING: {
@@ -729,6 +730,8 @@ public class JDBCMetaDataParser extends MetaDataElementParser {
                 case BATCH_CASCADE_DELETE: {
                     metaData.setBatchCascadeDelete(Boolean.parseBoolean(getElementText(reader)));
                     break;
+                }
+                case CMR_FIELD: {
                 }
                 default: {
                     throw unexpectedElement(reader);

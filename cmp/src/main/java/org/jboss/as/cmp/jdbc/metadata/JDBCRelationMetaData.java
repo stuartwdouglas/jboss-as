@@ -66,12 +66,12 @@ public final class JDBCRelationMetaData {
     /**
      * is table created
      */
-    private Boolean tableCreated;
+    private boolean tableCreated;
 
     /**
      * is table dropped
      */
-    private Boolean tableDropped;
+    private boolean tableDropped;
 
     /**
      * should we create the table when deployed
@@ -182,22 +182,29 @@ public final class JDBCRelationMetaData {
     }
 
     public JDBCRelationMetaData(JDBCApplicationMetaData jdbcApplication, JDBCRelationMetaData defaultValues) {
+        final JDBCEntityMetaData defaultEntity = jdbcApplication.getDefaultEntity();
+
         mappingStyle = defaultValues.mappingStyle;
-        readOnly = defaultValues.isReadOnly();
-        readTimeOut = defaultValues.getReadTimeOut();
-        dataSourceName = defaultValues.getDataSourceName();
-        datasourceMapping = defaultValues.getTypeMapping();
+        readOnly = defaultValues.readOnly != null ? defaultValues.readOnly : defaultEntity.isReadOnly();
+        readTimeOut = defaultValues.readTimeOut != null ? defaultValues.readTimeOut : defaultEntity.getReadTimeOut();
+        dataSourceName = defaultValues.dataSourceName != null ? defaultValues.dataSourceName : defaultEntity.getDataSourceName();
+        datasourceMapping = defaultValues.datasourceMapping != null ? defaultValues.datasourceMapping : defaultEntity.getTypeMapping();
+
         String tableNameString = defaultValues.getDefaultTableName();
         if (tableNameString == null) {
             tableNameString = defaultValues.createDefaultTableName();
         }
         tableName = tableNameString;
-        createTable = defaultValues.getCreateTable();
-        removeTable = defaultValues.getRemoveTable();
-        tablePostCreateCmd.addAll(defaultValues.tablePostCreateCmd);
-        alterTable = defaultValues.getAlterTable();
-        rowLocking = defaultValues.hasRowLocking();
-        primaryKeyConstraint = defaultValues.hasPrimaryKeyConstraint();
+        createTable = defaultValues.createTable != null ? defaultValues.createTable : defaultEntity.getCreateTable();
+        removeTable = defaultValues.removeTable != null ? defaultValues.removeTable : defaultEntity.getRemoveTable();
+        if (defaultValues.tablePostCreateCmd != null && !defaultValues.tablePostCreateCmd.isEmpty()) {
+            tablePostCreateCmd.addAll(defaultValues.tablePostCreateCmd);
+        } else if (defaultEntity.getDefaultTablePostCreateCmd() != null) {
+            tablePostCreateCmd.addAll(defaultEntity.getDefaultTablePostCreateCmd());
+        }
+        alterTable = defaultValues.alterTable != null ? defaultValues.alterTable : defaultEntity.getAlterTable();
+        rowLocking = defaultValues.rowLocking != null ? defaultValues.rowLocking : defaultEntity.hasRowLocking();
+        primaryKeyConstraint = defaultValues.primaryKeyConstraint != null ? defaultValues.primaryKeyConstraint : defaultEntity.hasPrimaryKeyConstraint();
 
         JDBCRelationshipRoleMetaData defaultLeft = defaultValues.getLeftRelationshipRole();
         JDBCRelationshipRoleMetaData defaultRight = defaultValues.getRightRelationshipRole();
@@ -224,12 +231,14 @@ public final class JDBCRelationMetaData {
     }
 
     public static JDBCRelationMetaData merge(final JDBCApplicationMetaData jdbcApplication, final JDBCRelationMetaData defaultValues, final JDBCRelationMetaData newValues) {
+
         final JDBCRelationMetaData relationMetaData = new JDBCRelationMetaData();
         relationMetaData.mappingStyle = newValues.mappingStyle != null ? newValues.mappingStyle : defaultValues.mappingStyle;
         relationMetaData.readOnly = newValues.readOnly != null ? newValues.readOnly : defaultValues.readOnly;
         relationMetaData.readTimeOut = newValues.readTimeOut != null ? newValues.readTimeOut : defaultValues.readTimeOut;
         relationMetaData.dataSourceName = newValues.dataSourceName != null ? newValues.dataSourceName : defaultValues.dataSourceName;
         relationMetaData.datasourceMapping = newValues.datasourceMapping != null ? newValues.datasourceMapping : defaultValues.datasourceMapping;
+
         String tableNameString = newValues.getDefaultTableName();
         if (tableNameString == null) {
             tableNameString = defaultValues.getDefaultTableName();
@@ -242,11 +251,14 @@ public final class JDBCRelationMetaData {
         relationMetaData.createTable = newValues.createTable != null ? newValues.createTable : defaultValues.createTable;
         relationMetaData.removeTable = newValues.removeTable != null ? newValues.removeTable : defaultValues.removeTable;
         relationMetaData.alterTable = newValues.alterTable != null ? newValues.alterTable : defaultValues.alterTable;
+        relationMetaData.alterTable = relationMetaData.alterTable != null ? relationMetaData.alterTable : defaultValues.getAlterTable();
         relationMetaData.rowLocking = newValues.rowLocking != null ? newValues.rowLocking : defaultValues.rowLocking;
+
         relationMetaData.primaryKeyConstraint = newValues.primaryKeyConstraint != null ? newValues.primaryKeyConstraint : defaultValues.primaryKeyConstraint;
-        if (!newValues.tablePostCreateCmd.isEmpty()) {
+
+        if (newValues.tablePostCreateCmd != null && !newValues.tablePostCreateCmd.isEmpty()) {
             relationMetaData.tablePostCreateCmd.addAll(newValues.tablePostCreateCmd);
-        } else {
+        } else if (defaultValues.tablePostCreateCmd != null && !defaultValues.tablePostCreateCmd.isEmpty()) {
             relationMetaData.tablePostCreateCmd.addAll(defaultValues.tablePostCreateCmd);
         }
 

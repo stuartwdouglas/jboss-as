@@ -43,8 +43,7 @@ public class JDBCCommandFactory {
 
     public JDBCCommandFactory(JDBCStoreManager manager) throws Exception {
         this.manager = manager;
-
-        log = Logger.getLogger(this.getClass().getName() + "." + manager.getComponent().getComponentName());
+        log = Logger.getLogger(this.getClass().getName() + "." + manager.getEntityBridge().getEntityName());
     }
 
     public JDBCQueryCommand createFindByPrimaryKeyQuery(JDBCQueryMetaData q) {

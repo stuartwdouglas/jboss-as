@@ -28,7 +28,7 @@ import java.util.Set;
 import org.jboss.as.cmp.bridge.EntityBridge;
 
 /**
- * This class maintains a map of all entitie bridges in an application by name.
+ * This class maintains a map of all entities bridges in an application by name.
  *
  * @author <a href="mailto:dain@daingroup.com">Dain Sundstrom</a>
  * @version $Revision: 81030 $
@@ -39,6 +39,7 @@ public final class Catalog {
     private final Map entityByInterface = new HashMap();
 
     public void addEntity(EntityBridge entityBridge) {
+        System.out.println("Added: " + entityBridge.getEntityName());
         entityByAbstractSchemaName.put(
                 entityBridge.getAbstractSchemaName(),
                 entityBridge);

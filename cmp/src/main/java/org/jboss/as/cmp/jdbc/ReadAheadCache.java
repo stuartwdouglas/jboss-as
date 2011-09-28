@@ -60,7 +60,7 @@ public final class ReadAheadCache {
     private final JDBCStoreManager manager;
     private final Logger log;
 
-    private final TransactionLocal listMapTxLocal;
+    private TransactionLocal listMapTxLocal;
 
     private ListCache listCache;
     private int listCacheMax;
@@ -73,7 +73,15 @@ public final class ReadAheadCache {
                 this.getClass().getName() +
                         "." +
                         manager.getMetaData().getName());
+    }
 
+    public void create() {
+        // Create the list cache
+        listCacheMax = ((JDBCEntityBridge) manager.getEntityBridge()).getListCacheMax();
+        listCache = new ListCache(listCacheMax);
+    }
+
+    public void start() {
         listMapTxLocal = new TransactionLocal(manager.getComponent().getTransactionManager()) {
             protected Object initialValue() {
                 return new HashMap();
@@ -88,15 +96,7 @@ public final class ReadAheadCache {
                 }
             }
         };
-    }
-
-    public void create() {
-        // Create the list cache
-        listCacheMax = ((JDBCEntityBridge) manager.getEntityBridge()).getListCacheMax();
-        listCache = new ListCache(listCacheMax);
-    }
-
-    public void start() {
+        listCache.start();
     }
 
     public void stop() {
@@ -548,21 +548,8 @@ public final class ReadAheadCache {
     }
 
     private final class ListCache {
-        private final TransactionLocal cacheTxLocal = new TransactionLocal(ReadAheadCache.this.manager.getComponent().getTransactionManager()) {
-            protected Object initialValue() {
-                return new LinkedList();
-            }
-
-            public Transaction getTransaction() {
-                try {
-                    return transactionManager.getTransaction();
-                } catch (SystemException e) {
-                    throw new IllegalStateException("An error occured while getting the " +
-                            "transaction associated with the current thread: " + e);
-                }
-            }
-        };
-        private int max;
+        private TransactionLocal cacheTxLocal;
+        private final int max;
 
         public ListCache(int max) {
             if (max < 0)
@@ -628,6 +615,23 @@ public final class ReadAheadCache {
 
         private LinkedList getCache() {
             return (LinkedList) cacheTxLocal.get();
+        }
+
+        public void start() {
+            cacheTxLocal = new TransactionLocal(ReadAheadCache.this.manager.getComponent().getTransactionManager()) {
+                protected Object initialValue() {
+                    return new LinkedList();
+                }
+
+                public Transaction getTransaction() {
+                    try {
+                        return transactionManager.getTransaction();
+                    } catch (SystemException e) {
+                        throw new IllegalStateException("An error occured while getting the " +
+                                "transaction associated with the current thread: " + e);
+                    }
+                }
+            };
         }
     }
 

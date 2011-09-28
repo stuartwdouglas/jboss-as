@@ -47,6 +47,7 @@ enum Element {
     CLASS("class"),
     CLEAN_READ_AHEAD("clean-read-ahead-on-load"),
     CMP_FIELD("CMP_FIELD"),
+    CMR_FIELD("cmr-field-name"),
     COLUMN_NAME("column-name"),
     CREATE_TABLE("create-table"),
     CREATED_BY("created-by"),

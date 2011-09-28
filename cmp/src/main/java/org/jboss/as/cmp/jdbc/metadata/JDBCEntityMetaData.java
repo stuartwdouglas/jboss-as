@@ -327,7 +327,7 @@ public final class JDBCEntityMetaData {
         // build the metadata for the cmp fields now in case there is
         // no jbosscmp-jdbc.xml
 
-        for (CMPFieldMetaData cmpFieldMetaData : entity.getCmpFields()) {
+        if (entity.getCmpFields() != null) for (CMPFieldMetaData cmpFieldMetaData : entity.getCmpFields()) {
             JDBCCMPFieldMetaData cmpField = new JDBCCMPFieldMetaData(this, cmpFieldMetaData.getFieldName());
             cmpFields.add(cmpField);
             cmpFieldsByName.put(cmpFieldMetaData.getFieldName(), cmpField);
@@ -344,7 +344,7 @@ public final class JDBCEntityMetaData {
         }
 
         queryFactory = new JDBCQueryMetaDataFactory(this);
-        for (QueryMetaData queryData : entity.getQueries()) {
+        if (entity.getQueries() != null) for (QueryMetaData queryData : entity.getQueries()) {
             queries.putAll(queryFactory.createJDBCQueryMetaData(queryData));
         }
     }

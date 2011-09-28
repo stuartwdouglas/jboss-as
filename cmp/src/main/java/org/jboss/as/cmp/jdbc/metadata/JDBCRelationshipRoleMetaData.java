@@ -131,7 +131,7 @@ public final class JDBCRelationshipRoleMetaData {
         foreignKeyConstraint = false;
         readAhead = null;
 
-        String fieldName = role.getCmrField().getCmrFieldName();
+        String fieldName = role.getCmrField() != null ? role.getCmrField().getCmrFieldName() : null;
         if (fieldName == null) {
             cmrFieldName = generateNonNavigableCMRName(role);
             navigable = false;
@@ -139,7 +139,7 @@ public final class JDBCRelationshipRoleMetaData {
             cmrFieldName = fieldName;
             navigable = true;
         }
-        cmrFieldType = role.getCmrField().getCmrFieldType();
+        cmrFieldType = role.getCmrField() != null ? role.getCmrField().getCmrFieldType() : null;
         // get the entity for this role
         entity = application.getBeanByEjbName(role.getRoleSource().getEjbName());
         if (entity == null) {
@@ -251,7 +251,7 @@ public final class JDBCRelationshipRoleMetaData {
     }
 
     public boolean isIndexed() {
-        return genIndex;
+        return genIndex != null && genIndex;
     }
 
     public void setForeignKeyConstraint(final boolean foreignKeyConstraint) {
@@ -364,6 +364,8 @@ public final class JDBCRelationshipRoleMetaData {
             if (pkFields.size() > 1) {
                 columnName += "_" + cmpField.getFieldName();
             }
+
+            genIndex = (genIndex != null && genIndex) || cmpField.isIndexed();
 
             cmpField = new JDBCCMPFieldMetaData(
                     entity,

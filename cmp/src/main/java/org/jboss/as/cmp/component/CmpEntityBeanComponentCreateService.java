@@ -24,6 +24,7 @@ package org.jboss.as.cmp.component;
 
 import java.lang.reflect.Method;
 import org.jboss.as.cmp.jdbc.JDBCEntityPersistenceStore;
+import org.jboss.as.cmp.jdbc.JDBCStoreManager;
 import org.jboss.as.cmp.jdbc.metadata.JDBCEntityMetaData;
 import org.jboss.as.ee.component.BasicComponent;
 import org.jboss.as.ee.component.BasicComponentCreateService;
@@ -35,6 +36,7 @@ import org.jboss.as.ejb3.deployment.EjbJarConfiguration;
 import org.jboss.invocation.Interceptors;
 import org.jboss.msc.inject.Injector;
 import org.jboss.msc.value.InjectedValue;
+import org.jboss.msc.value.Value;
 
 /**
  * @author John Bailey
@@ -47,10 +49,10 @@ public class CmpEntityBeanComponentCreateService extends EntityBeanComponentCrea
         }
     };
 
-    private final InjectedValue<JDBCEntityPersistenceStore> storeManager = new InjectedValue<JDBCEntityPersistenceStore>();
     private final JDBCEntityMetaData entityMetaData;
     private final Class<?> homeClass;
     private final Class<?> localHomeClass;
+    private Value<JDBCEntityPersistenceStore> storeManager;
 
     public CmpEntityBeanComponentCreateService(final ComponentConfiguration componentConfiguration, final EjbJarConfiguration ejbJarConfiguration) {
         super(componentConfiguration, ejbJarConfiguration);
@@ -63,7 +65,8 @@ public class CmpEntityBeanComponentCreateService extends EntityBeanComponentCrea
 
     @Override
     protected BasicComponent createComponent() {
-        return new CmpEntityBeanComponent(this);
+        System.out.println("Create Component: " + storeManager);
+        return new CmpEntityBeanComponent(this, storeManager);
     }
 
     public JDBCEntityMetaData getEntityMetaData() {
@@ -74,15 +77,15 @@ public class CmpEntityBeanComponentCreateService extends EntityBeanComponentCrea
         return storeManager.getValue();
     }
 
-    public Injector<JDBCEntityPersistenceStore> getStoreManagerInjector() {
-        return storeManager;
-    }
-
     public Class<?> getHomeClass() {
         return homeClass;
     }
 
     public Class<?> getLocalHomeClass() {
         return localHomeClass;
+    }
+
+    public void setStoreManagerValue(final Value<JDBCEntityPersistenceStore> storeManager) {
+        this.storeManager = storeManager;
     }
 }

@@ -166,11 +166,7 @@ public final class JDBCCMRFieldBridge extends JDBCAbstractCMRFieldBridge {
     // for waiting for it entities. Relationship with waiting entities is established,
     // removing waiting entities' primary keys from the map.
     // NOTE: this map is used only for foreign key fields mapped to CMP fields.
-    private final TransactionLocal relatedPKValuesWaitingForMyPK = new TransactionLocal() {
-        protected Object initialValue() {
-            return new HashMap();
-        }
-    };
+    private TransactionLocal relatedPKValuesWaitingForMyPK;
 
     /**
      * FindByPrimaryKey method used to find related instances in case when FK fields mapped to PK fields
@@ -284,6 +280,7 @@ public final class JDBCCMRFieldBridge extends JDBCAbstractCMRFieldBridge {
         this.relatedContainerRef = new WeakReference<CmpEntityBeanComponent>(relatedComponent);
 
         // related findByPrimaryKey
+        System.out.println("Related: " + relatedComponent);
         Class homeClass = (relatedComponent.getLocalHomeClass() != null ?
                 relatedComponent.getLocalHomeClass() : relatedComponent.getHomeClass());
         try {
@@ -348,6 +345,20 @@ public final class JDBCCMRFieldBridge extends JDBCAbstractCMRFieldBridge {
      */
     public void start() {
         cascadeDeleteStrategy = CascadeDeleteStrategy.getCascadeDeleteStrategy(this);
+        relatedPKValuesWaitingForMyPK = new TransactionLocal(this.manager.getComponent().getTransactionManager()) {
+            protected Object initialValue() {
+                return new HashMap();
+            }
+
+            public Transaction getTransaction() {
+                try {
+                    return transactionManager.getTransaction();
+                } catch (SystemException e) {
+                    throw new IllegalStateException("An error occured while getting the " +
+                            "transaction associated with the current thread: " + e);
+                }
+            }
+        };
     }
 
     public boolean removeFromRelations(CmpEntityBeanContext ctx, Object[] oldRelationsRef) {
@@ -681,7 +692,7 @@ public final class JDBCCMRFieldBridge extends JDBCAbstractCMRFieldBridge {
         if (hasFKFieldsMappedToCMPFields && relatedManager.getReadAheadCache().getPreloadDataMap(fk, false) == null) {  // not in preload cache
             EJBLocalHome relatedHome = relatedContainer.getEJBLocalHome();
             try {
-                relatedLocalObject = (EJBLocalObject)relatedFindByPrimaryKey.invoke(relatedHome, new Object[]{fk});
+                relatedLocalObject = (EJBLocalObject) relatedFindByPrimaryKey.invoke(relatedHome, new Object[]{fk});
             } catch (Exception ignore) {
                 // no such entity. it is ok to ignore
             }
@@ -1272,7 +1283,7 @@ public final class JDBCCMRFieldBridge extends JDBCAbstractCMRFieldBridge {
         }
 
         // clear the field state
-        JDBCContext jdbcCtx = (JDBCContext)ctx.getPersistenceContext();
+        JDBCContext jdbcCtx = (JDBCContext) ctx.getPersistenceContext();
         // invalidate current field state
         /*
      FieldState currentFieldState = (FieldState) jdbcCtx.getFieldState(jdbcContextIndex);
@@ -1387,7 +1398,7 @@ public final class JDBCCMRFieldBridge extends JDBCAbstractCMRFieldBridge {
     }
 
     public boolean invalidateCache(CmpEntityBeanContext ctx) {
-        JDBCContext jdbcCtx = (JDBCContext)ctx.getPersistenceContext();
+        JDBCContext jdbcCtx = (JDBCContext) ctx.getPersistenceContext();
         FieldState fieldState = (FieldState) jdbcCtx.getFieldState(jdbcContextIndex);
         return fieldState == null ? false : fieldState.isChanged();
     }
@@ -1441,7 +1452,7 @@ public final class JDBCCMRFieldBridge extends JDBCAbstractCMRFieldBridge {
      * Gets the field state object from the persistence context.
      */
     private FieldState getFieldState(CmpEntityBeanContext ctx) {
-        JDBCContext jdbcCtx = (JDBCContext)ctx.getPersistenceContext();
+        JDBCContext jdbcCtx = (JDBCContext) ctx.getPersistenceContext();
         FieldState fieldState = (FieldState) jdbcCtx.getFieldState(jdbcContextIndex);
         if (fieldState == null) {
             fieldState = new FieldState(ctx);
@@ -1910,20 +1921,30 @@ public final class JDBCCMRFieldBridge extends JDBCAbstractCMRFieldBridge {
         }
     };
 
-    public static class M2MRelationManager
-            implements RelationDataManager {
+    public static class M2MRelationManager implements RelationDataManager {
         private final JDBCCMRFieldBridge leftField;
         private final JDBCCMRFieldBridge rightField;
 
-        private final TransactionLocal relationData = new TransactionLocal() {
-            protected Object initialValue() {
-                return new RelationData(leftField, rightField);
-            }
-        };
+        private final TransactionLocal relationData;
 
-        public M2MRelationManager(JDBCCMRFieldBridge leftField, JDBCCMRFieldBridge rightField) {
+        public M2MRelationManager(final JDBCCMRFieldBridge leftField, final JDBCCMRFieldBridge rightField) {
             this.leftField = leftField;
             this.rightField = rightField;
+
+            relationData = new TransactionLocal(leftField.manager.getComponent().getTransactionManager()) {
+                protected Object initialValue() {
+                    return new RelationData(leftField, rightField);
+                }
+
+                public Transaction getTransaction() {
+                    try {
+                        return transactionManager.getTransaction();
+                    } catch (SystemException e) {
+                        throw new IllegalStateException("An error occured while getting the " +
+                                "transaction associated with the current thread: " + e);
+                    }
+                }
+            };
         }
 
         public void addRelation(JDBCCMRFieldBridge field,

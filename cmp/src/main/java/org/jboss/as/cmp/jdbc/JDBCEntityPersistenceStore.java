@@ -227,7 +227,5 @@ public interface JDBCEntityPersistenceStore {
     void addExistingTable(String entityName);
 
     EntityBridgeInvocationHandler getInvocationHandler();
-
-    void init(CmpEntityBeanComponent cmpEntityBeanComponent);
 }
 

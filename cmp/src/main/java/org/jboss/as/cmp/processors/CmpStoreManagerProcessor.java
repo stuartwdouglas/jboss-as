@@ -24,11 +24,14 @@ package org.jboss.as.cmp.processors;
 
 import javax.sql.DataSource;
 import org.jboss.as.cmp.CmpConfig;
+import org.jboss.as.cmp.component.CmpEntityBeanComponent;
 import org.jboss.as.cmp.component.CmpEntityBeanComponentCreateService;
 import org.jboss.as.cmp.component.CmpEntityBeanComponentDescription;
 import org.jboss.as.cmp.ejbql.Catalog;
 import org.jboss.as.cmp.jdbc.JDBCEntityPersistenceStore;
 import org.jboss.as.cmp.jdbc.JDBCStoreManager;
+import org.jboss.as.cmp.jdbc.JdbcStoreManagerInitService;
+import org.jboss.as.cmp.jdbc.JdbcStoreManagerStartService;
 import org.jboss.as.cmp.jdbc.metadata.JDBCEntityMetaData;
 import org.jboss.as.cmp.jdbc.metadata.JDBCRelationshipRoleMetaData;
 import org.jboss.as.connector.subsystems.datasources.AbstractDataSourceService;
@@ -36,15 +39,19 @@ import org.jboss.as.ee.component.Component;
 import org.jboss.as.ee.component.ComponentConfiguration;
 import org.jboss.as.ee.component.ComponentConfigurator;
 import org.jboss.as.ee.component.ComponentDescription;
+import org.jboss.as.ee.component.ComponentStartService;
 import org.jboss.as.ee.component.DependencyConfigurator;
 import org.jboss.as.ee.component.EEModuleDescription;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
+import org.jboss.msc.inject.InjectionException;
+import org.jboss.msc.inject.Injector;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceName;
+import org.jboss.msc.value.InjectedValue;
 
 /**
  * @author John Bailey
@@ -67,18 +74,58 @@ public class CmpStoreManagerProcessor implements DeploymentUnitProcessor {
                         final JDBCEntityMetaData entityMetaData = componentDescription.getEntityMetaData();
 
                         final JDBCStoreManager storeManager = new JDBCStoreManager(context.getDeploymentUnit(), entityMetaData, new CmpConfig(), catalog);
-                        final ServiceName serviceName = component.getServiceName().append("jdbc", "store-manager");
-                        final ServiceBuilder<?> builder = context.getServiceTarget().addService(serviceName, storeManager);
-                        addDataSourceDependency(builder, storeManager, entityMetaData.getDataSourceName());
-                        for(JDBCRelationshipRoleMetaData roleMetaData : entityMetaData.getRelationshipRoles()) {
-                            addDataSourceDependency(builder, storeManager, roleMetaData.getRelationMetaData().getDataSourceName());
-                        }
-                        builder.install();
+                        final ServiceName serviceNameBase = component.getServiceName().append("jdbc", "store-manager");
 
+                        // First the Init
+                        final JdbcStoreManagerInitService initService = new JdbcStoreManagerInitService(storeManager);
+                        final ServiceName initName = serviceNameBase.append("INIT");
+                        final ServiceBuilder<?> initBuilder = context.getServiceTarget().addService(initName, initService);
+                        addDataSourceDependency(initBuilder, storeManager, entityMetaData.getDataSourceName());
+                        for (JDBCRelationshipRoleMetaData roleMetaData : entityMetaData.getRelationshipRoles()) {
+                            final String dsName = roleMetaData.getRelationMetaData().getDataSourceName();
+                            if (dsName != null) {
+                                addDataSourceDependency(initBuilder, storeManager, dsName);
+                            }
+                        }
+                        initBuilder.addDependency(description.getCreateServiceName(), CmpEntityBeanComponent.class, storeManager.getComponentInjector());
+                        initBuilder.install();
+
+                        // Now Start
+                        final JdbcStoreManagerStartService startService = new JdbcStoreManagerStartService(storeManager);
+                        final ServiceName startName = serviceNameBase.append("START");
+                        final ServiceBuilder<?> startBuilder = context.getServiceTarget().addService(startName, startService)
+                                .addDependency(initName);
+
+                        //  Add all the deps on the other entities
+                        final EEModuleDescription moduleDescription = deploymentUnit.getAttachment(org.jboss.as.ee.component.Attachments.EE_MODULE_DESCRIPTION);
+                        for (JDBCRelationshipRoleMetaData roleMetaData : componentDescription.getEntityMetaData().getRelationshipRoles()) {
+                            final CmpEntityBeanComponentDescription relatedComponentDescription = (CmpEntityBeanComponentDescription) moduleDescription.getComponentByName(roleMetaData.getRelatedRole().getEntity().getName());
+                            if(!componentDescription.equals(relatedComponentDescription)) {
+                                startBuilder.addDependency(relatedComponentDescription.getServiceName().append("jdbc", "store-manager", "INIT"));
+                            }
+                        }
+                        startBuilder.install();
+
+                        final InjectedValue<JDBCEntityPersistenceStore> persistenceStoreInjector = new InjectedValue<JDBCEntityPersistenceStore>();
                         configuration.getCreateDependencies().add(new DependencyConfigurator<Service<Component>>() {
                             public void configureDependency(final ServiceBuilder<?> serviceBuilder, final Service<Component> service) throws DeploymentUnitProcessingException {
-                                final CmpEntityBeanComponentCreateService createService = (CmpEntityBeanComponentCreateService)service;
-                                serviceBuilder.addDependency(serviceName, JDBCEntityPersistenceStore.class, createService.getStoreManagerInjector());
+                                final CmpEntityBeanComponentCreateService createService = (CmpEntityBeanComponentCreateService) service;
+                                createService.setStoreManagerValue(persistenceStoreInjector);
+                            }
+                        });
+                        configuration.getStartDependencies().add(new DependencyConfigurator<ComponentStartService>() {
+                            public void configureDependency(ServiceBuilder<?> serviceBuilder, ComponentStartService service) throws DeploymentUnitProcessingException {
+                                System.out.println("Adding start Dep");
+                                serviceBuilder.addDependency(startName, JDBCEntityPersistenceStore.class, new Injector<JDBCEntityPersistenceStore>() {
+                                    public void inject(JDBCEntityPersistenceStore value) throws InjectionException {
+                                        System.out.println("Running inject: " + value);
+                                        persistenceStoreInjector.inject(value);
+                                    }
+
+                                    public void uninject() {
+                                        persistenceStoreInjector.uninject();
+                                    }
+                                });
                             }
                         });
                     }

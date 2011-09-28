@@ -39,24 +39,24 @@ import org.jboss.as.ejb3.component.entity.EntityBeanComponent;
 import org.jboss.as.naming.ManagedReference;
 import org.jboss.invocation.Interceptor;
 import org.jboss.invocation.InterceptorFactoryContext;
+import org.jboss.msc.value.Value;
 
 /**
  * @author John Bailey
  */
 public class CmpEntityBeanComponent extends EntityBeanComponent {
 
-    private final JDBCEntityPersistenceStore storeManager;
+    private final Value<JDBCEntityPersistenceStore> storeManager;
     private final Class<?> homeClass;
     private final Class<?> localHomeClass;
 
-    public CmpEntityBeanComponent(final CmpEntityBeanComponentCreateService ejbComponentCreateService) {
+    public CmpEntityBeanComponent(final CmpEntityBeanComponentCreateService ejbComponentCreateService, final Value<JDBCEntityPersistenceStore> storeManager) {
         super(ejbComponentCreateService);
 
         this.homeClass = ejbComponentCreateService.getHomeClass();
         this.localHomeClass = ejbComponentCreateService.getLocalHomeClass();
 
-        storeManager = ejbComponentCreateService.getStoreManager();
-        storeManager.init(this);
+        this.storeManager = storeManager;
     }
 
     protected BasicComponentInstance instantiateComponentInstance(final AtomicReference<ManagedReference> instanceReference, final Interceptor preDestroyInterceptor, final Map<Method, Interceptor> methodInterceptors, final InterceptorFactoryContext interceptorContext) {
@@ -71,7 +71,12 @@ public class CmpEntityBeanComponent extends EntityBeanComponent {
         return localHomeClass;
     }
 
-
+    public void start() {
+        super.start();
+        if (storeManager == null || storeManager.getValue() == null) {
+            throw new IllegalStateException("Store manager not set");
+        }
+    }
 
     public Collection<Object> getEntityLocalCollection(List<Object> idList) {
         return null;  // TODO: jeb - This should return proxy instances to local entities
@@ -94,10 +99,10 @@ public class CmpEntityBeanComponent extends EntityBeanComponent {
     }
 
     public EJBLocalHome getEJBLocalHome() throws IllegalStateException {
-        return (EJBLocalHome)createViewInstanceProxy(getLocalHomeClass(), Collections.emptyMap());
+        return (EJBLocalHome) createViewInstanceProxy(getLocalHomeClass(), Collections.emptyMap());
     }
 
     public JDBCEntityPersistenceStore getStoreManager() {
-        return storeManager;
+        return storeManager.getValue();
     }
 }

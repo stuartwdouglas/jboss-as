@@ -28,7 +28,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,11 +57,8 @@ import org.jboss.as.server.deployment.AttachmentList;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.logging.Logger;
 import org.jboss.msc.inject.Injector;
-import org.jboss.msc.service.Service;
-import org.jboss.msc.service.StartContext;
-import org.jboss.msc.service.StopContext;
-import org.jboss.msc.service.management.ServiceStatus;
 import org.jboss.msc.value.InjectedValue;
+import org.jboss.msc.value.Value;
 
 /**
  * JDBCStoreManager manages storage of persistence data into a table.
@@ -81,14 +77,14 @@ import org.jboss.msc.value.InjectedValue;
  * @author <a href="mailto:alex@jboss.org">Alex Loubyansky</a>
  * @version $Revision: 81030 $
  */
-public final class JDBCStoreManager implements JDBCEntityPersistenceStore, Service<JDBCEntityPersistenceStore> {
+public final class JDBCStoreManager implements JDBCEntityPersistenceStore {
     private Logger log = Logger.getLogger(JDBCStoreManager.class);
 
     private final DeploymentUnit deploymentUnit;
     private final JDBCEntityMetaData metaData;
     private final CmpConfig cmpConfig;
 
-    private CmpEntityBeanComponent component;
+    private InjectedValue<CmpEntityBeanComponent> component = new InjectedValue<CmpEntityBeanComponent>();
 
     private JDBCEntityBridge entityBridge;
 
@@ -141,51 +137,107 @@ public final class JDBCStoreManager implements JDBCEntityPersistenceStore, Servi
         this.catalog = catalog;
     }
 
-    public synchronized void start(final StartContext context) {
-        deploymentUnit.addToAttachmentList(CREATED_MANAGERS, this);
+    void initStoreManager() throws Exception {
+        if (log.isDebugEnabled()) {
+            log.debug("Initializing CMP plugin for " + metaData.getName());
+        }
+
+        // setup the type factory, which is used to map java types to sql types.
+        typeFactory = new JDBCTypeFactory(
+                metaData.getTypeMapping(),
+                metaData.getJDBCApplication().getValueClasses(),
+                metaData.getJDBCApplication().getUserTypeMappings()
+        );
+
+        // create the bridge between java land and this engine (sql land)
+        entityBridge = new JDBCEntityBridge(metaData, this);
+        entityBridge.init();
+        bridgeInvocationHandler = new EntityBridgeInvocationHandler(createFieldMap(), createSelectorMap());
+
+        getCatalog().addEntity(entityBridge);
+
+        // create the read ahead cache
+        readAheadCache = new ReadAheadCache(this);
+        readAheadCache.create();
+
+        // Set up Commands
+        commandFactory = new JDBCCommandFactory(this);
+
+        // Execute the init command
+        initCommand = commandFactory.createInitCommand();
+        initCommand.execute();
     }
 
-    public synchronized void stop(StopContext context) {
-        // On deploy errors, sometimes CMPStoreManager was never initialized!
-        if (stopCommand != null) {
-            List<JDBCStoreManager> managers = deploymentUnit.getAttachment(CREATED_MANAGERS);
-            while (managers != null && !managers.isEmpty()) {
-                int stoppedInIteration = 0;
-                for (Iterator<JDBCStoreManager> i = managers.iterator(); i.hasNext(); ) {
-                    JDBCStoreManager manager = i.next();
-                    if (manager.stopCommand == null || manager.stopCommand.execute()) {
-                        i.remove();
-                        ++stoppedInIteration;
-                    }
-                }
+    /**
+     * Brings the store manager into a completely running state.
+     * This method will create the database table and compile the queries.
+     */
+    void startStoreManager() throws Exception {
+        tm = getComponent().getTransactionManager();
 
-                if (stoppedInIteration == 0) {
-                    break;
-                }
-            }
-        }
+        entityBridge.resolveRelationships();
+        entityBridge.start();
+
+        // Store manager life cycle commands
+        startCommand = commandFactory.createStartCommand();
+        stopCommand = commandFactory.createStopCommand();
+        destroyCommand = commandFactory.createDestroyCommand();
+
+        // Entity commands
+        initEntityCommand = commandFactory.createInitEntityCommand();
+        findEntityCommand = commandFactory.createFindEntityCommand();
+        findEntitiesCommand = commandFactory.createFindEntitiesCommand();
+        createEntityCommand = commandFactory.createCreateEntityCommand();
+        postCreateEntityCommand = commandFactory.createPostCreateEntityCommand();
+        removeEntityCommand = commandFactory.createRemoveEntityCommand();
+        loadEntityCommand = commandFactory.createLoadEntityCommand();
+        isModifiedCommand = commandFactory.createIsModifiedCommand();
+        storeEntityCommand = commandFactory.createStoreEntityCommand();
+        activateEntityCommand = commandFactory.createActivateEntityCommand();
+        passivateEntityCommand = commandFactory.createPassivateEntityCommand();
+
+        // Relation commands
+        loadRelationCommand = commandFactory.createLoadRelationCommand();
+        deleteRelationsCommand = commandFactory.createDeleteRelationsCommand();
+        insertRelationsCommand = commandFactory.createInsertRelationsCommand();
+
+        // Create the query manager
+        queryManager = new JDBCQueryManager(this);
+
+        // Execute the start command, creates the tables
+        startCommand.execute();
+
+        // Start the query manager. At this point is creates all of the
+        // query commands. The must occure in the start phase, as
+        // queries can opperate on other entities in the application, and
+        // all entities are gaurenteed to be createed until the start phase.
+        queryManager.start();
+
+        readAheadCache.start();
+
+        startCommand.addForeignKeyConstraints();
+    }
+
+    void stopStoreManager() {
+        stopCommand.execute();
         readAheadCache.stop();
     }
 
-    public synchronized JDBCEntityPersistenceStore getValue() throws IllegalStateException, IllegalArgumentException {
-        return this;
-    }
-
-    public void init(final CmpEntityBeanComponent component) {
-        this.component = component;
-
-        try {
-            initStoreManager();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to init store manager", e);
+    void destroy() {
+        // On deploy errors, sometimes CMPStoreManager was never initialized!
+        if (destroyCommand != null) {
+            destroyCommand.execute();
         }
-        entityBridge.resolveRelationships();
-        try {
-            startStoreManager();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to start store manager", e);
+
+        if (readAheadCache != null) {
+            readAheadCache.destroy();
         }
-        startCommand.addForeignKeyConstraints();
+
+        readAheadCache = null;
+        if (queryManager != null) {
+            queryManager.clear();
+        }
+        queryManager = null;
     }
 
     /**
@@ -307,108 +359,12 @@ public final class JDBCStoreManager implements JDBCEntityPersistenceStore, Servi
         getEntityTxDataMap().remove(key);
     }
 
-    private static final AttachmentKey<AttachmentList<JDBCStoreManager>> CREATED_MANAGERS = AttachmentKey.createList(JDBCStoreManager.class);
-
-    /**
-     * Preforms as much initialization as possible without referencing
-     * another entity.
-     */
-    private void initStoreManager() throws Exception {
-        if (log.isDebugEnabled())
-            log.debug("Initializing CMP plugin for " + metaData.getName());
-
-        // get the transaction manager
-        tm = getComponent().getTransactionManager();
-
-        // setup the type factory, which is used to map java types to sql types.
-        typeFactory = new JDBCTypeFactory(
-                metaData.getTypeMapping(),
-                metaData.getJDBCApplication().getValueClasses(),
-                metaData.getJDBCApplication().getUserTypeMappings()
-        );
-
-        // create the bridge between java land and this engine (sql land)
-        entityBridge = new JDBCEntityBridge(metaData, this);
-        entityBridge.init();
-        bridgeInvocationHandler = new EntityBridgeInvocationHandler(createFieldMap(), createSelectorMap());
-
-        getCatalog().addEntity(entityBridge);
-
-        // create the read ahead cache
-        readAheadCache = new ReadAheadCache(this);
-        readAheadCache.create();
-
-        // Set up Commands
-        commandFactory = new JDBCCommandFactory(this);
-
-        // Execute the init command
-        initCommand = commandFactory.createInitCommand();
-        initCommand.execute();
-    }
-
-    /**
-     * Brings the store manager into a completely running state.
-     * This method will create the database table and compile the queries.
-     */
-    private void startStoreManager() throws Exception {
-        entityBridge.start();
-
-        // Store manager life cycle commands
-        startCommand = commandFactory.createStartCommand();
-        stopCommand = commandFactory.createStopCommand();
-        destroyCommand = commandFactory.createDestroyCommand();
-
-        // Entity commands
-        initEntityCommand = commandFactory.createInitEntityCommand();
-        findEntityCommand = commandFactory.createFindEntityCommand();
-        findEntitiesCommand = commandFactory.createFindEntitiesCommand();
-        createEntityCommand = commandFactory.createCreateEntityCommand();
-        postCreateEntityCommand = commandFactory.createPostCreateEntityCommand();
-        removeEntityCommand = commandFactory.createRemoveEntityCommand();
-        loadEntityCommand = commandFactory.createLoadEntityCommand();
-        isModifiedCommand = commandFactory.createIsModifiedCommand();
-        storeEntityCommand = commandFactory.createStoreEntityCommand();
-        activateEntityCommand = commandFactory.createActivateEntityCommand();
-        passivateEntityCommand = commandFactory.createPassivateEntityCommand();
-
-        // Relation commands
-        loadRelationCommand = commandFactory.createLoadRelationCommand();
-        deleteRelationsCommand = commandFactory.createDeleteRelationsCommand();
-        insertRelationsCommand = commandFactory.createInsertRelationsCommand();
-
-        // Create the query manager
-        queryManager = new JDBCQueryManager(this);
-
-        // Execute the start command, creates the tables
-        startCommand.execute();
-
-        // Start the query manager. At this point is creates all of the
-        // query commands. The must occure in the start phase, as
-        // queries can opperate on other entities in the application, and
-        // all entities are gaurenteed to be createed until the start phase.
-        queryManager.start();
-
-        readAheadCache.start();
-    }
-
-    public void destroy() {
-        // On deploy errors, sometimes CMPStoreManager was never initialized!
-        if (destroyCommand != null) {
-            destroyCommand.execute();
-        }
-
-        if (readAheadCache != null) {
-            readAheadCache.destroy();
-        }
-
-        readAheadCache = null;
-        if (queryManager != null) {
-            queryManager.clear();
-        }
-        queryManager = null;
-    }
 
     public CmpEntityBeanComponent getComponent() {
+        return component.getValue();
+    }
+
+    public Injector<CmpEntityBeanComponent> getComponentInjector() {
         return component;
     }
 
@@ -556,8 +512,12 @@ public final class JDBCStoreManager implements JDBCEntityPersistenceStore, Servi
     }
 
     public DataSource getDataSource(final String name) {
-        final DataSource dataSource = dataSources.get(name).getValue();
-        if(dataSource == null) {
+        final Value<DataSource> value = dataSources.get(name);
+        if (value == null) {
+            throw new IllegalArgumentException("Error: can't find data source: " + name);
+        }
+        final DataSource dataSource = value.getValue();
+        if (dataSource == null) {
             throw new IllegalArgumentException("Error: can't find data source: " + name);
         }
         return dataSource;
@@ -589,6 +549,7 @@ public final class JDBCStoreManager implements JDBCEntityPersistenceStore, Servi
     }
 
     public Injector<DataSource> getDataSourceInjector(final String name) {
+        System.out.println("Adding DS" + name + " to " + getMetaData().getName());
         final InjectedValue<DataSource> injector = new InjectedValue<DataSource>();
         dataSources.put(name, injector);
         return injector;
@@ -599,7 +560,7 @@ public final class JDBCStoreManager implements JDBCEntityPersistenceStore, Servi
     }
 
     private Map<String, Method> getAbstractAccessors() {
-        Method[] methods = getComponent().getComponentClass().getMethods();
+        Method[] methods = entityBridge.getMetaData().getEntityClass().getMethods();
         Map<String, Method> abstractAccessors = new HashMap<String, Method>(methods.length);
 
         for (Method method : methods) {

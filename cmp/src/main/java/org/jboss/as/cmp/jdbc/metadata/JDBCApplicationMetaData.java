@@ -317,7 +317,7 @@ public final class JDBCApplicationMetaData {
 
         // First all the defaults
         for (JDBCEntityMetaData entity : defaultValues.getBeans()) {
-            metaData.addEntity(new JDBCEntityMetaData(metaData, entity));
+            metaData.addEntity(JDBCEntityMetaData.merge(metaData, metaData.defaultEntity, entity));
         }
         // Now the new ones
         for (JDBCEntityMetaData entity : newValues.entities.values()) {
@@ -329,7 +329,6 @@ public final class JDBCApplicationMetaData {
                         "ejb-jar.xml");
             }
             JDBCEntityMetaData newEntity = JDBCEntityMetaData.merge(metaData, existing, entity);
-            newEntity = JDBCEntityMetaData.merge(metaData, metaData.defaultEntity, newEntity);
 
             metaData.entities.put(newEntity.getName(), newEntity);
             if (newEntity.getAbstractSchemaName() != null) {

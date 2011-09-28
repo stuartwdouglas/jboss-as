@@ -40,6 +40,7 @@
 
     <modules>
         <module>smoke</module>
+        <module>integration</module>
     </modules>
 
     <packaging>pom</packaging>
