@@ -59,8 +59,7 @@ public class SessionObjectReferenceTestCase {
         WebArchive war = ShrinkWrap.create(WebArchive.class, "war-example.war")
             .addClasses(HttpRequest.class, SimpleServlet.class, SimpleStatefulSessionBean.class, WriterOutputStream.class)
             .addAsWebInfResource(SessionObjectReferenceTestCase.class.getPackage().getName() + "/beans.xml")
-            .addAsWebInfResource(SessionObjectReferenceTestCase.class.getPackage().getName() + "/web.xml")
-            ;
+            .addAsWebInfResource(SessionObjectReferenceTestCase.class.getPackage().getName() + "/web.xml");
         return war;
     }
 

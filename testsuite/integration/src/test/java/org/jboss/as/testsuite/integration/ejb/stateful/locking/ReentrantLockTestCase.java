@@ -22,31 +22,27 @@
 
 package org.jboss.as.testsuite.integration.ejb.stateful.locking;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+import javax.ejb.ConcurrentAccessException;
+import javax.ejb.EJBException;
+import javax.inject.Inject;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.transaction.UserTransaction;
+
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
-import org.jboss.as.testsuite.integration.ejb.stateful.timeout.AnnotatedBean2;
-import org.jboss.as.testsuite.integration.ejb.stateful.timeout.DescriptorBean;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.EmptyAsset;
-import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import javax.ejb.NoSuchEJBException;
-import javax.inject.Inject;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
-import javax.transaction.NotSupportedException;
-import javax.transaction.SystemException;
-import javax.transaction.UserTransaction;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 /**
  * Tests that multiple calls to a SFSB in the same TX release the lock correctly.
@@ -65,6 +61,9 @@ public class ReentrantLockTestCase {
 
     @Inject
     private SimpleSFSB simpleSFSB;
+
+    @Inject
+    private ReentrantStatefulBean reentrantStatefulBean;
 
     private static final int NUM_THREADS = 5;
 
@@ -86,15 +85,31 @@ public class ReentrantLockTestCase {
     public void testStatefulTimeoutFromAnnotation() throws Exception {
         ExecutorService executorService = Executors.newFixedThreadPool(NUM_THREADS);
         Future[] results = new Future[NUM_THREADS];
-        for(int i = 0; i < NUM_THREADS; ++i) {
+        for (int i = 0; i < NUM_THREADS; ++i) {
             results[i] = executorService.submit(new CallingClass());
         }
 
-        for(int i = 0; i < NUM_THREADS; ++i) {
+        for (int i = 0; i < NUM_THREADS; ++i) {
             results[i].get();
         }
     }
 
+    @Test
+    public void testReentrantCallWithTransactionUpgrade() throws Exception {
+        try {
+            reentrantStatefulBean.upgradeTxMethod();
+            Assert.fail("Exception expected");
+        } catch (ConcurrentAccessException e) {
+            Assert.fail("Got " + e + " which was not expected");
+        } catch (EJBException e) {
+            //expected
+        }
+    }
+
+    @Test
+    public void testReentrantCallWithoutTransactionUpgrade() throws Exception {
+        reentrantStatefulBean.sameTxMethod();
+    }
 
     private class CallingClass implements Runnable {
 
@@ -112,7 +127,6 @@ public class ReentrantLockTestCase {
 
         }
     }
-
 
 
 }

@@ -21,11 +21,9 @@
  */
 package org.jboss.as.ejb3.component.stateful;
 
-import org.jboss.as.ejb3.component.AbstractEJBInterceptor;
-import org.jboss.as.ejb3.concurrency.AccessTimeoutDetails;
-import org.jboss.as.ejb3.tx.OwnableReentrantLock;
-import org.jboss.invocation.InterceptorContext;
-import org.jboss.logging.Logger;
+import static org.jboss.as.ejb3.component.stateful.StatefulComponentInstanceInterceptor.getComponentInstance;
+
+import java.util.concurrent.TimeUnit;
 
 import javax.ejb.ConcurrentAccessTimeoutException;
 import javax.ejb.EJBException;
@@ -33,7 +31,11 @@ import javax.transaction.Status;
 import javax.transaction.Synchronization;
 import javax.transaction.TransactionSynchronizationRegistry;
 
-import static org.jboss.as.ejb3.component.stateful.StatefulComponentInstanceInterceptor.getComponentInstance;
+import org.jboss.as.ejb3.component.AbstractEJBInterceptor;
+import org.jboss.as.ejb3.concurrency.AccessTimeoutDetails;
+import org.jboss.as.ejb3.tx.OwnableReentrantLock;
+import org.jboss.invocation.InterceptorContext;
+import org.jboss.logging.Logger;
 
 /**
  * {@link org.jboss.invocation.Interceptor} which manages {@link Synchronization} semantics on a stateful session bean.
@@ -47,6 +49,7 @@ public class StatefulSessionSynchronizationInterceptor extends AbstractEJBInterc
     private final Object threadLock = new Object();
     private final OwnableReentrantLock lock = new OwnableReentrantLock();
     private boolean synchronizationRegistered = false;
+    private final ThreadLocal<Boolean> callInProgress = new ThreadLocal<Boolean>();
 
     /**
      * Handles the exception that occured during a {@link StatefulSessionSynchronization transaction synchronization} callback
@@ -85,17 +88,30 @@ public class StatefulSessionSynchronizationInterceptor extends AbstractEJBInterc
         final TransactionSynchronizationRegistry transactionSynchronizationRegistry = component.getTransactionSynchronizationRegistry();
         lock.pushOwner(getLockOwner(transactionSynchronizationRegistry));
         try {
+            //we need to check for re-entrancy before we try and acquire the lock
+            //as the thread may not be associated with the same TX any more
             final AccessTimeoutDetails timeout = component.getAccessTimeout(context.getMethod());
             if (log.isTraceEnabled()) {
                 log.trace("Trying to acquire lock: " + lock + " for stateful component instance: " + instance + " during invocation: " + context);
             }
             // we obtain a lock in this synchronization interceptor because the lock needs to be tied to the synchronization
             // so that it can released on the tx synchronization callbacks
-            boolean acquired = lock.tryLock(timeout.getValue(), timeout.getTimeUnit());
-            if (!acquired) {
-                throw new ConcurrentAccessTimeoutException("EJB 3.1 FR 4.3.14.1 concurrent access timeout on " + context
-                        + " - could not obtain lock within " + timeout.getValue() + timeout.getTimeUnit());
+            if (callInProgress.get() != null) {
+                //this thread has an invocation currently running, if we can't immediatly aquire then
+                //lock then the transaction context has changed and we need to throw an exception
+                if (!lock.tryLock(0, TimeUnit.MILLISECONDS)) {
+                    throw new EJBException("EJB 4.10.13 re-entrant call made to SFSB " + instance + " during invocation: " + context);
+                }
+            } else {
+                boolean acquired = lock.tryLock(timeout.getValue(), timeout.getTimeUnit());
+                if (!acquired) {
+                    throw new ConcurrentAccessTimeoutException("EJB 3.1 FR 4.3.14.1 concurrent access timeout on " + context
+                            + " - could not obtain lock within " + timeout.getValue() + timeout.getTimeUnit());
+                }
             }
+            callInProgress.set(true);
+            //we synchronize in case there are multiple threads active within the TX
+            //this should not be a common case.
             synchronized (threadLock) {
                 if (log.isTraceEnabled()) {
                     log.trace("Acquired lock: " + lock + " for stateful component instance: " + instance + " during invocation: " + context);
@@ -137,6 +153,7 @@ public class StatefulSessionSynchronizationInterceptor extends AbstractEJBInterc
                 }
             }
         } finally {
+            callInProgress.remove();
             lock.popOwner();
         }
     }
