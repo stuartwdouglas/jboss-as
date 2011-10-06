@@ -22,6 +22,20 @@
 
 package org.jboss.as.ejb3.deployment.processors;
 
+import static org.jboss.as.ejb3.deployment.processors.ViewInterfaces.getPotentialViewInterfaces;
+
+import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.ejb.Local;
+import javax.ejb.LocalBean;
+import javax.ejb.Remote;
+
 import org.jboss.as.ee.component.Attachments;
 import org.jboss.as.ee.component.ComponentDescription;
 import org.jboss.as.ee.component.EEModuleDescription;
@@ -33,19 +47,6 @@ import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
 import org.jboss.logging.Logger;
 import org.jboss.modules.Module;
-
-import javax.ejb.Local;
-import javax.ejb.LocalBean;
-import javax.ejb.Remote;
-import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
-import static org.jboss.as.ejb3.deployment.processors.ViewInterfaces.getPotentialViewInterfaces;
 
 /**
  * Processes {@link Local @Local} and {@link @Remote} annotation of a session bean and sets up the {@link SessionBeanComponentDescription}
@@ -61,27 +62,41 @@ public class BusinessViewAnnotationProcessor implements DeploymentUnitProcessor 
      */
     private static final Logger logger = Logger.getLogger(BusinessViewAnnotationProcessor.class);
 
+    private final boolean appclient;
+
+    public BusinessViewAnnotationProcessor(final boolean appclient) {
+        this.appclient = appclient;
+    }
+
     @Override
     public void deploy(DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
         final DeploymentUnit deploymentUnit = phaseContext.getDeploymentUnit();
 
-        if(MetadataCompleteMarker.isMetadataComplete(deploymentUnit)) {
+        if (MetadataCompleteMarker.isMetadataComplete(deploymentUnit)) {
             return;
         }
 
         final EEModuleDescription eeModuleDescription = deploymentUnit.getAttachment(Attachments.EE_MODULE_DESCRIPTION);
         final Collection<ComponentDescription> componentDescriptions = eeModuleDescription.getComponentDescriptions();
-        if (componentDescriptions == null || componentDescriptions.isEmpty()) {
-            return;
-        }
         final Module module = deploymentUnit.getAttachment(org.jboss.as.server.deployment.Attachments.MODULE);
         final ClassLoader moduleClassLoader = module.getClassLoader();
-        for (ComponentDescription componentDescription : componentDescriptions) {
-            if (componentDescription instanceof SessionBeanComponentDescription == false) {
-                continue;
+        if (componentDescriptions != null) {
+            for (ComponentDescription componentDescription : componentDescriptions) {
+                if (componentDescription instanceof SessionBeanComponentDescription == false) {
+                    continue;
+                }
+                final Class<?> ejbClass = this.getEjbClass(componentDescription.getComponentClassName(), moduleClassLoader);
+                this.processViewAnnotations(ejbClass, (SessionBeanComponentDescription) componentDescription);
             }
-            final Class<?> ejbClass = this.getEjbClass(componentDescription.getComponentClassName(), moduleClassLoader);
-            this.processViewAnnotations(ejbClass, (SessionBeanComponentDescription) componentDescription);
+        }
+        if (appclient) {
+            for (ComponentDescription componentDescription : deploymentUnit.getAttachmentList(Attachments.ADDITIONAL_RESOLVABLE_COMPONENTS)) {
+                if (componentDescription instanceof SessionBeanComponentDescription == false) {
+                    continue;
+                }
+                final Class<?> ejbClass = this.getEjbClass(componentDescription.getComponentClassName(), moduleClassLoader);
+                this.processViewAnnotations(ejbClass, (SessionBeanComponentDescription) componentDescription);
+            }
         }
     }
 
