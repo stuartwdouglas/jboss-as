@@ -79,6 +79,9 @@ public class BusinessViewAnnotationProcessor implements DeploymentUnitProcessor 
         final EEModuleDescription eeModuleDescription = deploymentUnit.getAttachment(Attachments.EE_MODULE_DESCRIPTION);
         final Collection<ComponentDescription> componentDescriptions = eeModuleDescription.getComponentDescriptions();
         final Module module = deploymentUnit.getAttachment(org.jboss.as.server.deployment.Attachments.MODULE);
+        if(module == null) {
+            return;
+        }
         final ClassLoader moduleClassLoader = module.getClassLoader();
         if (componentDescriptions != null) {
             for (ComponentDescription componentDescription : componentDescriptions) {
