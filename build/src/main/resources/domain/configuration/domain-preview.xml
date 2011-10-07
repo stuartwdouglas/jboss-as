@@ -117,9 +117,12 @@
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:ee:1.0"/>
             <subsystem xmlns="urn:jboss:domain:ejb3:1.2" >
-                <timer-service>
-                    <thread-pool core-threads="1" max-threads="4" />
-                    <data-store path="timer-service-data" relative-to="jboss.server.data.dir" />
+
+                <remote connector-ref="remoting-connector" thread-pool-name="default" />
+                <async thread-pool-name="default" />
+
+                <timer-service thread-pool-name="default" >
+                    <data-store path="timer-service-data" relative-to="jboss.server.data.dir"/>
                 </timer-service>
 
                 <!-- EJB3 pools -->
@@ -127,17 +130,8 @@
                     <bean-instance-pools>
                         <strict-max-pool name="slsb-strict-max-pool" max-pool-size="20" instance-acquisition-timeout="5"
                                          instance-acquisition-timeout-unit="MINUTES"/>
-
-                        <strict-max-pool name="mdb-strict-max-pool" max-pool-size="20" instance-acquisition-timeout="5"
-                                         instance-acquisition-timeout-unit="MINUTES"/>
                     </bean-instance-pools>
                 </pools>
-
-                <!-- Default MDB configurations -->
-                <mdb>
-                    <resource-adapter-ref resource-adapter-name="hornetq-ra"/>
-                    <bean-instance-pool-ref pool-name="mdb-strict-max-pool"/>
-                </mdb>
 
                 <!-- Session bean configurations -->
                 <session-bean>
@@ -146,10 +140,12 @@
                     </stateless>
                 </session-bean>
 
-
                 <default-stateful-access-timeout>5000</default-stateful-access-timeout>
                 <default-singleton-access-timeout>5000</default-singleton-access-timeout>
 
+                <thread-pools>
+                    <thread-pool name="default" max-threads="10" keepalive-time="100" />
+                </thread-pools>
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:infinispan:1.0" default-cache-container="hibernate">
                 <cache-container name="hibernate" default-cache="local-query">
@@ -470,9 +466,12 @@
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:ee:1.0"/>
             <subsystem xmlns="urn:jboss:domain:ejb3:1.2" >
-                <timer-service>
-                    <thread-pool core-threads="1" />
-                    <data-store path="timer-service-data" relative-to="jboss.server.data.dir" />
+
+                <remote connector-ref="remoting-connector" thread-pool-name="default" />
+                <async thread-pool-name="default" />
+
+                <timer-service thread-pool-name="default" >
+                    <data-store path="timer-service-data" relative-to="jboss.server.data.dir"/>
                 </timer-service>
 
                 <!-- EJB3 pools -->
@@ -480,17 +479,8 @@
                     <bean-instance-pools>
                         <strict-max-pool name="slsb-strict-max-pool" max-pool-size="20" instance-acquisition-timeout="5"
                                          instance-acquisition-timeout-unit="MINUTES"/>
-
-                        <strict-max-pool name="mdb-strict-max-pool" max-pool-size="20" instance-acquisition-timeout="5"
-                                         instance-acquisition-timeout-unit="MINUTES"/>
                     </bean-instance-pools>
                 </pools>
-
-                <!-- Default MDB configurations -->
-                <mdb>
-                    <resource-adapter-ref resource-adapter-name="hornetq-ra"/>
-                    <bean-instance-pool-ref pool-name="mdb-strict-max-pool"/>
-                </mdb>
 
                 <!-- Session bean configurations -->
                 <session-bean>
@@ -502,6 +492,9 @@
                 <default-stateful-access-timeout>5000</default-stateful-access-timeout>
                 <default-singleton-access-timeout>5000</default-singleton-access-timeout>
 
+                <thread-pools>
+                    <thread-pool name="default" max-threads="10" keepalive-time="100" />
+                </thread-pools>
             </subsystem>
             <subsystem xmlns="urn:jboss:domain:infinispan:1.0" default-cache-container="cluster">
                 <cache-container name="cluster" default-cache="default">
