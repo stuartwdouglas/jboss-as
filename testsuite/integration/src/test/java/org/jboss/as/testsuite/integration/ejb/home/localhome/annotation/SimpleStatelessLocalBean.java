@@ -35,7 +35,6 @@ import org.jboss.as.testsuite.integration.ejb.home.localhome.SimpleLocalInterfac
  */
 @Stateless
 @LocalHome(SimpleLocalHome.class)
-@Local(SimpleLocalInterface.class)
 public class SimpleStatelessLocalBean  {
 
     @Resource
