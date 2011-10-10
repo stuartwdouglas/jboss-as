@@ -21,36 +21,21 @@
  */
 package org.jboss.as.testsuite.integration.ejb.interceptor.defaultinterceptor;
 
-import javax.ejb.LocalBean;
-import javax.ejb.Stateless;
-import javax.interceptor.ExcludeClassInterceptors;
-import javax.interceptor.ExcludeDefaultInterceptors;
+import javax.interceptor.AroundInvoke;
+import javax.interceptor.InvocationContext;
 
 /**
  * @author Stuart Douglas
  */
-@Stateless
-@LocalBean
-@ExcludeDefaultInterceptors
-public class NoDefaultInterceptorsSLSB implements SessionBean {
+public class ClassInterceptor {
+    public static final String MESSAGE = "ClassInterceptor ";
 
-    private boolean postConstructCalled;
 
-    public String message() {
-        return "Hello";
-    }
-
-    @ExcludeClassInterceptors
-    public String noClassLevel() {
-        return "Hello";
-    }
-
-    @Override
-    public void setPostConstructCalled() {
-        postConstructCalled = true;
-    }
-
-    public boolean isPostConstructCalled() {
-        return postConstructCalled;
+    @AroundInvoke
+    public Object aroundInvoke(final InvocationContext context) throws Exception {
+        if (context.getMethod().getReturnType().equals(String.class)) {
+            return  MESSAGE + context.proceed().toString();
+        }
+        return context.proceed();
     }
 }
