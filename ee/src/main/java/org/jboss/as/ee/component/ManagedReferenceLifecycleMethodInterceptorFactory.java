@@ -22,13 +22,16 @@
 
 package org.jboss.as.ee.component;
 
-import org.jboss.as.naming.ManagedReference;
-import org.jboss.invocation.Interceptor;
-import org.jboss.invocation.InterceptorFactory;
-import org.jboss.invocation.InterceptorFactoryContext;
-
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicReference;
+
+import org.jboss.as.naming.ManagedReference;
+import org.jboss.invocation.Interceptor;
+import org.jboss.invocation.InterceptorContext;
+import org.jboss.invocation.InterceptorFactory;
+import org.jboss.invocation.InterceptorFactoryContext;
+import org.jboss.invocation.Interceptors;
 
 /**
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -48,5 +51,57 @@ final class ManagedReferenceLifecycleMethodInterceptorFactory implements Interce
         @SuppressWarnings("unchecked")
         final AtomicReference<ManagedReference> ref = (AtomicReference<ManagedReference>) context.getContextData().get(contextKey);
         return new ManagedReferenceLifecycleMethodInterceptor(ref, method, changeMethod);
+    }
+
+
+    /**
+     * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
+     */
+    static final class ManagedReferenceLifecycleMethodInterceptor implements Interceptor {
+
+        private final AtomicReference<ManagedReference> instanceRef;
+        private final Method method;
+        private final boolean withContext;
+        private final boolean changeMethod;
+
+        ManagedReferenceLifecycleMethodInterceptor(final AtomicReference<ManagedReference> instanceRef, final Method method, final boolean changeMethod) {
+            this.changeMethod = changeMethod;
+            this.method = method;
+            this.instanceRef = instanceRef;
+            withContext = method.getParameterTypes().length == 1;
+        }
+
+        /**
+         * {@inheritDoc}
+         */
+        public Object processInvocation(final InterceptorContext context) throws Exception {
+            final ManagedReference reference = instanceRef.get();
+            final Object instance = reference.getInstance();
+            try {
+                Method method = this.method;
+                if (withContext) {
+                    if (changeMethod) {
+                        final Method oldMethod = context.getMethod();
+                        context.setMethod(method);
+                        try {
+                            return method.invoke(instance, context.getInvocationContext());
+                        } finally {
+                            context.setMethod(oldMethod);
+                        }
+                    } else {
+                        return method.invoke(instance, context.getInvocationContext());
+                    }
+                } else {
+                    method.invoke(instance, null);
+                    return context.proceed();
+                }
+            } catch (IllegalAccessException e) {
+                final IllegalAccessError n = new IllegalAccessError(e.getMessage());
+                n.setStackTrace(e.getStackTrace());
+                throw n;
+            } catch (InvocationTargetException e) {
+                throw Interceptors.rethrow(e.getCause());
+            }
+        }
     }
 }
