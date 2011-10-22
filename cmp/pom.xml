@@ -51,6 +51,7 @@
                             <goal>jjtree</goal>
                         </goals>
                         <configuration>
+                            <sourceDirectory>src/main/jjtree</sourceDirectory>
                             <includes>
                                 <include>org/jboss/as/cmp/ejbql/JBossQLParser.jjt</include>
                             </includes>
@@ -62,6 +63,7 @@
                             <goal>jjtree</goal>
                         </goals>
                         <configuration>
+                            <sourceDirectory>src/main/jjtree</sourceDirectory>
                             <includes>
                                 <include>org/jboss/as/cmp/ejbql/EJBQLParser.jjt</include>
                             </includes>
