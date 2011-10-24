@@ -33,6 +33,7 @@ import javax.ejb.RemoveException;
 
 import org.jboss.as.ee.component.ComponentView;
 import org.jboss.as.ejb3.component.entity.EntityBeanComponent;
+import org.jboss.ejb.client.EntityEJBLocator;
 import org.jboss.invocation.Interceptor;
 import org.jboss.invocation.InterceptorContext;
 import org.jboss.invocation.InterceptorFactory;
@@ -44,11 +45,11 @@ import org.jboss.invocation.InterceptorFactoryContext;
  *
  * @author Stuart Douglas
  */
-public class EntityIsIdenticalInterceptorFactory implements InterceptorFactory {
+public class EntityBeanIsIdenticalInterceptorFactory implements InterceptorFactory {
 
-    public static final EntityIsIdenticalInterceptorFactory INSTANCE = new EntityIsIdenticalInterceptorFactory();
+    public static final EntityBeanIsIdenticalInterceptorFactory INSTANCE = new EntityBeanIsIdenticalInterceptorFactory();
 
-    private EntityIsIdenticalInterceptorFactory() {
+    private EntityBeanIsIdenticalInterceptorFactory() {
     }
 
     @Override
@@ -75,16 +76,16 @@ public class EntityIsIdenticalInterceptorFactory implements InterceptorFactory {
                 //now we know that this is an ejb for the correct component view
                 //as digging out the session id from the proxy object is not really
                 //a viable option, we invoke equals() for the other instance with a
-                //SessionIdHolder as the other side
+                //PrimaryKeyHolder as the other side
                 if (other instanceof EJBLocalObject) {
-                    return ((EJBLocalObject) other).isIdentical(new SessionIdHolder(primaryKey));
+                    return ((EJBLocalObject) other).isIdentical(new PrimaryKeyHolder(primaryKey));
                 } else if (other instanceof EJBObject) {
-                    return ((EJBObject) other).isIdentical(new SessionIdHolder(primaryKey));
+                    return ((EJBObject) other).isIdentical(new PrimaryKeyHolder(primaryKey));
                 } else {
                     throw new RuntimeException(getClass() + " was attached to a view that is not an EJBObject or a EJBLocalObject");
                 }
-            } else if (other instanceof SessionIdHolder) {
-                return primaryKey.equals(((SessionIdHolder) other).primaryKey);
+            } else if (other instanceof PrimaryKeyHolder) {
+                return primaryKey.equals(((PrimaryKeyHolder) other).primaryKey);
             } else {
                 return false;
             }
@@ -92,10 +93,10 @@ public class EntityIsIdenticalInterceptorFactory implements InterceptorFactory {
     }
 
 
-    private static class SessionIdHolder implements EJBLocalObject, EJBObject {
+    private static class PrimaryKeyHolder implements EJBLocalObject, EJBObject {
         private final Object primaryKey;
 
-        public SessionIdHolder(final Object primaryKey) {
+        public PrimaryKeyHolder(final Object primaryKey) {
             this.primaryKey = primaryKey;
         }
 

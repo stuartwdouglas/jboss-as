@@ -34,8 +34,8 @@ import org.jboss.invocation.InterceptorFactoryContext;
  * @author Stuart Douglas
  * @author John Bailey
  */
-public class EntityIdentityInterceptorFactory implements InterceptorFactory {
-    public static final EntityIdentityInterceptorFactory INSTANCE = new EntityIdentityInterceptorFactory();
+public class EntityBeanIdentityInterceptorFactory implements InterceptorFactory {
+    public static final EntityBeanIdentityInterceptorFactory INSTANCE = new EntityBeanIdentityInterceptorFactory();
 
     public Interceptor create(final InterceptorFactoryContext context) {
         final ComponentView componentView = (ComponentView) context.getContextData().get(ComponentView.class);
