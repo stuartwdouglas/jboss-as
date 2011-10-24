@@ -21,19 +21,11 @@
  */
 package org.jboss.as.ejb3.component.entity.interceptors;
 
-import java.rmi.RemoteException;
-
-import javax.ejb.EJBException;
-import javax.ejb.EJBHome;
-import javax.ejb.EJBLocalHome;
 import javax.ejb.EJBLocalObject;
 import javax.ejb.EJBObject;
-import javax.ejb.Handle;
-import javax.ejb.RemoveException;
 
 import org.jboss.as.ee.component.ComponentView;
 import org.jboss.as.ejb3.component.entity.EntityBeanComponent;
-import org.jboss.ejb.client.EntityEJBLocator;
 import org.jboss.invocation.Interceptor;
 import org.jboss.invocation.InterceptorContext;
 import org.jboss.invocation.InterceptorFactory;
@@ -71,69 +63,11 @@ public class EntityBeanIsIdenticalInterceptorFactory implements InterceptorFacto
         public Object processInvocation(final InterceptorContext context) throws Exception {
             final Object primaryKey = context.getPrivateData(EntityBeanComponent.PRIMARY_KEY_CONTEXT_KEY);
             final Object other = context.getParameters()[0];
-            final Class<?> proxyType = componentView.getProxyClass();
-            if (proxyType.isAssignableFrom(other.getClass())) {
-                //now we know that this is an ejb for the correct component view
-                //as digging out the session id from the proxy object is not really
-                //a viable option, we invoke equals() for the other instance with a
-                //PrimaryKeyHolder as the other side
-                if (other instanceof EJBLocalObject) {
-                    return ((EJBLocalObject) other).isIdentical(new PrimaryKeyHolder(primaryKey));
-                } else if (other instanceof EJBObject) {
-                    return ((EJBObject) other).isIdentical(new PrimaryKeyHolder(primaryKey));
-                } else {
-                    throw new RuntimeException(getClass() + " was attached to a view that is not an EJBObject or a EJBLocalObject");
-                }
-            } else if (other instanceof PrimaryKeyHolder) {
-                return primaryKey.equals(((PrimaryKeyHolder) other).primaryKey);
+            if (context.getMethod().getParameterTypes()[0].equals(EJBLocalObject.class)) {
+                return ((EJBLocalObject) other).getPrimaryKey().equals(primaryKey);
             } else {
-                return false;
+                return ((EJBObject) other).getPrimaryKey().equals(primaryKey);
             }
         }
     }
-
-
-    private static class PrimaryKeyHolder implements EJBLocalObject, EJBObject {
-        private final Object primaryKey;
-
-        public PrimaryKeyHolder(final Object primaryKey) {
-            this.primaryKey = primaryKey;
-        }
-
-        @Override
-        public EJBLocalHome getEJBLocalHome() throws EJBException {
-            return null;
-        }
-
-        @Override
-        public EJBHome getEJBHome() throws RemoteException {
-            return null;
-        }
-
-        @Override
-        public Object getPrimaryKey() throws EJBException {
-            return null;
-        }
-
-        @Override
-        public void remove() throws RemoveException, EJBException {
-
-        }
-
-        @Override
-        public Handle getHandle() throws RemoteException {
-            return null;
-        }
-
-        @Override
-        public boolean isIdentical(final EJBObject ejbo) throws RemoteException {
-            return false;
-        }
-
-        @Override
-        public boolean isIdentical(final EJBLocalObject obj) throws EJBException {
-            return false;
-        }
-    }
-
 }
