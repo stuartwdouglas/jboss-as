@@ -29,7 +29,9 @@ import java.util.Properties;
 
 import org.jboss.as.ee.component.BasicComponent;
 import org.jboss.as.ee.component.ComponentConfiguration;
+import org.jboss.as.ee.component.ViewConfiguration;
 import org.jboss.as.ejb3.component.EJBComponentCreateService;
+import org.jboss.as.ejb3.component.MethodIntf;
 import org.jboss.as.ejb3.component.pool.PoolConfig;
 import org.jboss.as.ejb3.deployment.ApplicationExceptions;
 import org.jboss.as.ejb3.inflow.EndpointDeployer;
@@ -57,7 +59,14 @@ public class MessageDrivenComponentCreateService extends EJBComponentCreateServi
         final MessageDrivenComponentDescription componentDescription = (MessageDrivenComponentDescription) componentConfiguration.getComponentDescription();
         this.resourceAdapterName = this.stripDotRarSuffix(componentDescription.getResourceAdapterName());
         // see MessageDrivenComponentDescription.<init>
-        this.messageListenerInterface = componentConfiguration.getViews().get(0).getViewClass();
+        ViewConfiguration interfaceView = null;
+        for(ViewConfiguration view : componentConfiguration.getViews()) {
+            if(view.getPrivateData().get(MethodIntf.class) == MethodIntf.MESSAGE_ENDPOINT) {
+                interfaceView = view;
+                break;
+            }
+        }
+        this.messageListenerInterface = interfaceView.getViewClass();
 
         this.activationProps = componentDescription.getActivationProps();
     }

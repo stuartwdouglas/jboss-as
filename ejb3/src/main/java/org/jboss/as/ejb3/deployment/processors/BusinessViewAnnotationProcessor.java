@@ -22,9 +22,6 @@
 
 package org.jboss.as.ejb3.deployment.processors;
 
-import static org.jboss.as.ee.component.Attachments.EE_MODULE_DESCRIPTION;
-import static org.jboss.as.ejb3.deployment.processors.ViewInterfaces.getPotentialViewInterfaces;
-
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,6 +36,7 @@ import javax.ejb.Remote;
 
 import org.jboss.as.ee.component.ComponentDescription;
 import org.jboss.as.ee.component.EEModuleDescription;
+import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ee.metadata.MetadataCompleteMarker;
 import org.jboss.as.ejb3.component.session.SessionBeanComponentDescription;
 import org.jboss.as.server.deployment.Attachments;
@@ -46,9 +44,11 @@ import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
+import org.jboss.logging.Logger;
 import org.jboss.modules.Module;
 
-import org.jboss.logging.Logger;
+import static org.jboss.as.ee.component.Attachments.EE_MODULE_DESCRIPTION;
+import static org.jboss.as.ejb3.deployment.processors.ViewInterfaces.getPotentialViewInterfaces;
 
 /**
  * Processes {@link Local @Local} and {@link @Remote} annotation of a session bean and sets up the {@link SessionBeanComponentDescription}
@@ -136,7 +136,7 @@ public class BusinessViewAnnotationProcessor implements DeploymentUnitProcessor 
         }
 
         // EJB 3.1 FR 4.9.7 & 4.9.8, if the bean exposes no views
-        if (hasNoViews(sessionBeanComponentDescription)) {
+        if (hasNoBusinessViews(sessionBeanComponentDescription)) {
             final Set<Class<?>> potentialBusinessInterfaces = getPotentialBusinessInterfaces(sessionBeanClass);
             if (potentialBusinessInterfaces.isEmpty()) {
                 sessionBeanComponentDescription.addNoInterfaceView();
@@ -216,8 +216,13 @@ public class BusinessViewAnnotationProcessor implements DeploymentUnitProcessor 
         return sessionBeanClass.getAnnotation(LocalBean.class) != null;
     }
 
-    private static boolean hasNoViews(SessionBeanComponentDescription sessionBeanComponentDescription) {
-        return sessionBeanComponentDescription.getViews() == null || sessionBeanComponentDescription.getViews().isEmpty();
+    private static boolean hasNoBusinessViews(SessionBeanComponentDescription sessionBeanComponentDescription) {
+        for (ViewDescription view : sessionBeanComponentDescription.getViews()) {
+            if(!view.isInternalView()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private Class<?> getEjbClass(String className, ClassLoader cl) throws DeploymentUnitProcessingException {

@@ -113,13 +113,20 @@ public class EjbJndiBindingsDeploymentUnitProcessor implements DeploymentUnitPro
         jndiBindingsLogMessage.append("JNDI bindings for session bean named " + sessionBean.getEJBName() + " in deployment unit " + deploymentUnit + " are as follows:\n\n");
 
         // now create the bindings for each view under the java:global, java:app and java:module namespaces
-        EJBViewDescription ejbViewDescription = null;
+
+        int intervalViewCount = 0;
+        EJBViewDescription singleViewDescription = null;
         for (ViewDescription viewDescription : views) {
-            ejbViewDescription = (EJBViewDescription) viewDescription;
+            final EJBViewDescription ejbViewDescription = (EJBViewDescription) viewDescription;
+            if(ejbViewDescription.isInternalView()) {
+                intervalViewCount++;
+            }
             if (appclient && ejbViewDescription.getMethodIntf() != MethodIntf.REMOTE && ejbViewDescription.getMethodIntf() != MethodIntf.HOME) {
                 continue;
             }
             if (!ejbViewDescription.hasJNDIBindings()) continue;
+
+            singleViewDescription = ejbViewDescription;
 
             final String viewClassName = ejbViewDescription.getViewClassName();
 
@@ -148,20 +155,21 @@ public class EjbJndiBindingsDeploymentUnitProcessor implements DeploymentUnitPro
         //
         // Note that this also applies to java:app and java:module bindings
         // as can be seen by the examples in 4.4.2.1
-        if (views.size() == 1) {
-            final EJBViewDescription viewDescription = (EJBViewDescription) views.iterator().next();
-            if (ejbViewDescription.hasJNDIBindings()) {
+        final int size = views.size();
+        //we do not count internal views
+        if (size == (1 + intervalViewCount)) {
+            if (singleViewDescription != null) {
 
                 // java:global binding
-                registerBinding(sessionBean, viewDescription, globalJNDIBaseName);
+                registerBinding(sessionBean, singleViewDescription, globalJNDIBaseName);
                 logBinding(jndiBindingsLogMessage, globalJNDIBaseName);
 
                 // java:app binding
-                registerBinding(sessionBean, viewDescription, appJNDIBaseName);
+                registerBinding(sessionBean, singleViewDescription, appJNDIBaseName);
                 logBinding(jndiBindingsLogMessage, appJNDIBaseName);
 
                 // java:module binding
-                registerBinding(sessionBean, viewDescription, moduleJNDIBaseName);
+                registerBinding(sessionBean, singleViewDescription, moduleJNDIBaseName);
                 logBinding(jndiBindingsLogMessage, moduleJNDIBaseName);
             }
         }

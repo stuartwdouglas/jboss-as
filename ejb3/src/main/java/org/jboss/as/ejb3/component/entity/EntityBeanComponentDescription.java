@@ -39,13 +39,13 @@ import org.jboss.as.ejb3.component.EJBComponentDescription;
 import org.jboss.as.ejb3.component.EJBViewDescription;
 import org.jboss.as.ejb3.component.EjbHomeViewDescription;
 import org.jboss.as.ejb3.component.MethodIntf;
+import org.jboss.as.ejb3.component.entity.interceptors.EntityBeanAssociatingInterceptorFactory;
 import org.jboss.as.ejb3.component.entity.interceptors.EntityBeanReentrancyInterceptor;
 import org.jboss.as.ejb3.component.entity.interceptors.EntityBeanRemoveInterceptor;
 import org.jboss.as.ejb3.component.entity.interceptors.EntityBeanSynchronizationInterceptor;
 import org.jboss.as.ejb3.component.interceptors.CurrentInvocationContextInterceptor;
 import org.jboss.as.ejb3.deployment.EjbJarDescription;
 import org.jboss.as.ejb3.tx.CMTTxInterceptor;
-import org.jboss.as.ejb3.tx.TimerCMTTxInterceptor;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.reflect.ClassIndex;
@@ -74,6 +74,7 @@ public class EntityBeanComponentDescription extends EJBComponentDescription {
             }
         });
         addRemoveInterceptor();
+        registerTimerServiceView();
     }
 
     protected void addRemoveInterceptor() {
@@ -108,19 +109,7 @@ public class EntityBeanComponentDescription extends EJBComponentDescription {
 
 
     @Override
-    public final ComponentConfiguration createConfiguration(final ClassIndex classIndex, final ClassLoader moduleClassLoder) {
-        final ComponentConfiguration configuration = createEntityBeanConfiguration(classIndex, moduleClassLoder);
-        // add the timer interceptor
-        getConfigurators().add(new ComponentConfigurator() {
-            @Override
-            public void configure(final DeploymentPhaseContext context, final ComponentDescription description, final ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                configuration.addTimeoutInterceptor(TimerCMTTxInterceptor.FACTORY, InterceptorOrder.Component.COMPONENT_CMT_INTERCEPTOR);
-            }
-        });
-        return configuration;
-    }
-
-    protected ComponentConfiguration createEntityBeanConfiguration(final ClassIndex classIndex, final ClassLoader moduleClassLoder) {
+    public ComponentConfiguration createConfiguration(final ClassIndex classIndex, final ClassLoader moduleClassLoder) {
         final ComponentConfiguration configuration = new ComponentConfiguration(this, classIndex, moduleClassLoder);
         // setup the component create service
         configuration.setComponentCreateServiceFactory(EntityBeanComponentCreateService.FACTORY);
@@ -147,8 +136,16 @@ public class EntityBeanComponentDescription extends EJBComponentDescription {
         //now we need to figure out if this is a home or object view
         if (view instanceof EjbHomeViewDescription) {
             view.getConfigurators().add(getHomeViewConfigurator());
-        } else {
+        } else if(view.getMethodIntf() != MethodIntf.TIMER){
             view.getConfigurators().add(getObjectViewConfigurator());
+        } else {
+            //if this is the timer view we need to add the associating interceptor
+            view.getConfigurators().add(new ViewConfigurator() {
+                @Override
+                public void configure(final DeploymentPhaseContext context, final ComponentConfiguration componentConfiguration, final ViewDescription description, final ViewConfiguration configuration) throws DeploymentUnitProcessingException {
+                    configuration.addViewInterceptor(EntityBeanAssociatingInterceptorFactory.INSTANCE, InterceptorOrder.View.ASSOCIATING_INTERCEPTOR);
+                }
+            });
         }
 
         if (view.getMethodIntf() == MethodIntf.REMOTE) {

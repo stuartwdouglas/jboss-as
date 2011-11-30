@@ -51,9 +51,9 @@ public class EJBViewDescription extends ViewDescription {
      */
     private final boolean ejb2xView;
 
-    public EJBViewDescription(final ComponentDescription componentDescription, final String viewClassName, final MethodIntf methodIntf, final boolean ejb2xView) {
+    public EJBViewDescription(final ComponentDescription componentDescription, final String viewClassName, final MethodIntf methodIntf, final boolean ejb2xView, final ServiceName serviceName) {
         //only add the default configurator if an 3jb 3.x business view
-        super(componentDescription, viewClassName, !ejb2xView && methodIntf != MethodIntf.HOME && methodIntf != MethodIntf.LOCAL_HOME );
+        super(componentDescription, viewClassName, !ejb2xView && methodIntf != MethodIntf.HOME && methodIntf != MethodIntf.LOCAL_HOME , serviceName);
         this.methodIntf = methodIntf;
         this.ejb2xView = ejb2xView;
         hasJNDIBindings = initHasJNDIBindings(methodIntf);
@@ -143,4 +143,8 @@ public class EJBViewDescription extends ViewDescription {
         return ejb2xView;
     }
 
+    @Override
+    public boolean isInternalView() {
+        return methodIntf == MethodIntf.TIMER;
+    }
 }

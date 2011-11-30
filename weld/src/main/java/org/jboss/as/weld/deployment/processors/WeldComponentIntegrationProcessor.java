@@ -34,8 +34,14 @@ import org.jboss.as.ee.component.DependencyConfigurator;
 import org.jboss.as.ee.component.EEApplicationDescription;
 import org.jboss.as.ee.component.EEModuleDescription;
 import org.jboss.as.ee.component.InterceptorDescription;
+import org.jboss.as.ee.component.ViewConfiguration;
+import org.jboss.as.ee.component.ViewConfigurator;
+import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
+import org.jboss.as.ee.component.interceptors.UserInterceptorFactory;
 import org.jboss.as.ejb3.component.EJBComponentDescription;
+import org.jboss.as.ejb3.component.EJBViewDescription;
+import org.jboss.as.ejb3.component.MethodIntf;
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
@@ -50,6 +56,7 @@ import org.jboss.as.weld.ejb.Jsr299BindingsInterceptor;
 import org.jboss.as.weld.injection.WeldInjectionInterceptor;
 import org.jboss.as.weld.injection.WeldManagedReferenceFactory;
 import org.jboss.as.weld.services.WeldService;
+import org.jboss.invocation.ImmediateInterceptorFactory;
 import org.jboss.modules.ModuleClassLoader;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceName;
@@ -128,30 +135,24 @@ public class WeldComponentIntegrationProcessor implements DeploymentUnitProcesso
                 .addDependency(weldServiceName, WeldContainer.class, factory.getWeldContainer());
 
         configuration.setInstanceFactory(factory);
-        configuration.getStartDependencies().add(new DependencyConfigurator<ComponentStartService>() {
-            @Override
-            public void configureDependency(final ServiceBuilder<?> serviceBuilder, ComponentStartService service) throws DeploymentUnitProcessingException {
-                serviceBuilder.addDependency(serviceName);
-            }
-        });
+        configuration.getStartDependencies().add(new DepConfigurator(serviceName));
 
         //if this is an ejb add the EJB interceptors
         if (description instanceof EJBComponentDescription) {
 
-
+            EJBComponentDescription ejbDescription = (EJBComponentDescription) description;
             final Jsr299BindingsInterceptor.Factory aroundInvokeFactory = new Jsr299BindingsInterceptor.Factory(description.getBeanDeploymentArchiveId(), beanName, InterceptionType.AROUND_INVOKE, classLoader);
             builder.addDependency(weldServiceName, WeldContainer.class, aroundInvokeFactory.getWeldContainer());
-            configuration.addComponentInterceptor(aroundInvokeFactory, InterceptorOrder.Component.CDI_INTERCEPTORS, false);
-            if (description.isTimerServiceApplicable()) {
-                final Jsr299BindingsInterceptor.Factory aroundTimeoutFactory = new Jsr299BindingsInterceptor.Factory(description.getBeanDeploymentArchiveId(), beanName, InterceptionType.AROUND_TIMEOUT, classLoader);
-                configuration.addTimeoutInterceptor(aroundTimeoutFactory, InterceptorOrder.Component.CDI_INTERCEPTORS);
-                builder.addDependency(weldServiceName, WeldContainer.class, aroundTimeoutFactory.getWeldContainer());
+            final Jsr299BindingsInterceptor.Factory aroundTimeoutFactory = new Jsr299BindingsInterceptor.Factory(description.getBeanDeploymentArchiveId(), beanName, InterceptionType.AROUND_TIMEOUT, classLoader);
+            builder.addDependency(weldServiceName, WeldContainer.class, aroundTimeoutFactory.getWeldContainer());
+            configuration.addComponentInterceptor(new UserInterceptorFactory(aroundInvokeFactory, aroundTimeoutFactory), InterceptorOrder.Component.CDI_INTERCEPTORS, false);
 
-                //we need to activate our own request scope for timer service invocations
-                final EjbRequestScopeActivationInterceptor.Factory requestFactory = new EjbRequestScopeActivationInterceptor.Factory(classLoader);
-                configuration.addTimeoutInterceptor(requestFactory, InterceptorOrder.Component.CDI_REQUEST_SCOPE);
-                builder.addDependency(weldServiceName, WeldContainer.class, requestFactory.getWeldContainer());
+            if (ejbDescription.getTimerView() != null) {
+                final EjbRequestScopeActivationInterceptor scopeInterceptor = new EjbRequestScopeActivationInterceptor(classLoader);
+                builder.addDependency(weldServiceName, WeldContainer.class, scopeInterceptor.getWeldContainer());
+                ejbDescription.getTimerView().getConfigurators().add(new CdiRequestScopeInterceptorViewConfigurator(scopeInterceptor));
             }
+
 
             final Jsr299BindingsInterceptor.Factory preDestroyInterceptor = new Jsr299BindingsInterceptor.Factory(description.getBeanDeploymentArchiveId(), beanName, InterceptionType.PRE_DESTROY, classLoader);
             builder.addDependency(weldServiceName, WeldContainer.class, preDestroyInterceptor.getWeldContainer());
@@ -161,11 +162,17 @@ public class WeldComponentIntegrationProcessor implements DeploymentUnitProcesso
             builder.addDependency(weldServiceName, WeldContainer.class, postConstruct.getWeldContainer());
             configuration.addPostConstructInterceptor(postConstruct, InterceptorOrder.ComponentPostConstruct.CDI_INTERCEPTORS);
 
-            if (((EJBComponentDescription) description).isMessageDriven()) {
+            if (ejbDescription.isMessageDriven()) {
                 //message driven beans also need to have the CDI request scope activated by an interceptor
-                final EjbRequestScopeActivationInterceptor.Factory requestFactory = new EjbRequestScopeActivationInterceptor.Factory(classLoader);
-                configuration.addComponentInterceptor(requestFactory, InterceptorOrder.Component.CDI_REQUEST_SCOPE, false);
-                builder.addDependency(weldServiceName, WeldContainer.class, requestFactory.getWeldContainer());
+                final EjbRequestScopeActivationInterceptor scopeInterceptor = new EjbRequestScopeActivationInterceptor(classLoader);
+                builder.addDependency(weldServiceName, WeldContainer.class, scopeInterceptor.getWeldContainer());
+                for (ViewDescription view : ejbDescription.getViews()) {
+                    if (view instanceof EJBViewDescription) {
+                        if (((EJBViewDescription) view).getMethodIntf() == MethodIntf.MESSAGE_ENDPOINT) {
+                            view.getConfigurators().add(new CdiRequestScopeInterceptorViewConfigurator(scopeInterceptor));
+                        }
+                    }
+                }
             }
         }
 
@@ -176,5 +183,32 @@ public class WeldComponentIntegrationProcessor implements DeploymentUnitProcesso
     @Override
     public void undeploy(DeploymentUnit context) {
 
+    }
+
+    private static class CdiRequestScopeInterceptorViewConfigurator implements ViewConfigurator {
+        private final EjbRequestScopeActivationInterceptor requestFactory;
+
+        public CdiRequestScopeInterceptorViewConfigurator(final EjbRequestScopeActivationInterceptor requestFactory) {
+            this.requestFactory = requestFactory;
+        }
+
+        @Override
+        public void configure(final DeploymentPhaseContext context, final ComponentConfiguration componentConfiguration, final ViewDescription description, final ViewConfiguration configuration) throws DeploymentUnitProcessingException {
+            //we need to activate our own request scope for timer service invocations
+            configuration.addViewInterceptor(new ImmediateInterceptorFactory(requestFactory), InterceptorOrder.View.CDI_REQUEST_SCOPE);
+        }
+    }
+
+    private static class DepConfigurator implements DependencyConfigurator<ComponentStartService> {
+        private final ServiceName serviceName;
+
+        public DepConfigurator(final ServiceName serviceName) {
+            this.serviceName = serviceName;
+        }
+
+        @Override
+        public void configureDependency(final ServiceBuilder<?> serviceBuilder, ComponentStartService service) throws DeploymentUnitProcessingException {
+            serviceBuilder.addDependency(serviceName);
+        }
     }
 }

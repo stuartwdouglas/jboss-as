@@ -25,7 +25,6 @@ package org.jboss.as.ejb3.component;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,8 +40,6 @@ import org.jboss.as.ejb3.deployment.ApplicationExceptions;
 import org.jboss.as.ejb3.remote.EJBRemoteTransactionsRepository;
 import org.jboss.as.ejb3.security.EJBSecurityMetaData;
 import org.jboss.as.server.deployment.DeploymentUnit;
-import org.jboss.invocation.InterceptorFactory;
-import org.jboss.invocation.Interceptors;
 import org.jboss.invocation.proxy.MethodIdentifier;
 import org.jboss.msc.inject.Injector;
 import org.jboss.msc.service.ServiceController;
@@ -66,14 +63,13 @@ public class EJBComponentCreateService extends BasicComponentCreateService {
 
     private final TimerService timerService;
 
-    private final Map<Method, InterceptorFactory> timeoutInterceptors;
-
     private final Method timeoutMethod;
 
     private final ServiceName ejbLocalHome;
     private final ServiceName ejbHome;
     private final ServiceName ejbObject;
     private final ServiceName ejbLocalObject;
+    private final ServiceName timerView;
 
 
     private final String applicationName;
@@ -105,16 +101,6 @@ public class EJBComponentCreateService extends BasicComponentCreateService {
         }
         // Setup the security metadata for the bean
         this.securityMetaData = new EJBSecurityMetaData(componentConfiguration);
-
-        if (ejbComponentDescription.isTimerServiceApplicable()) {
-            Map<Method, InterceptorFactory> timeoutInterceptors = new IdentityHashMap<Method, InterceptorFactory>();
-            for (Method method : componentConfiguration.getDefinedComponentMethods()) {
-                timeoutInterceptors.put(method, Interceptors.getChainedInterceptorFactory(componentConfiguration.getAroundTimeoutInterceptors(method)));
-            }
-            this.timeoutInterceptors = timeoutInterceptors;
-        } else {
-            timeoutInterceptors = null;
-        }
 
         List<ViewConfiguration> views = componentConfiguration.getViews();
         if (views != null) {
@@ -159,6 +145,10 @@ public class EJBComponentCreateService extends BasicComponentCreateService {
         this.ejbObject = ejbObject == null ? null : ejbObject.getServiceName();
         final EJBViewDescription ejbLocalObject = ejbComponentDescription.getEjbLocalView();
         this.ejbLocalObject = ejbLocalObject == null ? null : ejbLocalObject.getServiceName();
+
+        final EJBViewDescription timerView = ejbComponentDescription.getTimerView();
+        this.timerView = timerView == null ? null : timerView.getServiceName();
+
         this.applicationName = componentConfiguration.getApplicationName();
         this.earApplicationName = componentConfiguration.getComponentDescription().getModuleDescription().getEarApplicationName();
         this.moduleName = componentConfiguration.getModuleName();
@@ -222,10 +212,6 @@ public class EJBComponentCreateService extends BasicComponentCreateService {
         return this.securityMetaData;
     }
 
-    public Map<Method, InterceptorFactory> getTimeoutInterceptors() {
-        return timeoutInterceptors;
-    }
-
     public TimerService getTimerService() {
         return timerService;
     }
@@ -248,6 +234,10 @@ public class EJBComponentCreateService extends BasicComponentCreateService {
 
     public ServiceName getEjbLocalObject() {
         return ejbLocalObject;
+    }
+
+    public ServiceName getTimerView() {
+        return timerView;
     }
 
     public String getApplicationName() {

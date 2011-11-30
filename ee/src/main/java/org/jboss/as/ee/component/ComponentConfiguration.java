@@ -65,9 +65,6 @@ public class ComponentConfiguration {
     private final OrderedItemContainer<InterceptorFactory> preDestroyInterceptors = new OrderedItemContainer<InterceptorFactory>();
     private final Map<Method, OrderedItemContainer<InterceptorFactory>> componentInterceptors = new IdentityHashMap<Method, OrderedItemContainer<InterceptorFactory>>();
 
-    //TODO: move this into an EJB specific configuration
-    private final Map<Method, OrderedItemContainer<InterceptorFactory>> timeoutInterceptors = new IdentityHashMap<Method, OrderedItemContainer<InterceptorFactory>>();
-
     // Component instance management
     private ManagedReferenceFactory instanceFactory;
 
@@ -140,22 +137,6 @@ public class ComponentConfiguration {
     }
 
     /**
-     * Gets the around timeout interceptor list for a given method. This should not be called until
-     * all interceptors have been added.
-     *
-     * @param method the component method
-     * @return the deque
-     */
-    public List<InterceptorFactory> getAroundTimeoutInterceptors(Method method) {
-        Map<Method, OrderedItemContainer<InterceptorFactory>> map = timeoutInterceptors;
-        OrderedItemContainer<InterceptorFactory> interceptors = map.get(method);
-        if (interceptors == null) {
-            return Collections.emptyList();
-        }
-        return interceptors.getSortedItems();
-    }
-
-    /**
      * Adds an interceptor factory to every method on the component.
      *
      * @param factory    The interceptor factory to add
@@ -191,42 +172,6 @@ public class ComponentConfiguration {
         }
         interceptors.add(factory, priority);
     }
-
-    /**
-     * Adds a timeout interceptor factory to a given method. The method parameter *must* be retrived from either the
-     * {@link org.jboss.as.server.deployment.reflect.DeploymentReflectionIndex} or from {@link #getDefinedComponentMethods()},
-     * as the methods are stored in an identity hash map
-     *
-     * @param method   The method to add the interceptor to
-     * @param factory  The interceptor factory to add
-     * @param priority The interceptors relative order
-     */
-    public void addTimeoutInterceptor(Method method, InterceptorFactory factory, int priority) {
-        OrderedItemContainer<InterceptorFactory> interceptors = timeoutInterceptors.get(method);
-        if (interceptors == null) {
-            timeoutInterceptors.put(method, interceptors = new OrderedItemContainer<InterceptorFactory>());
-        }
-        interceptors.add(factory, priority);
-    }
-
-    /**
-     * Adds a timeout interceptor factory to every method on the component.
-     *
-     * TODO: this should only add it to timer methods
-     *
-     * @param factory    The interceptor factory to add
-     * @param priority   The interceptors relative order
-     */
-    public void addTimeoutInterceptor(InterceptorFactory factory, int priority) {
-        for (Method method : classIndex.getClassMethods()) {
-            OrderedItemContainer<InterceptorFactory> interceptors = timeoutInterceptors.get(method);
-            if (interceptors == null) {
-                timeoutInterceptors.put(method, interceptors = new OrderedItemContainer<InterceptorFactory>());
-            }
-            interceptors.add(factory, priority);
-        }
-    }
-
 
     /**
      * Get the create dependencies list.

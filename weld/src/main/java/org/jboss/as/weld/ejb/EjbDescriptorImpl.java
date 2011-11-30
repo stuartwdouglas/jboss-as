@@ -74,7 +74,9 @@ public class EjbDescriptorImpl<T> implements EjbDescriptor<T> {
 
         if (componentDescription.getViews() != null) {
             for (ViewDescription view : componentDescription.getViews()) {
-
+                if(view.isInternalView()) {
+                    continue;
+                }
                 if (description == null || getMethodIntf(view) == MethodIntf.LOCAL) {
                     final String viewClassName = view.getViewClassName();
                     localInterfaces.add(new BusinessInterfaceDescriptorImpl<Object>(beanDeploymentArchive, viewClassName));
@@ -106,7 +108,9 @@ public class EjbDescriptorImpl<T> implements EjbDescriptor<T> {
         this.ejbName = componentDescription.getEJBName();
         Map<Class<?>, ServiceName> viewServices = new HashMap<Class<?>, ServiceName>();
         for (ViewDescription view : componentDescription.getViews()) {
-            viewServices.put(loader.classForName(view.getViewClassName()), view.getServiceName());
+            if(!view.isInternalView()) {
+                viewServices.put(loader.classForName(view.getViewClassName()), view.getServiceName());
+            }
         }
         this.viewServices = Collections.unmodifiableMap(viewServices);
         this.localInterfaces = localInterfaces;

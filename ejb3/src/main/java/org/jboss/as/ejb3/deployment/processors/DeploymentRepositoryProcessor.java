@@ -63,9 +63,11 @@ public class DeploymentRepositoryProcessor implements DeploymentUnitProcessor {
                 injectedValues.put(component.getCreateServiceName(), componentInjectedValue);
                 final Map<String, InjectedValue<ComponentView>> views = new HashMap<String, InjectedValue<ComponentView>>();
                 for (ViewDescription view : ejbComponentDescription.getViews()) {
-                    final InjectedValue<ComponentView> componentViewInjectedValue = new InjectedValue<ComponentView>();
-                    views.put(view.getViewClassName(), componentViewInjectedValue);
-                    injectedValues.put(view.getServiceName(), componentViewInjectedValue);
+                    if (!view.isInternalView()) {
+                        final InjectedValue<ComponentView> componentViewInjectedValue = new InjectedValue<ComponentView>();
+                        views.put(view.getViewClassName(), componentViewInjectedValue);
+                        injectedValues.put(view.getServiceName(), componentViewInjectedValue);
+                    }
                 }
                 final InjectedValue<EjbIIOPService> iorFactory = new InjectedValue<EjbIIOPService>();
                 if (ejbComponentDescription.isExposedViaIiop()) {

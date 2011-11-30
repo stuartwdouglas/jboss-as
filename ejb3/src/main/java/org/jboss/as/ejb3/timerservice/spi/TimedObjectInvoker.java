@@ -21,6 +21,8 @@
  */
 package org.jboss.as.ejb3.timerservice.spi;
 
+import java.lang.reflect.Method;
+
 import org.jboss.as.ejb3.timerservice.TimerImpl;
 
 /**
@@ -47,10 +49,20 @@ public interface TimedObjectInvoker {
      */
     void callTimeout(TimerImpl timer) throws Exception;
 
+    /**
+     * Call a timeout on an arbitrary method
+     *
+     * @param timer The timer
+     * @param timeoutMethod The @Schedlue method to call
+     * @throws Exception
+     */
+    void callTimeout(TimerImpl timer, Method timeoutMethod) throws Exception;
 
     /**
      * @return The class loader that should be used to load restore any timers for this object
      */
     ClassLoader getClassLoader();
+
+
 
 }

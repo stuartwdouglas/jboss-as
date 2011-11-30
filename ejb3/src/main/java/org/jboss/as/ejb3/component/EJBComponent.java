@@ -45,6 +45,7 @@ import org.jboss.as.ee.component.ComponentView;
 import org.jboss.as.ejb3.context.CurrentInvocationContext;
 import org.jboss.as.ejb3.remote.EJBRemoteTransactionsRepository;
 import org.jboss.as.ejb3.security.EJBSecurityMetaData;
+import org.jboss.as.ejb3.timerservice.TimedObjectInvokerImpl;
 import org.jboss.as.ejb3.timerservice.spi.TimedObjectInvoker;
 import org.jboss.as.ejb3.tx.ApplicationExceptionDetails;
 import org.jboss.as.naming.ManagedReference;
@@ -54,7 +55,6 @@ import org.jboss.as.server.CurrentServiceContainer;
 import org.jboss.ejb.client.EJBClient;
 import org.jboss.ejb.client.EJBHomeLocator;
 import org.jboss.invocation.InterceptorContext;
-import org.jboss.invocation.InterceptorFactory;
 import org.jboss.invocation.proxy.MethodIdentifier;
 import org.jboss.logging.Logger;
 import org.jboss.msc.service.ServiceController;
@@ -82,15 +82,16 @@ public abstract class EJBComponent extends BasicComponent {
     private final ServiceName ejbHome;
     private final ServiceName ejbObject;
     private final ServiceName ejbLocalObject;
+    private final ServiceName timerView;
 
     private final TimerService timerService;
-    protected final Map<Method, InterceptorFactory> timeoutInterceptors;
     private final Method timeoutMethod;
     private final String applicationName;
     private final String earApplicationName;
     private final String moduleName;
     private final String distinctName;
     private final EJBRemoteTransactionsRepository ejbRemoteTransactionsRepository;
+    private final TimedObjectInvoker timedObjectInvoker;
 
 
     /**
@@ -118,7 +119,6 @@ public abstract class EJBComponent extends BasicComponent {
         this.securityMetaData = ejbComponentCreateService.getSecurityMetaData();
         this.viewServices = ejbComponentCreateService.getViewServices();
         this.timerService = ejbComponentCreateService.getTimerService();
-        this.timeoutInterceptors = ejbComponentCreateService.getTimeoutInterceptors();
         this.timeoutMethod = ejbComponentCreateService.getTimeoutMethod();
         this.ejbLocalHome = ejbComponentCreateService.getEjbLocalHome();
         this.ejbHome = ejbComponentCreateService.getEjbHome();
@@ -128,9 +128,17 @@ public abstract class EJBComponent extends BasicComponent {
         this.moduleName = ejbComponentCreateService.getModuleName();
         this.ejbObject = ejbComponentCreateService.getEjbObject();
         this.ejbLocalObject = ejbComponentCreateService.getEjbLocalObject();
+        this.timerView = ejbComponentCreateService.getTimerView();
 
 
         this.ejbRemoteTransactionsRepository = ejbComponentCreateService.getEJBRemoteTransactionsRepository();
+        final String deploymentName;
+        if (ejbComponentCreateService.getDistinctName() == null || ejbComponentCreateService.getDistinctName().length() == 0) {
+            deploymentName = ejbComponentCreateService.getApplicationName() + "." + ejbComponentCreateService.getModuleName();
+        } else {
+            deploymentName = ejbComponentCreateService.getApplicationName() + "." + ejbComponentCreateService.getModuleName() + "." + ejbComponentCreateService.getDistinctName();
+        }
+        this.timedObjectInvoker = new TimedObjectInvokerImpl(this, deploymentName);
     }
 
     protected <T> T createViewInstanceProxy(final Class<T> viewInterface, final Map<Object, Object> contextData) {
@@ -230,7 +238,7 @@ public abstract class EJBComponent extends BasicComponent {
     }
 
     public Class<?> getEjbObjectType() {
-        if(ejbObject == null) {
+        if (ejbObject == null) {
             return null;
         }
         final ServiceController<?> serviceController = CurrentServiceContainer.getServiceContainer().getRequiredService(ejbObject);
@@ -239,7 +247,7 @@ public abstract class EJBComponent extends BasicComponent {
     }
 
     public Class<?> getEjbLocalObjectType() {
-        if(ejbLocalObject == null) {
+        if (ejbLocalObject == null) {
             return null;
         }
         final ServiceController<?> serviceController = CurrentServiceContainer.getServiceContainer().getRequiredService(ejbLocalObject);
@@ -252,6 +260,14 @@ public abstract class EJBComponent extends BasicComponent {
             throw MESSAGES.beanLocalHomeInterfaceIsNull(getComponentName());
         }
         return createViewInstanceProxy(EJBLocalHome.class, Collections.emptyMap(), ejbLocalHome);
+    }
+
+    public ComponentView getTimerView() throws IllegalStateException {
+        if (timerView == null) {
+            throw MESSAGES.noTimerView(getComponentName());
+        }
+        final ServiceController<?> serviceController = CurrentServiceContainer.getServiceContainer().getRequiredService(timerView);
+        return (ComponentView) serviceController.getValue();
     }
 
     public boolean getRollbackOnly() throws IllegalStateException {
@@ -299,7 +315,7 @@ public abstract class EJBComponent extends BasicComponent {
     public TransactionAttributeType getTransactionAttributeType(final MethodIntf methodIntf, final Method method) {
         TransactionAttributeType txAttr = txAttrs.get(new MethodTransactionAttributeKey(methodIntf, MethodIdentifier.getIdentifierForMethod(method)));
         //fall back to type bean if not found
-        if(txAttr == null && methodIntf != MethodIntf.BEAN) {
+        if (txAttr == null && methodIntf != MethodIntf.BEAN) {
             txAttr = txAttrs.get(new MethodTransactionAttributeKey(MethodIntf.BEAN, MethodIdentifier.getIdentifierForMethod(method)));
         }
         if (txAttr == null)
@@ -366,7 +382,7 @@ public abstract class EJBComponent extends BasicComponent {
             try {
                 jndiContext = new InitialContext();
             } catch (NamingException ne) {
-                throw MESSAGES.failToLookupJNDI(name,ne);
+                throw MESSAGES.failToLookupJNDI(name, ne);
             }
         } else {
             throw MESSAGES.failToLookupJNDINameSpace(name);
@@ -375,7 +391,7 @@ public abstract class EJBComponent extends BasicComponent {
         try {
             return jndiContext.lookup(namespaceStrippedJndiName);
         } catch (NamingException ne) {
-            throw MESSAGES.failToLookupStrippedJNDI(namespaceContextSelector,jndiContext,ne);
+            throw MESSAGES.failToLookupStrippedJNDI(namespaceContextSelector, jndiContext, ne);
         }
     }
 
@@ -399,10 +415,6 @@ public abstract class EJBComponent extends BasicComponent {
 
     public EJBSecurityMetaData getSecurityMetaData() {
         return this.securityMetaData;
-    }
-
-    public TimedObjectInvoker getTimedObjectInvoker() {
-        return null;
     }
 
     public Method getTimeoutMethod() {
@@ -433,5 +445,9 @@ public abstract class EJBComponent extends BasicComponent {
      */
     public EJBRemoteTransactionsRepository getEjbRemoteTransactionsRepository() {
         return this.ejbRemoteTransactionsRepository;
+    }
+
+    public TimedObjectInvoker getTimedObjectInvoker() {
+        return timedObjectInvoker;
     }
 }

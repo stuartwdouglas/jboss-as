@@ -24,7 +24,6 @@ package org.jboss.as.ee.component;
 
 import java.lang.reflect.Method;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
@@ -54,7 +53,7 @@ import static org.jboss.as.server.deployment.Attachments.REFLECTION_INDEX;
 public class ViewDescription {
     private final String viewClassName;
     private final ComponentDescription componentDescription;
-    private final List<String> viewNameParts = new ArrayList<String>();
+    private final ServiceName serviceNameSuffix;
     private final Set<String> bindingNames = new HashSet<String>();
     private final Deque<ViewConfigurator> configurators = new ArrayDeque<ViewConfigurator>();
     private boolean serializable;
@@ -67,7 +66,7 @@ public class ViewDescription {
      * @param viewClassName        the view class name
      */
     public ViewDescription(final ComponentDescription componentDescription, final String viewClassName) {
-        this(componentDescription, viewClassName, true);
+        this(componentDescription, viewClassName, true, null);
     }
 
     /**
@@ -77,13 +76,14 @@ public class ViewDescription {
      * @param viewClassName        the view class name
      * @param defaultConfiguratorRequired
      */
-    public ViewDescription(final ComponentDescription componentDescription, final String viewClassName, final boolean defaultConfiguratorRequired) {
+    public ViewDescription(final ComponentDescription componentDescription, final String viewClassName, final boolean defaultConfiguratorRequired, ServiceName serviceNameSuffix) {
         this.componentDescription = componentDescription;
         this.viewClassName = viewClassName;
         if (defaultConfiguratorRequired) {
             configurators.addFirst(DefaultConfigurator.INSTANCE);
         }
         configurators.addFirst(ViewBindingConfigurator.INSTANCE);
+        this.serviceNameSuffix = serviceNameSuffix;
     }
 
     /**
@@ -105,24 +105,14 @@ public class ViewDescription {
     }
 
     /**
-     * Get the strings to append to the view base name.  The view base name is the component base name
-     * followed by {@code "VIEW"} followed by these strings.
-     *
-     * @return the list of strings
-     */
-    public List<String> getViewNameParts() {
-        return viewNameParts;
-    }
-
-    /**
      * Get the service name for this view.
      *
      * @return the service name
      */
     public ServiceName getServiceName() {
         //TODO: need to set viewNameParts somewhere
-        if (!viewNameParts.isEmpty()) {
-            return componentDescription.getServiceName().append("VIEW").append(viewNameParts.toArray(new String[viewNameParts.size()]));
+        if (serviceNameSuffix != null) {
+            return componentDescription.getServiceName().append("VIEW").append(serviceNameSuffix);
         } else {
             return componentDescription.getServiceName().append("VIEW").append(viewClassName);
         }
@@ -225,5 +215,13 @@ public class ViewDescription {
 
     public void setUseWriteReplace(final boolean useWriteReplace) {
         this.useWriteReplace = useWriteReplace;
+    }
+
+    /**
+     *
+     * @return True if this is an internal view used by the container that should not be exposed to user deployments
+     */
+    public boolean isInternalView() {
+        return false;
     }
 }

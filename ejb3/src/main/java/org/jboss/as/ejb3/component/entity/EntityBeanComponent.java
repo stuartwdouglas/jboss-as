@@ -22,7 +22,6 @@
 package org.jboss.as.ejb3.component.entity;
 
 import java.lang.reflect.Method;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -40,8 +39,6 @@ import org.jboss.as.ejb3.component.entity.entitycache.ReferenceCountingEntityCac
 import org.jboss.as.ejb3.pool.InfinitePool;
 import org.jboss.as.ejb3.pool.Pool;
 import org.jboss.as.ejb3.pool.StatelessObjectFactory;
-import org.jboss.as.ejb3.timerservice.EntityTimedObjectInvokerImpl;
-import org.jboss.as.ejb3.timerservice.spi.TimedObjectInvoker;
 import org.jboss.as.naming.ManagedReference;
 import org.jboss.invocation.Interceptor;
 import org.jboss.invocation.InterceptorFactory;
@@ -71,8 +68,6 @@ public class EntityBeanComponent extends EJBComponent {
     private final InterceptorFactory ejbLoad;
     private final InterceptorFactory ejbActivate;
     private final InterceptorFactory ejbPassivate;
-
-    private final TimedObjectInvoker timedObjectInvoker;
 
     protected EntityBeanComponent(final EntityBeanComponentCreateService ejbComponentCreateService) {
         super(ejbComponentCreateService);
@@ -111,21 +106,11 @@ public class EntityBeanComponent extends EJBComponent {
         } else {
             deploymentName = ejbComponentCreateService.getApplicationName() + "." + ejbComponentCreateService.getModuleName() + "." + ejbComponentCreateService.getDistinctName();
         }
-        this.timedObjectInvoker = new EntityTimedObjectInvokerImpl(this, deploymentName);
     }
 
     @Override
     protected BasicComponentInstance instantiateComponentInstance(final AtomicReference<ManagedReference> instanceReference, final Interceptor preDestroyInterceptor, final Map<Method, Interceptor> methodInterceptors, final InterceptorFactoryContext interceptorContext) {
-        final Map<Method, Interceptor> timeouts;
-        if (timeoutInterceptors != null) {
-            timeouts = new HashMap<Method, Interceptor>();
-            for (Map.Entry<Method, InterceptorFactory> entry : timeoutInterceptors.entrySet()) {
-                timeouts.put(entry.getKey(), entry.getValue().create(interceptorContext));
-            }
-        } else {
-            timeouts = Collections.emptyMap();
-        }
-        return new EntityBeanComponentInstance(this, instanceReference, preDestroyInterceptor, methodInterceptors, timeouts);
+        return new EntityBeanComponentInstance(this, instanceReference, preDestroyInterceptor, methodInterceptors);
     }
 
     protected Interceptor createInterceptor(final InterceptorFactory factory) {
@@ -212,8 +197,4 @@ public class EntityBeanComponent extends EJBComponent {
         return ejbPassivate;
     }
 
-    @Override
-    public TimedObjectInvoker getTimedObjectInvoker() {
-        return timedObjectInvoker;
-    }
 }

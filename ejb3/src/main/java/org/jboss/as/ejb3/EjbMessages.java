@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
 import javax.ejb.ConcurrentAccessTimeoutException;
 import javax.ejb.EJBAccessException;
 import javax.ejb.EJBException;
@@ -34,10 +35,8 @@ import org.jboss.as.ejb3.component.MethodIntf;
 import org.jboss.as.ejb3.component.messagedriven.MessageDrivenComponent;
 import org.jboss.as.ejb3.concurrency.LockableComponent;
 import org.jboss.as.ejb3.subsystem.deployment.EJBComponentType;
-import org.jboss.as.ejb3.timerservice.CalendarTimer;
 import org.jboss.as.ejb3.timerservice.TimerImpl;
 import org.jboss.as.ejb3.timerservice.persistence.TimeoutMethod;
-import org.jboss.as.ejb3.timerservice.spi.MultiTimeoutMethodTimedObjectInvoker;
 import org.jboss.as.naming.context.NamespaceContextSelector;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
@@ -1517,15 +1516,6 @@ public interface EjbMessages {
     RuntimeException failToLoadDeclaringClassOfTimeOut(String declaringClass);
 
     /**
-     * Creates an exception indicating it cannot invoke timeout method because timer is an auto timer,
-     * but invoker is not of type specified"
-     *
-     * @return an {@link RuntimeException} for the error.
-     */
-    @Message(id = 14481, value = "Cannot invoke timeout method because timer: %s is an auto timer, but invoker is not of type %s")
-    RuntimeException failToInvokeTimeout(CalendarTimer calendarTimer, Class<MultiTimeoutMethodTimedObjectInvoker> multiTimeoutMethodTimedObjectInvokerClass);
-
-    /**
      * Creates an exception indicating it could not create timer file store directory
      *
      * @return an {@link RuntimeException} for the error.
@@ -1861,4 +1851,9 @@ public interface EjbMessages {
     @Message(id=14526, value = "Cannot call method %s in afterCompletion callback")
     IllegalStateException cannotCallMethodInAfterCompletion(String methodName);
 
+    @Message(id = 14527, value = "Component %s does not have a working timer service ")
+    IllegalStateException noTimerView(String componentName);
+
+    @Message(id = 14528, value = "Timer view already registered for component %s")
+    IllegalStateException timerViewAlreadyRegistered(String componentName);
 }

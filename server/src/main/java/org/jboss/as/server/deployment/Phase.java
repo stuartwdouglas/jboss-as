@@ -338,8 +338,6 @@ public enum Phase {
     public static final int POST_MODULE_EAR_DEPENDENCY                  = 0x0C00;
     public static final int POST_MODULE_WELD_BEAN_ARCHIVE               = 0x0D00;
     public static final int POST_MODULE_WELD_PORTABLE_EXTENSIONS        = 0x0E00;
-    // should come before ejb jndi bindings processor
-    public static final int POST_MODULE_EJB_IMPLICIT_NO_INTERFACE_VIEW  = 0x1000;
     public static final int POST_MODULE_EJB_JNDI_BINDINGS               = 0x1100;
     public static final int POST_MODULE_EJB_APPLICATION_EXCEPTIONS      = 0x1200;
     public static final int POST_INITIALIZE_IN_ORDER                    = 0x1300;

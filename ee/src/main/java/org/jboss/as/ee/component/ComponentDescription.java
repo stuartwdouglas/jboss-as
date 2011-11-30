@@ -42,6 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.jboss.as.ee.component.interceptors.DependencyInjectionCompleteMarker;
 import org.jboss.as.ee.component.interceptors.InterceptorClassDescription;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
+import org.jboss.as.ee.component.interceptors.UserInterceptorFactory;
 import org.jboss.as.ee.component.serialization.WriteReplaceInterface;
 import org.jboss.as.ee.metadata.MetadataCompleteMarker;
 import org.jboss.as.naming.ManagedReferenceFactory;
@@ -806,15 +807,9 @@ public class ComponentDescription {
 
                     configuration.addComponentInterceptor(method, Interceptors.getInitialInterceptorFactory(), InterceptorOrder.Component.INITIAL_INTERCEPTOR);
                     configuration.addComponentInterceptor(method, new ManagedReferenceMethodInterceptorFactory(instanceKey, method), InterceptorOrder.Component.TERMINAL_INTERCEPTOR);
-                    if (description.isTimerServiceApplicable()) {
-                        configuration.addTimeoutInterceptor(method, new ManagedReferenceMethodInterceptorFactory(instanceKey, method), InterceptorOrder.Component.TERMINAL_INTERCEPTOR);
-                    }
+
                     // and also add the tccl interceptor
                     configuration.addComponentInterceptor(method, tcclInterceptor, InterceptorOrder.Component.TCCL_INTERCEPTOR);
-                    if (description.isTimerServiceApplicable()) {
-                        configuration.addTimeoutInterceptor(method, tcclInterceptor, InterceptorOrder.Component.TCCL_INTERCEPTOR);
-                    }
-
 
                     final MethodIdentifier identifier = MethodIdentifier.getIdentifier(method.getReturnType(), method.getName(), method.getParameterTypes());
 
@@ -875,11 +870,14 @@ public class ComponentDescription {
                     // finally add the component level around invoke to the deque so that it's triggered last
                     userAroundInvokes.addAll(componentUserAroundInvoke);
 
-                    configuration.addComponentInterceptor(method, weaved(userAroundInvokes), InterceptorOrder.Component.USER_INTERCEPTORS);
+                    final InterceptorFactory weavedUser = weaved(userAroundInvokes);
+                    final InterceptorFactory weavedTimer;
                     if (description.isTimerServiceApplicable()) {
-                        userAroundTimeouts.addAll(componentUserAroundTimeout);
-                        configuration.addTimeoutInterceptor(method, weaved(userAroundTimeouts), InterceptorOrder.Component.USER_INTERCEPTORS);
+                        weavedTimer = weaved(userAroundTimeouts);
+                    } else {
+                        weavedTimer = weaved(Collections.<InterceptorFactory>emptyList());
                     }
+                    configuration.addComponentInterceptor(method,new UserInterceptorFactory(weavedUser, weavedTimer), InterceptorOrder.Component.USER_INTERCEPTORS);
                 }
             }
 

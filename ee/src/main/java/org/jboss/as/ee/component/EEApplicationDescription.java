@@ -51,6 +51,9 @@ public class EEApplicationDescription {
      */
     public void addComponent(final ComponentDescription description, final VirtualFile deploymentRoot) {
         for (final ViewDescription viewDescription : description.getViews()) {
+            if(viewDescription.isInternalView()) {
+                continue;
+            }
             List<ViewInformation> viewComponents = componentsByViewName.get(viewDescription.getViewClassName());
             if (viewComponents == null) {
                 viewComponents = new ArrayList<ViewInformation>(1);

@@ -41,6 +41,7 @@ import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
 import org.jboss.as.ee.metadata.MethodAnnotationAggregator;
 import org.jboss.as.ee.metadata.RuntimeAnnotationInformation;
+import org.jboss.as.ejb3.component.MethodIntf;
 import org.jboss.as.ejb3.component.interceptors.AsyncFutureInterceptorFactory;
 import org.jboss.as.ejb3.component.interceptors.AsyncVoidInterceptorFactory;
 import org.jboss.as.ejb3.component.EJBViewDescription;
@@ -125,7 +126,9 @@ public class AsynchronousMergingProcessor extends AbstractMergingProcessor<Sessi
             });
             for (final ViewDescription view : description.getViews()) {
                 final EJBViewDescription ejbView = (EJBViewDescription) view;
-
+                if(ejbView.getMethodIntf() == MethodIntf.TIMER) {
+                    continue;
+                }
                 ejbView.getConfigurators().add(new ViewConfigurator() {
                     @Override
                     public void configure(final DeploymentPhaseContext context, final ComponentConfiguration componentConfiguration, final ViewDescription description, final ViewConfiguration configuration) throws DeploymentUnitProcessingException {

@@ -53,6 +53,8 @@ import org.jboss.as.ee.component.ViewConfiguration;
 import org.jboss.as.ee.component.ViewConfigurator;
 import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
+import org.jboss.as.ejb3.EJBMethodIdentifier;
+import org.jboss.as.ejb3.EjbMessages;
 import org.jboss.as.ejb3.component.interceptors.EjbExceptionTransformingInterceptorFactories;
 import org.jboss.as.ejb3.component.interceptors.LoggingInterceptor;
 import org.jboss.as.ejb3.deployment.ApplicableMethodInformation;
@@ -157,8 +159,14 @@ public abstract class EJBComponentDescription extends ComponentDescription {
      * The ejb local home view
      */
     private EjbHomeViewDescription ejbHomeView;
+
+
     /**
-     * TODO: this should not be part of the description
+     * The EJB timer service view
+     */
+    private EJBViewDescription timerView;
+
+    /**
      */
     private TimerService timerService = NonFunctionalTimerService.INSTANCE;
 
@@ -491,13 +499,28 @@ public abstract class EJBComponentDescription extends ComponentDescription {
 
     protected EJBViewDescription registerView(final String viewClassName, final MethodIntf viewType, final boolean ejb2xView) {
         // setup the ViewDescription
-        final EJBViewDescription viewDescription = new EJBViewDescription(this, viewClassName, viewType, ejb2xView);
+        final EJBViewDescription viewDescription = new EJBViewDescription(this, viewClassName, viewType, ejb2xView, null);
         getViews().add(viewDescription);
         // setup server side view interceptors
         setupViewInterceptors(viewDescription);
         // setup client side view interceptors
         setupClientViewInterceptors(viewDescription);
         // return created view
+        return viewDescription;
+    }
+
+    protected EJBViewDescription registerTimerServiceView() {
+        if(timerView != null) {
+            throw EjbMessages.MESSAGES.timerViewAlreadyRegistered(getComponentName());
+        }
+        final EJBViewDescription viewDescription = new EJBViewDescription(this, getComponentClassName(), MethodIntf.TIMER, false, ServiceName.of("timerView"));
+        getViews().add(viewDescription);
+        // setup server side view interceptors
+        setupViewInterceptors(viewDescription);
+        // setup client side view interceptors
+        setupClientViewInterceptors(viewDescription);
+        // return created view
+        timerView = viewDescription;
         return viewDescription;
     }
 
@@ -650,5 +673,13 @@ public abstract class EJBComponentDescription extends ComponentDescription {
         return getClass().getName() + "{" +
                 "serviceName=" + getServiceName() +
                 '}' + "@" + Integer.toHexString(hashCode());
+    }
+
+    public EJBViewDescription getTimerView() {
+        return timerView;
+    }
+
+    public void setTimerView(final EJBViewDescription timerView) {
+        this.timerView = timerView;
     }
 }
