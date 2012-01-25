@@ -21,9 +21,6 @@
  */
 package org.jboss.as.jaxrs.deployment;
 
-import static org.jboss.as.jaxrs.JaxrsLogger.JAXRS_LOGGER;
-import static org.jboss.as.jaxrs.JaxrsMessages.MESSAGES;
-
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,6 +40,7 @@ import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
 import org.jboss.as.server.deployment.annotation.CompositeIndex;
+import org.jboss.as.server.deployment.reflect.DeploymentClassIndex;
 import org.jboss.as.server.moduleservice.ModuleIndexService;
 import org.jboss.as.web.deployment.WarMetaData;
 import org.jboss.jandex.AnnotationInstance;
@@ -53,13 +51,15 @@ import org.jboss.metadata.javaee.spec.ParamValueMetaData;
 import org.jboss.metadata.web.jboss.JBossWebMetaData;
 import org.jboss.metadata.web.spec.FilterMetaData;
 import org.jboss.metadata.web.spec.ServletMetaData;
-import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.modules.ModuleLoadException;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyBootstrapClasses;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
+
+import static org.jboss.as.jaxrs.JaxrsLogger.JAXRS_LOGGER;
+import static org.jboss.as.jaxrs.JaxrsMessages.MESSAGES;
 
 /**
  * Processor that finds jax-rs classes in the deployment
@@ -70,8 +70,6 @@ public class JaxrsScanningProcessor implements DeploymentUnitProcessor {
 
     public static final DotName APPLICATION = DotName.createSimple(Application.class.getName());
 
-    private static CompositeIndex[] EMPTY_INDEXES = new CompositeIndex[0];
-
     @Override
     public void deploy(DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
         final DeploymentUnit deploymentUnit = phaseContext.getDeploymentUnit();
@@ -80,7 +78,7 @@ public class JaxrsScanningProcessor implements DeploymentUnitProcessor {
         }
         final DeploymentUnit parent = deploymentUnit.getParent() == null ? deploymentUnit : deploymentUnit.getParent();
         final Map<ModuleIdentifier, ResteasyDeploymentData> deploymentData;
-        if(deploymentUnit.getParent() == null) {
+        if (deploymentUnit.getParent() == null) {
             deploymentData = Collections.synchronizedMap(new HashMap<ModuleIdentifier, ResteasyDeploymentData>());
             deploymentUnit.putAttachment(JaxrsAttachments.ADDITIONAL_RESTEASY_DEPLOYMENT_DATA, deploymentData);
         } else {
@@ -89,20 +87,21 @@ public class JaxrsScanningProcessor implements DeploymentUnitProcessor {
 
         final ModuleIdentifier moduleIdentifier = deploymentUnit.getAttachment(Attachments.MODULE_IDENTIFIER);
 
-        ResteasyDeploymentData resteasyDeploymentData = new ResteasyDeploymentData();
+        final ResteasyDeploymentData resteasyDeploymentData = new ResteasyDeploymentData();
         final WarMetaData warMetaData = deploymentUnit.getAttachment(WarMetaData.ATTACHMENT_KEY);
-        final Module module = deploymentUnit.getAttachment(Attachments.MODULE);
+        final DeploymentClassIndex classIndex = deploymentUnit.getAttachment(Attachments.CLASS_INDEX);
+
         final ServiceController<ModuleIndexService> serviceController = (ServiceController<ModuleIndexService>) phaseContext.getServiceRegistry().getRequiredService(Services.JBOSS_MODULE_INDEX_SERVICE);
 
         try {
 
             if (warMetaData == null) {
                 resteasyDeploymentData.setScanAll(true);
-                scan(deploymentUnit, module.getClassLoader(), resteasyDeploymentData, serviceController.getValue(), false);
+                scan(deploymentUnit, classIndex, resteasyDeploymentData);
                 deploymentData.put(moduleIdentifier, resteasyDeploymentData);
             } else {
-                scanWebDeployment(deploymentUnit, warMetaData.getMergedJBossWebMetaData(), module.getClassLoader(), resteasyDeploymentData);
-                scan(deploymentUnit, module.getClassLoader(), resteasyDeploymentData, serviceController.getValue(), true);
+                scanWebDeployment(warMetaData.getMergedJBossWebMetaData(), classIndex, resteasyDeploymentData);
+                scan(deploymentUnit, classIndex, resteasyDeploymentData);
             }
             deploymentUnit.putAttachment(JaxrsAttachments.RESTEASY_DEPLOYMENT_DATA, resteasyDeploymentData);
         } catch (ModuleLoadException e) {
@@ -144,7 +143,7 @@ public class JaxrsScanningProcessor implements DeploymentUnitProcessor {
 
     }
 
-    protected void scanWebDeployment(final DeploymentUnit du, final JBossWebMetaData webdata, final ClassLoader classLoader, final ResteasyDeploymentData resteasyDeploymentData) throws DeploymentUnitProcessingException {
+    protected void scanWebDeployment(final JBossWebMetaData webdata, final DeploymentClassIndex classIndex, final ResteasyDeploymentData resteasyDeploymentData) throws DeploymentUnitProcessingException {
 
 
         // If there is a resteasy boot class in web.xml, then the default should be to not scan
@@ -152,11 +151,7 @@ public class JaxrsScanningProcessor implements DeploymentUnitProcessor {
         boolean hasBoot = hasBootClasses(webdata);
         resteasyDeploymentData.setBootClasses(hasBoot);
 
-        Class<?> declaredApplicationClass = checkDeclaredApplicationClassAsServlet(webdata, classLoader);
-        // Assume that checkDeclaredApplicationClassAsServlet created the dispatcher
-        if (declaredApplicationClass != null) {
-            resteasyDeploymentData.setDispatcherCreated(true);
-        }
+        resteasyDeploymentData.getWebXmlApplicationClasses().addAll(getDeclaredApplicationClassesAsServlet(webdata, classIndex));
 
         // set scanning on only if there are no boot classes
         if (!hasBoot && !webdata.isMetadataComplete()) {
@@ -185,7 +180,7 @@ public class JaxrsScanningProcessor implements DeploymentUnitProcessor {
 
     }
 
-    protected void scan(final DeploymentUnit du, final ClassLoader classLoader, final ResteasyDeploymentData resteasyDeploymentData, final ModuleIndexService moduleIndexService, boolean webDeployment)
+    protected void scan(final DeploymentUnit du, final DeploymentClassIndex classIndex, final ResteasyDeploymentData resteasyDeploymentData)
             throws DeploymentUnitProcessingException, ModuleLoadException {
 
         final CompositeIndex index = du.getAttachment(Attachments.COMPOSITE_ANNOTATION_INDEX);
@@ -196,26 +191,11 @@ public class JaxrsScanningProcessor implements DeploymentUnitProcessor {
 
         final Set<ClassInfo> applicationClass = index.getAllKnownSubclasses(APPLICATION);
         try {
-            if (applicationClass.size() > 1) {
-                StringBuilder builder = new StringBuilder();
-                Set<ClassInfo> aClasses = new HashSet<ClassInfo>();
-                for (ClassInfo c : applicationClass) {
-                    if (!Modifier.isAbstract(c.flags())) {
-                        aClasses.add(c);
-                    }
-                    builder.append(" ").append(c.name().toString());
+            for (ClassInfo c : applicationClass) {
+                if (!Modifier.isAbstract(c.flags())) {
+                    resteasyDeploymentData.getScannedApplicationClasses().add((Class<? extends Application>)
+                            classIndex.classIndex(c.name().toString()).getModuleClass());
                 }
-                if (aClasses.size() > 1) {
-                    throw new DeploymentUnitProcessingException(MESSAGES.onlyOneApplicationClassAllowed(builder));
-                } else if (aClasses.size() == 1) {
-                    ClassInfo aClass = applicationClass.iterator().next();
-                    resteasyDeploymentData.setScannedApplicationClass((Class<? extends Application>) classLoader
-                            .loadClass(aClass.name().toString()));
-                }
-            } else if (applicationClass.size() == 1) {
-                ClassInfo aClass = applicationClass.iterator().next();
-                resteasyDeploymentData.setScannedApplicationClass((Class<? extends Application>) classLoader
-                        .loadClass(aClass.name().toString()));
             }
         } catch (ClassNotFoundException e) {
             throw MESSAGES.cannotLoadApplicationClass(e);
@@ -274,10 +254,12 @@ public class JaxrsScanningProcessor implements DeploymentUnitProcessor {
         }
     }
 
-    protected Class<?> checkDeclaredApplicationClassAsServlet(JBossWebMetaData webData,
-                                                              ClassLoader classLoader) throws DeploymentUnitProcessingException {
+    protected Set<Class<? extends Application>> getDeclaredApplicationClassesAsServlet(JBossWebMetaData webData,
+                                                              DeploymentClassIndex classIndex) throws DeploymentUnitProcessingException {
         if (webData.getServlets() == null)
-            return null;
+            return Collections.emptySet();
+
+        final Set<Class<? extends Application>> ret = new HashSet<Class<? extends Application>>();
 
         for (ServletMetaData servlet : webData.getServlets()) {
             String servletClass = servlet.getServletClass();
@@ -285,7 +267,7 @@ public class JaxrsScanningProcessor implements DeploymentUnitProcessor {
                 continue;
             Class<?> clazz = null;
             try {
-                clazz = classLoader.loadClass(servletClass);
+                clazz = classIndex.classIndex(servletClass).getModuleClass();
             } catch (ClassNotFoundException e) {
                 throw new DeploymentUnitProcessingException(e);
             }
@@ -302,10 +284,10 @@ public class JaxrsScanningProcessor implements DeploymentUnitProcessor {
                 }
                 params.add(param);
 
-                return clazz;
+                ret.add((Class<? extends Application>) clazz);
             }
         }
-        return null;
+        return ret;
     }
 
 }

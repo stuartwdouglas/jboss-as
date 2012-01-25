@@ -1,11 +1,13 @@
 package org.jboss.as.jaxrs.deployment;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.ApplicationPath;
+import javax.ws.rs.core.Application;
 
 import org.jboss.as.ee.structure.DeploymentType;
 import org.jboss.as.ee.structure.DeploymentTypeMarker;
@@ -23,7 +25,7 @@ import org.jboss.metadata.web.jboss.JBossServletsMetaData;
 import org.jboss.metadata.web.jboss.JBossWebMetaData;
 import org.jboss.metadata.web.spec.FilterMetaData;
 import org.jboss.metadata.web.spec.ServletMappingMetaData;
-import org.jboss.modules.Module;
+import org.jboss.metadata.web.spec.ServletMetaData;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.resteasy.plugins.server.servlet.HttpServlet30Dispatcher;
 import org.jboss.resteasy.plugins.server.servlet.ResteasyContextParameters;
@@ -45,7 +47,6 @@ public class JaxrsIntegrationProcessor implements DeploymentUnitProcessor {
     @Override
     public void deploy(DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
         final DeploymentUnit deploymentUnit = phaseContext.getDeploymentUnit();
-        final Module module = deploymentUnit.getAttachment(Attachments.MODULE);
 
         if (!JaxrsDeploymentMarker.isJaxrsDeployment(deploymentUnit)) {
             return;
@@ -61,6 +62,7 @@ public class JaxrsIntegrationProcessor implements DeploymentUnitProcessor {
 
         final ResteasyDeploymentData resteasy = deploymentUnit.getAttachment(JaxrsAttachments.RESTEASY_DEPLOYMENT_DATA);
 
+        final Map<String, String> initParameters = new HashMap<String, String>();
 
         if (resteasy == null)
             return;
@@ -109,7 +111,7 @@ public class JaxrsIntegrationProcessor implements DeploymentUnitProcessor {
             }
             String resources = buf.toString();
             JAXRS_LOGGER.debugf("Adding JAX-RS resource classes: %s", resources);
-            setContextParameter(webdata, ResteasyContextParameters.RESTEASY_SCANNED_RESOURCES, resources);
+            initParameters.put(ResteasyContextParameters.RESTEASY_SCANNED_RESOURCES, resources);
         }
         if (!resteasy.getScannedProviderClasses().isEmpty()) {
             StringBuffer buf = null;
@@ -123,7 +125,7 @@ public class JaxrsIntegrationProcessor implements DeploymentUnitProcessor {
             }
             String providers = buf.toString();
             JAXRS_LOGGER.debugf("Adding JAX-RS provider classes: %s", providers);
-            setContextParameter(webdata, ResteasyContextParameters.RESTEASY_SCANNED_PROVIDERS, providers);
+            initParameters.put(ResteasyContextParameters.RESTEASY_SCANNED_PROVIDERS, providers);
         }
 
         if (!resteasy.getScannedJndiComponentResources().isEmpty()) {
@@ -138,33 +140,38 @@ public class JaxrsIntegrationProcessor implements DeploymentUnitProcessor {
             }
             String providers = buf.toString();
             JAXRS_LOGGER.debugf("Adding JAX-RS jndi component resource classes: %s", providers);
-            setContextParameter(webdata, ResteasyContextParameters.RESTEASY_SCANNED_JNDI_RESOURCES, providers);
+            initParameters.put(ResteasyContextParameters.RESTEASY_SCANNED_JNDI_RESOURCES, providers);
         }
 
         if (!resteasy.isUnwrappedExceptionsParameterSet()) {
-            setContextParameter(webdata, ResteasyContextParameters.RESTEASY_UNWRAPPED_EXCEPTIONS, "javax.ejb.EJBException");
+            initParameters.put(ResteasyContextParameters.RESTEASY_UNWRAPPED_EXCEPTIONS, "javax.ejb.EJBException");
         }
 
-        if (resteasy.hasBootClasses() || resteasy.isDispatcherCreated())
+        if (resteasy.hasBootClasses())
             return;
 
+
         //if there are no JAX-RS classes in the app just return
-        if (resteasy.getScannedApplicationClass() == null
+        if (resteasy.getScannedApplicationClasses().isEmpty()
                 && resteasy.getScannedJndiComponentResources().isEmpty()
                 && resteasy.getScannedProviderClasses().isEmpty()
-                && resteasy.getScannedResourceClasses().isEmpty()) return;
+                && resteasy.getScannedResourceClasses().isEmpty()) {
+            return;
+        }
 
-        boolean useScannedClass = false;
-        String servletName;
-        if (resteasy.getScannedApplicationClass() == null) {
+        boolean mappingSet = false;
+        if (resteasy.getScannedApplicationClasses().isEmpty()) {
             //if there is no scanned application we must add a servlet with a name of
             //javax.ws.rs.core.Application
             JBossServletMetaData servlet = new JBossServletMetaData();
             servlet.setName(JAX_RS_SERVLET_NAME);
             servlet.setServletClass(HttpServlet30Dispatcher.class.getName());
             servlet.setAsyncSupported(true);
+            for (final Map.Entry<String, String> entry : initParameters.entrySet()) {
+                setInitParameter(servlet, entry.getKey(), entry.getValue());
+            }
+            setupMapping(webdata, JAX_RS_SERVLET_NAME, servlet);
             addServlet(webdata, servlet);
-            servletName = JAX_RS_SERVLET_NAME;
 
         } else {
             if (servletMappingsExist(webdata, JAX_RS_SERVLET_NAME)) {
@@ -172,99 +179,95 @@ public class JaxrsIntegrationProcessor implements DeploymentUnitProcessor {
 
             }
 
-            //now there are two options.
-            //if there is already a servlet defined with an init param
-            //we don't do anything.
-            //Otherwise we install our filter
-            //JAVA-RS seems somewhat confused about the difference between a context param
-            //and an init param.
-            ParamValueMetaData param = findInitParam(webdata, SERVLET_INIT_PARAM);
-            if (param != null) {
-                //we need to promote the init param to a context param
-                servletName = param.getParamValue();
-                setContextParameter(webdata, "javax.ws.rs.Application", servletName);
-            } else {
-                ParamValueMetaData contextParam = findContextParam(webdata, "javax.ws.rs.Application");
-                if (contextParam == null) {
-                    setContextParameter(webdata, "javax.ws.rs.Application", resteasy.getScannedApplicationClass().getName());
-                    useScannedClass = true;
-                    servletName = resteasy.getScannedApplicationClass().getName();
-                } else {
-                    servletName = contextParam.getParamValue();
+            for (final Class<? extends Application> application : resteasy.getScannedApplicationClasses()) {
+
+                //now there are two options.
+                //if there is already a servlet defined with an init param
+                //we just add our init params
+                //otherwise we add our filter
+
+
+                JBossServletMetaData servlet = findServletWithInitParam(webdata, SERVLET_INIT_PARAM, application);
+                if (servlet == null) {
+
+                    //add a servlet named after the application class
+                    servlet = new JBossServletMetaData();
+                    servlet.setName(application.getName());
+                    servlet.setServletClass(HttpServlet30Dispatcher.class.getName());
+                    servlet.setAsyncSupported(true);
+                    setInitParameter(servlet, SERVLET_INIT_PARAM, application.getName());
+                    addServlet(webdata, servlet);
+
                 }
-            }
-        }
 
-        boolean mappingSet = false;
+                for (final Map.Entry<String, String> entry : initParameters.entrySet()) {
+                    setInitParameter(servlet, entry.getKey(), entry.getValue());
+                }
 
-        if (useScannedClass) {
+                //look for servlet mappings
+                if (!servletMappingsExist(webdata, application.getName())) {
+                    //no mappings, add our own
+                    List<String> patterns = new ArrayList<String>();
+                    if (application.isAnnotationPresent(ApplicationPath.class)) {
+                        final ApplicationPath path = application.getAnnotation(ApplicationPath.class);
+                        String pathValue = path.value().trim();
+                        if (!pathValue.startsWith("/")) {
+                            pathValue = "/" + pathValue;
+                        }
+                        String prefix = pathValue;
+                        if (pathValue.endsWith("/")) {
+                            pathValue += "*";
+                        } else {
+                            pathValue += "/*";
+                        }
+                        patterns.add(pathValue);
 
-            //look for servlet mappings
-            if (!servletMappingsExist(webdata, servletName)) {
-                //no mappings, add our own
-                List<String> patterns = new ArrayList<String>();
-                if (resteasy.getScannedApplicationClass().isAnnotationPresent(ApplicationPath.class)) {
-                    ApplicationPath path = resteasy.getScannedApplicationClass().getAnnotation(ApplicationPath.class);
-                    String pathValue = path.value().trim();
-                    if (!pathValue.startsWith("/")) {
-                        pathValue = "/" + pathValue;
-                    }
-                    String prefix = pathValue;
-                    if (pathValue.endsWith("/")) {
-                        pathValue += "*";
+                        setInitParameter(servlet, "resteasy.servlet.mapping.prefix", prefix);
+                        mappingSet = true;
                     } else {
-                        pathValue += "/*";
+                        JAXRS_LOGGER.noServletMappingFound(application.getName());
+                        continue;
                     }
-                    patterns.add(pathValue);
-                    setContextParameter(webdata, "resteasy.servlet.mapping.prefix", prefix);
-                    mappingSet = true;
-                } else {
-                    JAXRS_LOGGER.noServletMappingFound(servletName);
-                    return;
+                    ServletMappingMetaData mapping = new ServletMappingMetaData();
+                    mapping.setServletName(application.getName());
+                    mapping.setUrlPatterns(patterns);
+                    if (webdata.getServletMappings() == null) {
+                        webdata.setServletMappings(new ArrayList<ServletMappingMetaData>());
+                    }
+                    webdata.getServletMappings().add(mapping);
                 }
-                ServletMappingMetaData mapping = new ServletMappingMetaData();
-                mapping.setServletName(servletName);
-                mapping.setUrlPatterns(patterns);
-                if (webdata.getServletMappings() == null) {
-                    webdata.setServletMappings(new ArrayList<ServletMappingMetaData>());
+
+                if (!mappingSet) {
+                    //now we need tell resteasy it's relative path
+                    setupMapping(webdata, application.getName(), servlet);
                 }
-                webdata.getServletMappings().add(mapping);
             }
-
-            //add a servlet named after the application class
-            JBossServletMetaData servlet = new JBossServletMetaData();
-            servlet.setName(servletName);
-            servlet.setServletClass(HttpServlet30Dispatcher.class.getName());
-            servlet.setAsyncSupported(true);
-            addServlet(webdata, servlet);
-
         }
+    }
 
-        if (!mappingSet) {
-            //now we need tell resteasy it's relative path
-            final List<ServletMappingMetaData> mappings = webdata.getServletMappings();
-            if (mappings != null) {
-                for (final ServletMappingMetaData mapping : mappings) {
-                    if (mapping.getServletName().equals(servletName)) {
-                        if (mapping.getUrlPatterns() != null) {
-                            for (String pattern : mapping.getUrlPatterns()) {
-                                if (mappingSet) {
-                                    JAXRS_LOGGER.moreThanOneServletMapping(servletName, pattern);
-                                } else {
-                                    mappingSet = true;
-                                    String realPattern = pattern;
-                                    if (realPattern.endsWith("*")) {
-                                        realPattern = realPattern.substring(0, realPattern.length() - 1);
-                                    }
-                                    setContextParameter(webdata, "resteasy.servlet.mapping.prefix", realPattern);
+    private void setupMapping(final JBossWebMetaData webdata,  final String servletName, final ServletMetaData servlet) {
+        boolean mappingSet = false;
+        final List<ServletMappingMetaData> mappings = webdata.getServletMappings();
+        if (mappings != null) {
+            for (final ServletMappingMetaData mapping : mappings) {
+                if (mapping.getServletName().equals(servletName)) {
+                    if (mapping.getUrlPatterns() != null) {
+                        for (String pattern : mapping.getUrlPatterns()) {
+                            if (mappingSet) {
+                                JAXRS_LOGGER.moreThanOneServletMapping(servletName, pattern);
+                            } else {
+                                mappingSet = true;
+                                String realPattern = pattern;
+                                if (realPattern.endsWith("*")) {
+                                    realPattern = realPattern.substring(0, realPattern.length() - 1);
                                 }
+                                setInitParameter(servlet, "resteasy.servlet.mapping.prefix", realPattern);
                             }
                         }
                     }
                 }
             }
         }
-
     }
 
     private void addServlet(JBossWebMetaData webdata, JBossServletMetaData servlet) {
@@ -303,7 +306,7 @@ public class JaxrsIntegrationProcessor implements DeploymentUnitProcessor {
         return null;
     }
 
-    public static ParamValueMetaData findInitParam(JBossWebMetaData webdata, String name) {
+    public static JBossServletMetaData findServletWithInitParam(JBossWebMetaData webdata, String name, Class<?> applicationClass) {
         JBossServletsMetaData servlets = webdata.getServlets();
         if (servlets == null)
             return null;
@@ -312,7 +315,9 @@ public class JaxrsIntegrationProcessor implements DeploymentUnitProcessor {
             if (initParams != null) {
                 for (ParamValueMetaData param : initParams) {
                     if (param.getParamName().equals(name)) {
-                        return param;
+                        if (param.getParamValue() != null &&
+                                param.getParamValue().equals(applicationClass.getName()))
+                            return servlet;
                     }
                 }
             }
@@ -332,18 +337,15 @@ public class JaxrsIntegrationProcessor implements DeploymentUnitProcessor {
         return false;
     }
 
-
-    public static void setContextParameter(JBossWebMetaData webdata, String name, String value) {
+    public static void setInitParameter(ServletMetaData servlet, String name, String value) {
         ParamValueMetaData param = new ParamValueMetaData();
         param.setParamName(name);
         param.setParamValue(value);
-        List<ParamValueMetaData> params = webdata.getContextParams();
+        List<ParamValueMetaData> params = servlet.getInitParam();
         if (params == null) {
             params = new ArrayList<ParamValueMetaData>();
-            webdata.setContextParams(params);
+            servlet.setInitParam(params);
         }
         params.add(param);
     }
-
-
 }

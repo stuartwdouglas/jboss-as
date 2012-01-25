@@ -1,13 +1,13 @@
 package org.jboss.as.jaxrs.deployment;
 
-import static org.jboss.as.jaxrs.JaxrsMessages.MESSAGES;
-
-import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
-
-import javax.ws.rs.core.Application;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.ws.rs.core.Application;
+
+import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 
 /**
  * @author <a href="mailto:bill@burkecentral.com">Bill Burke</a>
@@ -16,10 +16,10 @@ public class ResteasyDeploymentData {
     private boolean scanAll;
     private boolean scanResources;
     private boolean scanProviders;
-    private boolean dispatcherCreated;
     private final Set<String> scannedResourceClasses = new LinkedHashSet<String>();
     private final Set<String> scannedProviderClasses = new LinkedHashSet<String>();
-    private Class<? extends Application> scannedApplicationClass;
+    private final Set<Class<? extends Application>> scannedApplicationClasses = new HashSet<Class<? extends Application>>();
+    private final Set<Class<? extends Application>> webXmlApplicationClasses = new HashSet<Class<? extends Application>>();
     private boolean bootClasses;
     private boolean unwrappedExceptionsParameterSet;
     private final Set<String> scannedJndiComponentResources = new LinkedHashSet<String>();
@@ -30,16 +30,10 @@ public class ResteasyDeploymentData {
      * @param deploymentData
      */
     public void merge(final List<ResteasyDeploymentData> deploymentData) throws DeploymentUnitProcessingException {
-        Class<? extends Application> application = null;
+
         for (ResteasyDeploymentData data : deploymentData) {
-            if (!dispatcherCreated && scannedApplicationClass == null) {
-                if (data.getScannedApplicationClass() != null) {
-                    if (application != null) {
-                        throw MESSAGES.moreThanOneApplicationClassFound(application, data.getScannedApplicationClass());
-                    }
-                    application = data.getScannedApplicationClass();
-                }
-            }
+            scannedApplicationClasses.addAll(data.getScannedApplicationClasses());
+            webXmlApplicationClasses.addAll(data.getWebXmlApplicationClasses());
             if (scanResources) {
                 scannedResourceClasses.addAll(data.getScannedResourceClasses());
                 scannedJndiComponentResources.addAll(data.getScannedJndiComponentResources());
@@ -48,30 +42,10 @@ public class ResteasyDeploymentData {
                 scannedProviderClasses.addAll(data.getScannedProviderClasses());
             }
         }
-        if (scannedApplicationClass == null) {
-            scannedApplicationClass = application;
-        }
     }
-
 
     public Set<String> getScannedJndiComponentResources() {
         return scannedJndiComponentResources;
-    }
-
-    public boolean isDispatcherCreated() {
-        return dispatcherCreated;
-    }
-
-    public void setDispatcherCreated(boolean dispatcherCreated) {
-        this.dispatcherCreated = dispatcherCreated;
-    }
-
-    public Class<? extends Application> getScannedApplicationClass() {
-        return scannedApplicationClass;
-    }
-
-    public void setScannedApplicationClass(Class<? extends Application> scannedApplicationClass) {
-        this.scannedApplicationClass = scannedApplicationClass;
     }
 
     public boolean hasBootClasses() {
@@ -128,5 +102,13 @@ public class ResteasyDeploymentData {
 
     public void setUnwrappedExceptionsParameterSet(boolean unwrappedExceptionsParameterSet) {
         this.unwrappedExceptionsParameterSet = unwrappedExceptionsParameterSet;
+    }
+
+    public Set<Class<? extends Application>> getScannedApplicationClasses() {
+        return scannedApplicationClasses;
+    }
+
+    public Set<Class<? extends Application>> getWebXmlApplicationClasses() {
+        return webXmlApplicationClasses;
     }
 }
