@@ -22,6 +22,7 @@
 
 package org.jboss.as.ejb3.component.stateful;
 
+import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Set;
 
@@ -40,6 +41,7 @@ import org.jboss.invocation.ImmediateInterceptorFactory;
 import org.jboss.invocation.InterceptorFactory;
 import org.jboss.invocation.Interceptors;
 import org.jboss.marshalling.MarshallingConfiguration;
+import org.jboss.marshalling.SerializabilityChecker;
 import org.jboss.marshalling.SimpleClassResolver;
 import org.jboss.msc.inject.Injector;
 import org.jboss.msc.value.InjectedValue;
@@ -91,7 +93,15 @@ public class StatefulSessionComponentCreateService extends SessionBeanComponentC
         this.cache = componentDescription.getCache();
         this.marshallingConfiguration = new MarshallingConfiguration();
         this.marshallingConfiguration.setClassResolver(new SimpleClassResolver(componentConfiguration.getModuleClassLoder()));
-        this.marshallingConfiguration.setObjectResolver(new StatefulSessionBeanObjectResolver());
+
+        final Class<?> componentClass = componentConfiguration.getComponentClass();
+
+        this.marshallingConfiguration.setSerializabilityChecker(new SerializabilityChecker() {
+            @Override
+            public boolean isSerializable(final Class<?> clazz) {
+                return Serializable.class.isAssignableFrom(clazz) || clazz == componentClass;
+            }
+        });
         this.marshallingConfiguration.setClassTable(new StatefulSessionBeanClassTable(componentConfiguration.getComponentClass()));
         this.serializableInterceptorContextKeys = componentConfiguration.getInterceptorContextKeys();
     }

@@ -79,7 +79,6 @@ public class StatefulSessionBeanClassTable implements ClassTable {
         SerializationGroupImpl.class,
         SerializationGroupMemberImpl.class,
         AbstractBackingCacheEntry.class,
-        StatefulSessionBeanObjectResolver.SerializableAdapter.class,
         StatefulSerializedProxy.class,
     };
 
