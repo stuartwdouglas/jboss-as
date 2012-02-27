@@ -29,6 +29,13 @@ import java.util.logging.Logger;
 
 import org.jboss.arquillian.container.spi.client.container.LifecycleException;
 import org.jboss.as.arquillian.container.CommonDeployableContainer;
+import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
+import org.jboss.dmr.ModelNode;
+
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OUTCOME;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUCCESS;
 
 /**
  * JBossAsManagedContainer
@@ -170,6 +177,32 @@ public final class ManagedDeployableContainer extends CommonDeployableContainer<
 
     @Override
     protected void stopInternal() throws LifecycleException {
+
+        //create a shutdown operation to attempt to gracefully stop the server
+        final ModelNode shutdown = new ModelNode();
+        shutdown.get(OP_ADDR).set(PathAddress.EMPTY_ADDRESS.toModelNode());
+        shutdown.get(ModelDescriptionConstants.OP).set(ModelDescriptionConstants.SHUTDOWN);
+
+        try {
+            ModelNode result = getManagementClient().getControllerClient().execute(shutdown);
+            if (result.get(OUTCOME).asString().equals(SUCCESS)) {
+                long end = System.currentTimeMillis() + getContainerConfiguration().getStartupTimeoutInSeconds() * 1000;
+                while (end > System.currentTimeMillis()) {
+                    try {
+                        process.exitValue();
+                        return;
+                    } catch (IllegalThreadStateException ignore) {
+                        try {
+                            Thread.sleep(50);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+            }
+        } catch (IOException ignore) {
+        }
+
         if (shutdownThread != null) {
             Runtime.getRuntime().removeShutdownHook(shutdownThread);
             shutdownThread = null;
