@@ -21,24 +21,39 @@
  */
 package org.jboss.as.test.manualmode.ejb.client.reconnect;
 
-import org.jboss.arquillian.container.test.api.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+import javax.naming.Context;
+import javax.naming.NamingException;
+
+import org.jboss.arquillian.container.test.api.ContainerController;
+import org.jboss.arquillian.container.test.api.Deployer;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
+import org.jboss.arquillian.container.test.api.TargetsContainer;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.as.test.manualmode.ejb.Util;
+import org.jboss.ejb.client.ContextSelector;
 import org.jboss.ejb.client.EJBClient;
+import org.jboss.ejb.client.EJBClientConfiguration;
+import org.jboss.ejb.client.EJBClientContext;
 import org.jboss.ejb.client.EJBClientTransactionContext;
+import org.jboss.ejb.client.PropertiesBasedEJBClientConfiguration;
 import org.jboss.ejb.client.StatelessEJBLocator;
+import org.jboss.ejb.client.remoting.ConfigBasedEJBClientContextSelector;
 import org.jboss.logging.Logger;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import javax.naming.Context;
-import javax.naming.NamingException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -64,6 +79,21 @@ public class EJBClientReconnectionTestCase {
     @ArquillianResource
     private Deployer deployer;
 
+    private static ContextSelector<EJBClientContext> previousClientContextSelector;
+
+    @BeforeClass
+    public static void beforeClass() throws Exception {
+        // setup the client context selector
+        previousClientContextSelector = setupEJBClientContextSelector();
+
+    }
+
+    @AfterClass
+    public static void afterClass() {
+        if (previousClientContextSelector != null) {
+            EJBClientContext.setSelector(previousClientContextSelector);
+        }
+    }
 
     @Deployment(name = DEPLOYMENT, managed = false, testable = false)
     @TargetsContainer(CONTAINER)
@@ -147,5 +177,24 @@ public class EJBClientReconnectionTestCase {
         Context ctx = Util.createNamingContext();
         return remoteClass.cast(ctx.lookup(myContext));
     }
+    /**
+     * Sets up the EJB client context to use a selector which processes and sets up EJB receivers
+     * based on this testcase specific jboss-ejb-client.properties file
+     *
+     * @return
+     * @throws java.io.IOException
+     */
+    private static ContextSelector<EJBClientContext> setupEJBClientContextSelector() throws IOException {
+        // setup the selector
+        final InputStream inputStream = EJBClientReconnectionTestCase.class.getResourceAsStream("jboss-ejb-client.properties");
+        if (inputStream == null) {
+            throw new IllegalStateException("Could not find jboss-ejb-client.properties in classpath");
+        }
+        final Properties properties = new Properties();
+        properties.load(inputStream);
+        final EJBClientConfiguration ejbClientConfiguration = new PropertiesBasedEJBClientConfiguration(properties);
+        final ConfigBasedEJBClientContextSelector selector = new ConfigBasedEJBClientContextSelector(ejbClientConfiguration);
 
+        return EJBClientContext.setSelector(selector);
+    }
 }

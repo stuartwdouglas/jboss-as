@@ -141,7 +141,7 @@ public class LazyOutboundConnectionReconnectTestCase {
             final String echoFromIndependentBean = independentBean.echo(msg);
             Assert.assertEquals("Unexpected echo from independent bean", msg, echoFromIndependentBean);
 
-            // now try invoking the EJB (which calls a delegate bean on other server) on this server. 
+            // now try invoking the EJB (which calls a delegate bean on other server) on this server.
             // should fail with no EJB receivers, since the other server
             // which can handle the delegate bean invocation hasn't yet started.
             try {
@@ -149,7 +149,7 @@ public class LazyOutboundConnectionReconnectTestCase {
                 final String echoBeforeOtherServerStart = dependentBean.echo(msg);
                 Assert.fail("Invocation on bean when was expected to fail due to other server being down");
             } catch (Exception e) {
-                // expected 
+                // expected
                 logger.info("Got the expected exception on invoking a bean when other server was down", e);
             }
             // now start the main server
@@ -191,10 +191,9 @@ public class LazyOutboundConnectionReconnectTestCase {
      */
     private static ContextSelector<EJBClientContext> setupEJBClientContextSelector() throws IOException {
         // setup the selector
-        final String clientPropertiesFile = "org/jboss/as/test/manualmode/ejb/client/outbound/connection/jboss-ejb-client.properties";
-        final InputStream inputStream = LazyOutboundConnectionReconnectTestCase.class.getClassLoader().getResourceAsStream(clientPropertiesFile);
+        final InputStream inputStream = LazyOutboundConnectionReconnectTestCase.class.getResourceAsStream("jboss-ejb-client.properties");
         if (inputStream == null) {
-            throw new IllegalStateException("Could not find " + clientPropertiesFile + " in classpath");
+            throw new IllegalStateException("Could not find jboss-ejb-client.properties in classpath");
         }
         final Properties properties = new Properties();
         properties.load(inputStream);
