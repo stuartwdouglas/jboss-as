@@ -21,11 +21,14 @@
  */
 package org.jboss.as.ejb3.pool.strictmax;
 
+import org.jboss.as.ejb3.EjbMessages;
 import org.jboss.as.ejb3.pool.AbstractPool;
 import org.jboss.as.ejb3.pool.StatelessObjectFactory;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -60,6 +63,8 @@ public class StrictMaxPool<T> extends AbstractPool<T> {
      * Guarded by the implicit lock for "pool"
      */
     private final LinkedList<T> pool = new LinkedList<T>();
+    private final Set<T> inUse = new HashSet<T>();
+    private volatile boolean started = false;
 
     public StrictMaxPool(StatelessObjectFactory<T> factory, int maxSize, long timeout, TimeUnit timeUnit) {
         super(factory);
@@ -76,6 +81,10 @@ public class StrictMaxPool<T> extends AbstractPool<T> {
 
         // If we block when maxSize instances are in use, invoke release on strictMaxSize
         semaphore.release();
+        synchronized (pool) {
+            inUse.remove(ctx);
+            pool.notifyAll();
+        }
 
         // Let the super do any other remove stuff
         super.doRemove(ctx);
@@ -113,8 +122,13 @@ public class StrictMaxPool<T> extends AbstractPool<T> {
         }
 
         synchronized (pool) {
+            if(!started) {
+                throw EjbMessages.MESSAGES.poolIsStopped();
+            }
             if (!pool.isEmpty()) {
-                return pool.removeFirst();
+                final T instance =  pool.removeFirst();
+                inUse.add(instance);
+                return instance;
             }
         }
 
@@ -126,6 +140,12 @@ public class StrictMaxPool<T> extends AbstractPool<T> {
             if (bean == null) {
                 semaphore.release();
             }
+        }
+        synchronized (pool) {
+            if(!started) {
+                throw EjbMessages.MESSAGES.poolIsStopped();
+            }
+            inUse.add(bean);
         }
         return bean;
     }
@@ -151,6 +171,9 @@ public class StrictMaxPool<T> extends AbstractPool<T> {
                 pool.add(obj);
             else
                 destroyIt = true;
+
+            inUse.remove(obj);
+            pool.notifyAll();
         }
         if (destroyIt)
             destroy(obj);
@@ -172,7 +195,7 @@ public class StrictMaxPool<T> extends AbstractPool<T> {
 
     public void start() {
         // TODO Auto-generated method stub
-
+        started = true;
     }
 
     public void stop() {
@@ -181,9 +204,19 @@ public class StrictMaxPool<T> extends AbstractPool<T> {
             T obj;
             synchronized (pool) {
                 if(pool.isEmpty()) {
-                    return;
+                    if(inUse.isEmpty()) {
+                        started = false;
+                        return;
+                    } else {
+                        //is there are instances still in use we wait for them to finish
+                        try {
+                            pool.wait();
+                        } catch (InterruptedException e) {
+                           throw new RuntimeException(e);
+                        }
+                    }
                 }
-                ListIterator<T> itr = pool.listIterator();
+                final ListIterator<T> itr = pool.listIterator();
                 obj = itr.next();
                 itr.remove();
             }

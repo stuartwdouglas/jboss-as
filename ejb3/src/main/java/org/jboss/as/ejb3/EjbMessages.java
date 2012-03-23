@@ -2029,6 +2029,9 @@ public interface EjbMessages {
     @Message(id = 14558, value = "No EjbContext available as no EJB invocation is active")
     IllegalStateException noEjbContextAvailable();
 
+    @Message(id = 14559, value = "Pool is stopped")
+    IllegalStateException poolIsStopped();
+
 
     // STOP!!! Don't add message ids greater that 14599!!! If you need more first check what EjbLogger is
     // using and take more (lower) numbers from the available range for this module. If the range for the module is
