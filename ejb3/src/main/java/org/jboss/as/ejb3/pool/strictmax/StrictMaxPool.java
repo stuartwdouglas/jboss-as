@@ -203,9 +203,9 @@ public class StrictMaxPool<T> extends AbstractPool<T> {
             //we do not want to hold the lock while destruction is in progress
             T obj;
             synchronized (pool) {
+                started = false;
                 if(pool.isEmpty()) {
                     if(inUse.isEmpty()) {
-                        started = false;
                         return;
                     } else {
                         //is there are instances still in use we wait for them to finish

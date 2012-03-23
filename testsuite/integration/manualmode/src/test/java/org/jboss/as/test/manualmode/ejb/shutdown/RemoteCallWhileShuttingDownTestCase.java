@@ -101,7 +101,7 @@ public class RemoteCallWhileShuttingDownTestCase {
     @Deployment(name = DEP1, managed = false, testable = false)
     public static Archive createContainer1Deployment() {
         final JavaArchive ejbJar = ShrinkWrap.create(JavaArchive.class, DEP1 + ".jar");
-        ejbJar.addClasses(DelegatingEcho.class, RemoteEcho.class, RealEcho.class, StatelessDelegatingEcho.class);
+        ejbJar.addClasses(DelegatingEcho.class, RemoteEcho.class, RealEcho.class);
         return ejbJar;
     }
 
@@ -124,8 +124,6 @@ public class RemoteCallWhileShuttingDownTestCase {
             //now make the first invocation to make sure everything is working fine
             RemoteEcho echo = (RemoteEcho) context.lookup("ejb:/dep1/DelegatingEcho!" + RemoteEcho.class.getName());
             Assert.assertEquals("Real Hello", echo.echo("Hello"));
-            RemoteEcho statelessEcho = (RemoteEcho) context.lookup("ejb:/dep1/StatelessDelegatingEcho!" + RemoteEcho.class.getName());
-            Assert.assertEquals("Real Hello", statelessEcho.echo("Hello"));
 
             //now we need to shutdown the container
             //but we need to do it asyncronously
@@ -140,8 +138,6 @@ public class RemoteCallWhileShuttingDownTestCase {
             Thread.sleep(1000);
             Assert.assertEquals("Real Hello2", echo.echo("Hello2"));
             echo.testDone();
-            Assert.assertEquals("Real Hello2", statelessEcho.echo("Hello2"));
-            statelessEcho.testDone();
 
             while (managementClient.isServerInRunningState()) {
                 Thread.sleep(50);
