@@ -21,15 +21,16 @@
  */
 package org.jboss.as.ejb3.pool.strictmax;
 
-import static org.jboss.as.ejb3.EjbLogger.ROOT_LOGGER;
-import static org.jboss.as.ejb3.EjbMessages.MESSAGES;
-
 import org.jboss.as.ejb3.pool.AbstractPool;
 import org.jboss.as.ejb3.pool.StatelessObjectFactory;
 
 import java.util.LinkedList;
+import java.util.ListIterator;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+
+import static org.jboss.as.ejb3.EjbLogger.ROOT_LOGGER;
+import static org.jboss.as.ejb3.EjbMessages.MESSAGES;
 
 /**
  * A pool with a maximum size.
@@ -175,11 +176,18 @@ public class StrictMaxPool<T> extends AbstractPool<T> {
     }
 
     public void stop() {
-        synchronized (pool) {
-            for (T obj : pool) {
-                destroy(obj);
+        while (true) {
+            //we do not want to hold the lock while destruction is in progress
+            T obj;
+            synchronized (pool) {
+                if(pool.isEmpty()) {
+                    return;
+                }
+                ListIterator<T> itr = pool.listIterator();
+                obj = itr.next();
+                itr.remove();
             }
-            pool.clear();
+            destroy(obj);
         }
     }
 }
