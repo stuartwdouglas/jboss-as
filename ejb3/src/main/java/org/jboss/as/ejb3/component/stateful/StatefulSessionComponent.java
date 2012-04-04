@@ -46,7 +46,6 @@ import org.jboss.invocation.InterceptorFactory;
 import org.jboss.invocation.InterceptorFactoryContext;
 import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.msc.service.ServiceController;
-import org.jboss.msc.service.StopContext;
 
 import javax.ejb.AccessTimeout;
 import javax.ejb.EJBLocalObject;
@@ -311,9 +310,9 @@ public class StatefulSessionComponent extends SessionBeanComponent implements St
     }
 
     @Override
-    public void stop(final StopContext stopContext) {
+    public void stop() {
         getShutDownInterceptorFactory().shutdown();
-        super.stop(stopContext);
+        super.stop();
         cache.stop();
     }
 
