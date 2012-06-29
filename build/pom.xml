@@ -674,6 +674,35 @@
                 </dependency>
 
                 <dependency>
+                    <groupId>org.glassfish.corba</groupId>
+                    <artifactId>glassfish-corba-orb</artifactId>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.glassfish.gmbal</groupId>
+                    <artifactId>gmbal</artifactId>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>org.glassfish.pfl</groupId>
+                            <artifactId>pfl-asm</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.glassfish.pfl</groupId>
+                            <artifactId>pfl-tf-tools</artifactId>
+                        </exclusion>
+                        <exclusion>
+                            <groupId>org.glassfish.pfl</groupId>
+                            <artifactId>pfl-basic</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.glassfish.pfl</groupId>
+                    <artifactId>pfl-tf</artifactId>
+                </dependency>
+
+                <dependency>
                     <groupId>org.hibernate</groupId>
                     <artifactId>hibernate-core</artifactId>
                 </dependency>
@@ -969,6 +998,11 @@
 
                 <dependency>
                     <groupId>org.jboss.as</groupId>
+                    <artifactId>jboss-as-iiop-common</artifactId>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.jboss.as</groupId>
                     <artifactId>jboss-as-jacorb</artifactId>
                 </dependency>
 
@@ -1085,6 +1119,11 @@
                 <dependency>
                     <groupId>org.jboss.as</groupId>
                     <artifactId>jboss-as-system-jmx</artifactId>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.jboss.as</groupId>
+                    <artifactId>jboss-as-sunorb</artifactId>
                 </dependency>
 
                 <dependency>
@@ -2605,7 +2644,7 @@
                                         </group>
                                         <group>
                                             <title>Module org.jboss.as.jacorb</title>
-                                            <packages>org.jboss.as.jacorb:org.jboss.as.jacorb.csiv2:org.jboss.as.jacorb.csiv2.idl:org.jboss.as.jacorb.deployment:org.jboss.as.jacorb.naming:org.jboss.as.jacorb.naming.jndi:org.jboss.as.jacorb.rmi:org.jboss.as.jacorb.rmi.ir:org.jboss.as.jacorb.rmi.marshal:org.jboss.as.jacorb.rmi.marshal.strategy:org.jboss.as.jacorb.security:org.jboss.as.jacorb.service:org.jboss.as.jacorb.tm</packages>
+                                            <packages>org.jboss.as.jacorb:org.jboss.as.jacorb.csiv2:org.jboss.as.iiop.csiv2.idl:org.jboss.as.jacorb.deployment:org.jboss.as.jacorb.naming:org.jboss.as.jacorb.naming.jndi:org.jboss.as.jacorb.rmi:org.jboss.as.iiop.rmi.ir:org.jboss.as.iiop.rmi.marshal:org.jboss.as.iiop.rmi.marshal.strategy:org.jboss.as.jacorb.security:org.jboss.as.jacorb.service:org.jboss.as.iiop.tm</packages>
                                         </group>
                                         <group>
                                             <title>Module org.jboss.as.jaxr</title>

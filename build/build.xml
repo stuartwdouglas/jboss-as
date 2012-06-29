@@ -241,6 +241,10 @@
             <maven-resource group="org.jboss.as" artifact="jboss-as-server"/>
         </module-def>
 
+        <module-def name="org.jboss.as.sunorb">
+            <maven-resource group="org.jboss.as" artifact="jboss-as-sunorb"/>
+        </module-def>
+
         <module-def name="org.jboss.as.standalone"/>
 
         <module-def name="org.jboss.as.threads">
@@ -699,6 +703,17 @@
             <maven-resource group="org.codehaus.jettison" artifact="jettison" />
         </module-def>
 
+        <module-def name="org.glassfish.corba-orb">
+            <maven-resource group="org.glassfish.corba" artifact="glassfish-corba-orb" />
+            <maven-resource group="org.glassfish.corba" artifact="glassfish-corba-internal-api" />
+            <maven-resource group="org.glassfish.pfl" artifact="pfl-basic" />
+            <maven-resource group="org.glassfish.pfl" artifact="pfl-dynamic" />
+            <maven-resource group="org.glassfish.pfl" artifact="pfl-tf" />
+            <maven-resource group="org.glassfish.pfl" artifact="pfl-asm" />
+            <maven-resource group="org.glassfish.gmbal" artifact="gmbal" />
+            <maven-resource group="org.glassfish.external" artifact="management-api" />
+        </module-def>
+
         <module-def name="org.hibernate">
             <maven-resource group="org.hibernate" artifact="hibernate-core" />
             <maven-resource group="org.hibernate" artifact="hibernate-entitymanager" />
@@ -855,6 +870,10 @@
 
         <module-def name="org.jboss.as.jsr77">
             <maven-resource group="org.jboss.as" artifact="jboss-as-jsr77"/>
+        </module-def>
+
+        <module-def name="org.jboss.as.iiop.common">
+            <maven-resource group="org.jboss.as" artifact="jboss-as-iiop-common"/>
         </module-def>
 
         <module-def name="org.jboss.as.jacorb">
@@ -1278,7 +1297,9 @@
             <maven-resource group="org.kohsuke.rngom" artifact="rngom"/>
         </module-def>
 
-        <module-def name="org.omg.api" />
+        <module-def name="org.omg.api" >
+            <maven-resource group="org.glassfish.corba" artifact="glassfish-corba-omgapi" />
+        </module-def>
 
         <module-def name="org.osgi.core">
             <maven-resource group="org.osgi" artifact="org.osgi.core"/>

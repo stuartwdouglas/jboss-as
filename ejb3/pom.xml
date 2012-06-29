@@ -91,7 +91,7 @@ vi:ts=4:sw=4:expandtab
 
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>jboss-as-jacorb</artifactId>
+            <artifactId>jboss-as-iiop-common</artifactId>
         </dependency>
 
         <dependency>

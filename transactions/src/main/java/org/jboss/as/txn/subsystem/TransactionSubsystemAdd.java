@@ -22,10 +22,6 @@
 
 package org.jboss.as.txn.subsystem;
 
-import java.util.List;
-
-import javax.transaction.TransactionSynchronizationRegistry;
-
 import com.arjuna.ats.internal.arjuna.utils.UuidProcessId;
 import com.arjuna.ats.jbossatx.jta.RecoveryManagerService;
 import com.arjuna.ats.jts.common.jtsPropertyManager;
@@ -35,7 +31,7 @@ import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.as.controller.services.path.PathManagerService;
-import org.jboss.as.jacorb.service.CorbaNamingService;
+import org.jboss.as.iiop.IIOPServiceNames;
 import org.jboss.as.naming.ManagedReferenceFactory;
 import org.jboss.as.naming.ServiceBasedNamingStore;
 import org.jboss.as.naming.ValueManagedReferenceFactory;
@@ -69,6 +65,9 @@ import org.jboss.msc.value.ImmediateValue;
 import org.jboss.tm.JBossXATerminator;
 import org.jboss.tm.usertx.UserTransactionRegistry;
 import org.omg.CORBA.ORB;
+
+import javax.transaction.TransactionSynchronizationRegistry;
+import java.util.List;
 
 import static org.jboss.as.txn.TransactionLogger.ROOT_LOGGER;
 import static org.jboss.as.txn.subsystem.CommonAttributes.JTS;
@@ -381,7 +380,7 @@ class TransactionSubsystemAdd extends AbstractBoottimeAddStepHandler {
         //if jts is enabled we need the ORB
         if (jts) {
             transactionManagerServiceServiceBuilder.addDependency(ServiceName.JBOSS.append("jacorb", "orb-service"), ORB.class, transactionManagerService.getOrbInjector());
-            transactionManagerServiceServiceBuilder.addDependency(CorbaNamingService.SERVICE_NAME);
+            transactionManagerServiceServiceBuilder.addDependency(IIOPServiceNames.NAMING_SERVICE_NAME);
         }
 
         controllers.add(transactionManagerServiceServiceBuilder
