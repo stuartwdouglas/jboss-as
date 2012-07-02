@@ -24,6 +24,25 @@
 
 package org.jboss.as.ejb3;
 
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.util.Date;
+
+import javax.ejb.EJBException;
+import javax.ejb.EJBTransactionRequiredException;
+import javax.ejb.NoSuchObjectLocalException;
+import javax.ejb.RemoveException;
+import javax.ejb.Timer;
+import javax.ejb.TransactionAttributeType;
+import javax.resource.ResourceException;
+import javax.resource.spi.UnavailableException;
+import javax.resource.spi.endpoint.MessageEndpoint;
+import javax.security.auth.callback.Callback;
+import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.transaction.Transaction;
+
 import org.jboss.as.ee.component.Component;
 import org.jboss.as.ee.component.ResourceInjectionTarget;
 import org.jboss.as.ejb3.component.entity.EntityBeanComponentInstance;
@@ -52,24 +71,6 @@ import org.jboss.logging.annotations.Param;
 import org.jboss.remoting3.Channel;
 import org.jboss.remoting3.MessageInputStream;
 
-import javax.ejb.EJBException;
-import javax.ejb.EJBTransactionRequiredException;
-import javax.ejb.NoSuchObjectLocalException;
-import javax.ejb.RemoveException;
-import javax.ejb.Timer;
-import javax.ejb.TransactionAttributeType;
-import javax.resource.ResourceException;
-import javax.resource.spi.UnavailableException;
-import javax.resource.spi.endpoint.MessageEndpoint;
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.UnsupportedCallbackException;
-import javax.transaction.Transaction;
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.net.InetAddress;
-import java.util.Date;
-
 import static org.jboss.logging.Logger.Level.ERROR;
 import static org.jboss.logging.Logger.Level.INFO;
 import static org.jboss.logging.Logger.Level.WARN;
@@ -84,12 +85,7 @@ import static org.jboss.logging.Logger.Level.WARN;
 @MessageLogger(projectCode = "JBAS")
 public interface EjbLogger extends BasicLogger {
 
-    /**
-     * Default root level logger with the package name for he category.
-     */
-    EjbLogger ROOT_LOGGER = Logger.getMessageLogger(EjbLogger.class, EjbLogger.class.getPackage().getName());
-
-    EjbLogger EJB3_LOGGER = Logger.getMessageLogger(EjbLogger.class, "org.jboss.as.ejb3");
+    EjbLogger ROOT_LOGGER = Logger.getMessageLogger(EjbLogger.class, "org.jboss.as.ejb3");
 
     /**
      * logger use to log EJB invocation errors
@@ -800,9 +796,7 @@ public interface EjbLogger extends BasicLogger {
     @Message(id = 14259, value = "BMT stateful bean '%s' did not complete user transaction properly status=%s")
     void transactionNotComplete(String componentName, String status);
 
-
     // Don't add message ids greater that 14299!!! If you need more first check what EjbMessages is
     // using and take more (lower) numbers from the available range for this module. If the range for the module is
     // all used, go to https://community.jboss.org/docs/DOC-16810 and allocate another block for this subsystem
-
 }

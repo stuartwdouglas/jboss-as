@@ -124,7 +124,7 @@ public class PassivatingBackingCacheImpl<K extends Serializable, V extends Cache
             try {
                 passivate(i);
             } catch (Exception e) {
-                EjbLogger.EJB3_LOGGER.debug("passivation failed", e);
+                EjbLogger.ROOT_LOGGER.debug("passivation failed", e);
             }
         }
         return obj;

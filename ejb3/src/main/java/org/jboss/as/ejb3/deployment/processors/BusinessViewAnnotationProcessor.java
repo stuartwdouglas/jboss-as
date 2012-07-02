@@ -148,7 +148,7 @@ public class BusinessViewAnnotationProcessor implements DeploymentUnitProcessor 
         if (remoteViews == null || remoteViews.length == 0) {
             Set<Class<?>> interfaces = getPotentialBusinessInterfaces(sessionBeanClass);
             if (interfaces.size() != 1)
-                throw EjbLogger.EJB3_LOGGER.beanWithRemoteAnnotationImplementsMoreThanOneInterface(sessionBeanClass);
+                throw EjbLogger.ROOT_LOGGER.beanWithRemoteAnnotationImplementsMoreThanOneInterface(sessionBeanClass);
             return interfaces;
         }
         return Arrays.asList(remoteViews);
@@ -167,7 +167,7 @@ public class BusinessViewAnnotationProcessor implements DeploymentUnitProcessor 
         if (localViews == null || localViews.length == 0) {
             Set<Class<?>> interfaces = getPotentialBusinessInterfaces(sessionBeanClass);
             if (interfaces.size() != 1)
-                throw EjbLogger.EJB3_LOGGER.beanWithLocalAnnotationImplementsMoreThanOneInterface(sessionBeanClass);
+                throw EjbLogger.ROOT_LOGGER.beanWithLocalAnnotationImplementsMoreThanOneInterface(sessionBeanClass);
             return interfaces;
         }
         return Arrays.asList(localViews);

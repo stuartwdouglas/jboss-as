@@ -100,7 +100,7 @@ public abstract class IntegerBasedExpression {
                 break;
 
             default:
-                throw EjbLogger.EJB3_LOGGER.invalidValueForSecondInScheduleExpression(value);
+                throw EjbLogger.ROOT_LOGGER.invalidValueForSecondInScheduleExpression(value);
         }
     }
 

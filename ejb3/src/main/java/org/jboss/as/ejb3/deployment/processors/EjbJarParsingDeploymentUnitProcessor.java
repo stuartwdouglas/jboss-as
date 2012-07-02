@@ -48,6 +48,7 @@ import org.jboss.as.ejb3.pool.EJBBoundPoolParser;
 import org.jboss.as.ejb3.resourceadapterbinding.parser.EJBBoundResourceAdapterBindingMetaDataParser;
 import org.jboss.as.ejb3.security.parser.EJBBoundSecurityMetaDataParser;
 import org.jboss.as.ejb3.security.parser.SecurityRoleMetaDataParser;
+import org.jboss.as.ejb3.timerservice.TimerServiceMetaDataParser;
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
@@ -199,7 +200,7 @@ public class EjbJarParsingDeploymentUnitProcessor implements DeploymentUnitProce
             XMLStreamReader xmlReader = inputFactory.createXMLStreamReader(stream);
             return xmlReader;
         } catch (XMLStreamException xmlse) {
-            throw EjbLogger.EJB3_LOGGER.failedToParse(xmlse, "ejb-jar.xml: " + ejbJarXml.getPathName());
+            throw EjbLogger.ROOT_LOGGER.failedToParse(xmlse, "ejb-jar.xml: " + ejbJarXml.getPathName());
         }
     }
 
@@ -243,7 +244,7 @@ public class EjbJarParsingDeploymentUnitProcessor implements DeploymentUnitProce
             EjbJarMetaData ejbJarMetaData = EjbJarMetaDataParser.parse(reader, dtdInfo, SpecDescriptorPropertyReplacement.propertyReplacer(deploymentUnit));
             return ejbJarMetaData;
         } catch (XMLStreamException xmlse) {
-            throw EjbLogger.EJB3_LOGGER.failedToParse(xmlse, "ejb-jar.xml: " + descriptor.getPathName());
+            throw EjbLogger.ROOT_LOGGER.failedToParse(xmlse, "ejb-jar.xml: " + descriptor.getPathName());
         } finally {
             try {
                 stream.close();
@@ -275,7 +276,7 @@ public class EjbJarParsingDeploymentUnitProcessor implements DeploymentUnitProce
             final EjbJarMetaData ejbJarMetaData = parser.parse(reader, dtdInfo, JBossDescriptorPropertyReplacement.propertyReplacer(deploymentUnit));
             return ejbJarMetaData;
         } catch (XMLStreamException xmlse) {
-            throw EjbLogger.EJB3_LOGGER.failedToParse(xmlse, JBOSS_EJB3_XML + ": " + descriptor.getPathName());
+            throw EjbLogger.ROOT_LOGGER.failedToParse(xmlse, JBOSS_EJB3_XML + ": " + descriptor.getPathName());
         } finally {
             try {
                 stream.close();
@@ -300,6 +301,8 @@ public class EjbJarParsingDeploymentUnitProcessor implements DeploymentUnitProce
         parsers.put("urn:trans-timeout:1.0", new TransactionTimeoutMetaDataParser());
         parsers.put(EJBBoundPoolParser.NAMESPACE_URI, new EJBBoundPoolParser());
         parsers.put(EJBBoundCacheParser.NAMESPACE_URI, new EJBBoundCacheParser());
+
+        parsers.put(TimerServiceMetaDataParser.NAMESPACE_URI, TimerServiceMetaDataParser.INSTANCE);
         return parsers;
     }
 }

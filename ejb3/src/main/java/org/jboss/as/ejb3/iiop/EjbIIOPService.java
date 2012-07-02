@@ -377,12 +377,12 @@ public class EjbIIOPService implements Service<EjbIIOPService> {
                 try {
                     DynamicStubFactoryFactory.makeStubClass(homeView.getValue().getViewClass());
                 } catch (Exception e) {
-                    EjbLogger.EJB3_LOGGER.dynamicStubCreationFailed(homeView.getValue().getViewClass().getName(), e);
+                    EjbLogger.ROOT_LOGGER.dynamicStubCreationFailed(homeView.getValue().getViewClass().getName(), e);
                 }
                 try {
                     DynamicStubFactoryFactory.makeStubClass(remoteView.getValue().getViewClass());
                 } catch (Exception e) {
-                    EjbLogger.EJB3_LOGGER.dynamicStubCreationFailed(remoteView.getValue().getViewClass().getName(), e);
+                    EjbLogger.ROOT_LOGGER.dynamicStubCreationFailed(remoteView.getValue().getViewClass().getName(), e);
                 }
             } finally {
                 SecurityActions.setContextClassLoader(cl);
@@ -463,12 +463,12 @@ public class EjbIIOPService implements Service<EjbIIOPService> {
                     marshaller.finish();
                     return beanReferenceFactory.createReferenceWithId(stream.toByteArray(), beanRepositoryIds[0]);
                 }
-                throw EjbLogger.EJB3_LOGGER.unknownEJBLocatorType(locator);
+                throw EjbLogger.ROOT_LOGGER.unknownEJBLocatorType(locator);
             } else {
-                throw EjbLogger.EJB3_LOGGER.incorrectEJBLocatorForBean(locator, ejbComponent.getComponentName());
+                throw EjbLogger.ROOT_LOGGER.incorrectEJBLocatorForBean(locator, ejbComponent.getComponentName());
             }
         } catch (Exception e) {
-            throw EjbLogger.EJB3_LOGGER.couldNotCreateCorbaObject(e, locator);
+            throw EjbLogger.ROOT_LOGGER.couldNotCreateCorbaObject(e, locator);
         }
     }
 

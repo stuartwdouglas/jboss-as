@@ -24,7 +24,6 @@ package org.jboss.as.ejb3.component.session;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
-import javax.ejb.EJBException;
 import javax.ejb.EJBLocalObject;
 import javax.ejb.EJBObject;
 
@@ -129,7 +128,7 @@ public abstract class SessionBeanObjectViewConfigurator implements ViewConfigura
     private static final InterceptorFactory PRIMARY_KEY_INTERCEPTOR = new ImmediateInterceptorFactory(new Interceptor() {
         @Override
         public Object processInvocation(final InterceptorContext context) throws Exception {
-            throw EjbLogger.EJB3_LOGGER.cannotCallGetPKOnSessionBean();
+            throw EjbLogger.ROOT_LOGGER.cannotCallGetPKOnSessionBean();
         }
     });
 

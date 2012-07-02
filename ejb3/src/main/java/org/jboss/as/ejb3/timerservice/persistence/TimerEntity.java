@@ -35,21 +35,21 @@ public class TimerEntity implements Serializable {
 
     protected final String id;
 
-    protected final  String timedObjectId;
+    protected final String timedObjectId;
 
-    protected final  Date initialDate;
+    protected final Date initialDate;
 
-    protected final  long repeatInterval;
+    protected final long repeatInterval;
 
-    protected final  Date nextDate;
+    protected final Date nextDate;
 
-    protected final  Date previousRun;
+    protected final Date previousRun;
 
-    protected final  Serializable info;
+    protected final Serializable info;
 
-    protected final  Object primaryKey;
+    protected final Object primaryKey;
 
-    protected final  TimerState timerState;
+    protected final TimerState timerState;
 
     public TimerEntity(TimerImpl timer) {
         this.id = timer.getId();
@@ -61,7 +61,7 @@ public class TimerEntity implements Serializable {
         this.info = timer.getTimerInfo();
         this.primaryKey = timer.getPrimaryKey();
 
-        if(timer.getState() == TimerState.CREATED) {
+        if (timer.getState() == TimerState.CREATED) {
             //a timer that has been persisted cannot be in the created state
             this.timerState = TimerState.ACTIVE;
         } else {

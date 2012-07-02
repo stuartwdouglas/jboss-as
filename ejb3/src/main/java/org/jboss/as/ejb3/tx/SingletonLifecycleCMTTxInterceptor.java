@@ -58,7 +58,7 @@ public class SingletonLifecycleCMTTxInterceptor extends CMTTxInterceptor impleme
             case SUPPORTS:
                 return supports(invocation, component);
             default:
-                throw EjbLogger.EJB3_LOGGER.unknownTxAttributeOnInvocation(txAttr, invocation);
+                throw EjbLogger.ROOT_LOGGER.unknownTxAttributeOnInvocation(txAttr, invocation);
         }
     }
 

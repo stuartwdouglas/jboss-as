@@ -2109,4 +2109,7 @@ public interface EjbMessages {
     @Message(id = 14231, value = "EJB client context selector failed due to unavailability of %s service")
     IllegalStateException ejbClientContextSelectorUnableToFunctionDueToMissingService(ServiceName serviceName);
 
+    @Message(id = 14232, value = "Infinispan cache %s used for storing EJB timers is configured to use eviction. Eviction must be disabled to prevent timers from disappearing.")
+    StartException infinispanShouldNotHaveEvictionConfigured(final String cacheName);
+
 }

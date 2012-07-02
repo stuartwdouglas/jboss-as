@@ -137,7 +137,7 @@ public class EntityBeanHomeViewConfigurator implements ViewConfigurator {
                     ejbObjectClass = classIndex.classIndex(createdView.getViewClassName()).getModuleClass();
                     pkClass = classIndex.classIndex(componentDescription.getPrimaryKeyType()).getModuleClass();
                 } catch (ClassNotFoundException e) {
-                    throw EjbLogger.EJB3_LOGGER.failedToLoadViewClassForComponent(e, componentDescription.getComponentName());
+                    throw EjbLogger.ROOT_LOGGER.failedToLoadViewClassForComponent(e, componentDescription.getComponentName());
                 }
                 final EjbMetadataInterceptorFactory factory = new EjbMetadataInterceptorFactory(ejbObjectClass, configuration.getViewClass(), pkClass, false, false);
 

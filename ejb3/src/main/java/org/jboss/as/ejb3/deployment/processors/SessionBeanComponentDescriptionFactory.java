@@ -149,7 +149,7 @@ public class SessionBeanComponentDescriptionFactory extends EJBComponentDescript
                     sessionBeanDescription = new SingletonComponentDescription(beanName, beanClassName, ejbJarDescription, deploymentUnitServiceName, beanMetaData);
                     break;
                 default:
-                    throw EjbLogger.EJB3_LOGGER.unknownSessionBeanType(sessionBeanType.name());
+                    throw EjbLogger.ROOT_LOGGER.unknownSessionBeanType(sessionBeanType.name());
             }
 
             addComponent(deploymentUnit, sessionBeanDescription);
@@ -169,7 +169,7 @@ public class SessionBeanComponentDescriptionFactory extends EJBComponentDescript
             case Singleton:
                 return SessionBeanComponentDescription.SessionBeanType.SINGLETON;
             default:
-                throw EjbLogger.EJB3_LOGGER.unknownSessionBeanType(sessionType.name());
+                throw EjbLogger.ROOT_LOGGER.unknownSessionBeanType(sessionType.name());
         }
     }
 
@@ -186,12 +186,12 @@ public class SessionBeanComponentDescriptionFactory extends EJBComponentDescript
         final String className = sessionBeanClass.name().toString();
         // must *not* be a interface
         if (Modifier.isInterface(flags)) {
-            EjbLogger.EJB3_LOGGER.sessionBeanClassCannotBeAnInterface(className);
+            EjbLogger.ROOT_LOGGER.sessionBeanClassCannotBeAnInterface(className);
             return false;
         }
         // bean class must be public, must *not* be abstract or final
         if (!Modifier.isPublic(flags) || Modifier.isAbstract(flags) || Modifier.isFinal(flags)) {
-            EjbLogger.EJB3_LOGGER.sessionBeanClassMustBePublicNonAbstractNonFinal(className);
+            EjbLogger.ROOT_LOGGER.sessionBeanClassMustBePublicNonAbstractNonFinal(className);
             return false;
         }
         // valid class
@@ -236,7 +236,7 @@ public class SessionBeanComponentDescriptionFactory extends EJBComponentDescript
                 sessionBeanDescription = new SingletonComponentDescription(beanName, beanClassName, ejbJarDescription, deploymentUnit.getServiceName(), sessionBean);
                 break;
             default:
-                throw EjbLogger.EJB3_LOGGER.unknownSessionBeanType(sessionType.name());
+                throw EjbLogger.ROOT_LOGGER.unknownSessionBeanType(sessionType.name());
         }
         addComponent(deploymentUnit, sessionBeanDescription);
     }

@@ -75,7 +75,7 @@ public class TimedObjectInvokerImpl implements TimedObjectInvoker, Serializable,
     public void callTimeout(final TimerImpl timer, final Method timeoutMethod) throws Exception {
         if(!started) {
             //this can happen if an invocation has been triggered as the deployment is shutting down
-            throw EjbLogger.EJB3_LOGGER.timerInvocationFailedDueToInvokerNotBeingStarted();
+            throw EjbLogger.ROOT_LOGGER.timerInvocationFailedDueToInvokerNotBeingStarted();
         }
         final Interceptor interceptor = timeoutInterceptors.get(timeoutMethod);
         if(interceptor == null) {

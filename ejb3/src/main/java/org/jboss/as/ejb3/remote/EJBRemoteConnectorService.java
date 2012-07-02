@@ -209,7 +209,7 @@ public class EJBRemoteConnectorService implements Service<EJBRemoteConnectorServ
             try {
                 EJBRemoteConnectorService.this.sendVersionMessage(channelAssociation);
             } catch (IOException e) {
-                EjbLogger.EJB3_LOGGER.closingChannel(channel, e);
+                EjbLogger.ROOT_LOGGER.closingChannel(channel, e);
                 IoUtils.safeClose(channel);
             }
 
@@ -234,7 +234,7 @@ public class EJBRemoteConnectorService implements Service<EJBRemoteConnectorServ
 
         @Override
         public void handleError(Channel channel, IOException error) {
-            EjbLogger.EJB3_LOGGER.closingChannel(channel, error);
+            EjbLogger.ROOT_LOGGER.closingChannel(channel, error);
             try {
                 channel.close();
             } catch (IOException ioe) {
@@ -244,7 +244,7 @@ public class EJBRemoteConnectorService implements Service<EJBRemoteConnectorServ
 
         @Override
         public void handleEnd(Channel channel) {
-            EjbLogger.EJB3_LOGGER.closingChannelOnChannelEnd(channel);
+            EjbLogger.ROOT_LOGGER.closingChannelOnChannelEnd(channel);
             try {
                 channel.close();
             } catch (IOException ioe) {
@@ -261,7 +261,7 @@ public class EJBRemoteConnectorService implements Service<EJBRemoteConnectorServ
                 EjbLogger.ROOT_LOGGER.debug("Client with protocol version " + version + " and marshalling strategy " + clientMarshallingStrategy +
                         " trying to communicate on " + channel);
                 if (!EJBRemoteConnectorService.this.isSupportedMarshallingStrategy(clientMarshallingStrategy)) {
-                    EjbLogger.EJB3_LOGGER.unsupportedClientMarshallingStrategy(clientMarshallingStrategy, channel);
+                    EjbLogger.ROOT_LOGGER.unsupportedClientMarshallingStrategy(clientMarshallingStrategy, channel);
                     channel.close();
                     return;
                 }
@@ -280,7 +280,7 @@ public class EJBRemoteConnectorService implements Service<EJBRemoteConnectorServ
                         break;
 
                     default:
-                        throw EjbLogger.EJB3_LOGGER.ejbRemoteServiceCannotHandleClientVersion(version);
+                        throw EjbLogger.ROOT_LOGGER.ejbRemoteServiceCannotHandleClientVersion(version);
                 }
 
             } catch (IOException e) {
@@ -326,7 +326,7 @@ public class EJBRemoteConnectorService implements Service<EJBRemoteConnectorServ
     private MarshallerFactory getMarshallerFactory(final String marshallerStrategy) {
         final MarshallerFactory marshallerFactory = Marshalling.getProvidedMarshallerFactory(marshallerStrategy);
         if (marshallerFactory == null) {
-            throw EjbLogger.EJB3_LOGGER.failedToFindMarshallerFactoryForStrategy(marshallerStrategy);
+            throw EjbLogger.ROOT_LOGGER.failedToFindMarshallerFactoryForStrategy(marshallerStrategy);
         }
         return marshallerFactory;
     }

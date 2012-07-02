@@ -190,7 +190,7 @@ public class StatefulSessionComponent extends SessionBeanComponent implements St
     @Override
     public EJBLocalObject getEJBLocalObject(final InterceptorContext ctx) throws IllegalStateException {
         if (getEjbLocalObjectViewServiceName() == null) {
-            throw EjbLogger.EJB3_LOGGER.ejbLocalObjectUnavailable(getComponentName());
+            throw EjbLogger.ROOT_LOGGER.ejbLocalObjectUnavailable(getComponentName());
         }
         return createViewInstanceProxy(EJBLocalObject.class, Collections.<Object, Object>singletonMap(SessionID.class, getSessionIdOf(ctx)), getEjbLocalObjectViewServiceName());
     }

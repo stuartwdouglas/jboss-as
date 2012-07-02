@@ -180,7 +180,7 @@ public class MessageDrivenComponentDescriptionFactory extends EJBComponentDescri
         }
 
         if (interfaces.size() != 1)
-            throw EjbLogger.EJB3_LOGGER.mdbDoesNotImplementNorSpecifyMessageListener(beanClass);
+            throw EjbLogger.ROOT_LOGGER.mdbDoesNotImplementNorSpecifyMessageListener(beanClass);
         return interfaces.iterator().next().toString();
     }
 
@@ -198,12 +198,12 @@ public class MessageDrivenComponentDescriptionFactory extends EJBComponentDescri
         final String className = mdbClass.name().toString();
         // must *not* be a interface
         if (Modifier.isInterface(flags)) {
-            EjbLogger.EJB3_LOGGER.mdbClassCannotBeAnInterface(className);
+            EjbLogger.ROOT_LOGGER.mdbClassCannotBeAnInterface(className);
             return false;
         }
         // bean class must be public, must *not* be abstract or final
         if (!Modifier.isPublic(flags) || Modifier.isAbstract(flags) || Modifier.isFinal(flags)) {
-            EjbLogger.EJB3_LOGGER.mdbClassMustBePublicNonAbstractNonFinal(className);
+            EjbLogger.ROOT_LOGGER.mdbClassMustBePublicNonAbstractNonFinal(className);
             return false;
         }
         // valid class

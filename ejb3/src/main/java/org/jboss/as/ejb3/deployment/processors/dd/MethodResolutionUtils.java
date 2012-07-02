@@ -55,7 +55,7 @@ public class MethodResolutionUtils {
         final Collection<Method> method = resolveMethods(methodName, parameters, componentClass, reflectionIndex);
 
         if(method.size() >1) {
-            throw EjbLogger.EJB3_LOGGER.moreThanOneMethodWithSameNameOnComponent(methodName, componentClass);
+            throw EjbLogger.ROOT_LOGGER.moreThanOneMethodWithSameNameOnComponent(methodName, componentClass);
         }
         return method.iterator().next();
     }

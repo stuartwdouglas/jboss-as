@@ -99,11 +99,11 @@ public class HandleDelegateImpl implements HandleDelegate {
                     final ORB orb = (ORB) new InitialContext().lookup("java:comp/ORB");
                     stub.connect(orb);
                 } catch (NamingException ne) {
-                    throw EjbLogger.EJB3_LOGGER.failedToLookupORB();
+                    throw EjbLogger.ROOT_LOGGER.failedToLookupORB();
                 }
             }
         } else {
-            throw EjbLogger.EJB3_LOGGER.notAnObjectImpl(object.getClass());
+            throw EjbLogger.ROOT_LOGGER.notAnObjectImpl(object.getClass());
         }
     }
 

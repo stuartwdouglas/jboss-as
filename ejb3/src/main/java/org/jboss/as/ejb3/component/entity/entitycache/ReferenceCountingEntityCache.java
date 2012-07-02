@@ -56,7 +56,7 @@ public class ReferenceCountingEntityCache implements ReadyEntityCache {
                 //this happens in an instance is removed and then re-added in the space of the same transaction
                 existing.replacedInstance = instance;
             } else {
-                throw EjbLogger.EJB3_LOGGER.instanceAlreadyRegisteredForPK(instance.getPrimaryKey());
+                throw EjbLogger.ROOT_LOGGER.instanceAlreadyRegisteredForPK(instance.getPrimaryKey());
             }
         }
         return cacheEntry;
@@ -82,7 +82,7 @@ public class ReferenceCountingEntityCache implements ReadyEntityCache {
         if (instance.getPrimaryKey() == null) return;  // TODO: Should this be an Exception
         final CacheEntry cacheEntry = cache.get(instance.getPrimaryKey());
         if (cacheEntry == null) {
-            throw EjbLogger.EJB3_LOGGER.entityBeanInstanceNotFoundInCache(instance);
+            throw EjbLogger.ROOT_LOGGER.entityBeanInstanceNotFoundInCache(instance);
         }
         if (cacheEntry.replacedInstance != null) {
             //this can happen if an entity is removed and a new entity with the same PK is added in a transactions

@@ -68,7 +68,7 @@ public class ApplicationExceptionAnnotationProcessor implements DeploymentUnitPr
         for (AnnotationInstance annotationInstance : applicationExceptionAnnotations) {
             AnnotationTarget target = annotationInstance.target();
             if (!(target instanceof ClassInfo)) {
-                throw EjbLogger.EJB3_LOGGER.annotationOnlyAllowedOnClass(ApplicationException.class.getName(), target);
+                throw EjbLogger.ROOT_LOGGER.annotationOnlyAllowedOnClass(ApplicationException.class.getName(), target);
             }
             String exceptionClassName = ((ClassInfo) target).name().toString();
             boolean rollback = false;

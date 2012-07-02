@@ -120,7 +120,7 @@ public class TransactionLocalEntityCache implements ReadyEntityCache {
         if (map != null) {
             final CacheEntry cacheEntry = map.get(instance.getPrimaryKey());
             if (cacheEntry == null) {
-                throw EjbLogger.EJB3_LOGGER.entityBeanInstanceNotFoundInCache(instance);
+                throw EjbLogger.ROOT_LOGGER.entityBeanInstanceNotFoundInCache(instance);
             }
             if (cacheEntry.referenceCount.decrementAndGet() <= 0) {
                 final Object pk = instance.getPrimaryKey();
@@ -138,7 +138,7 @@ public class TransactionLocalEntityCache implements ReadyEntityCache {
         final Map<Object, CacheEntry> cache = prepareCache();
         final CacheEntry cacheEntry = cache.get(instance.getPrimaryKey());
         if (cacheEntry == null) {
-            throw EjbLogger.EJB3_LOGGER.entityBeanInstanceNotFoundInCache(instance);
+            throw EjbLogger.ROOT_LOGGER.entityBeanInstanceNotFoundInCache(instance);
         }
         cacheEntry.referenceCount.incrementAndGet();
     }

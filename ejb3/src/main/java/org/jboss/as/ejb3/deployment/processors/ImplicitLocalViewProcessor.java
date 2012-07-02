@@ -73,7 +73,7 @@ public class ImplicitLocalViewProcessor extends AbstractComponentConfigProcessor
 
         final Module module = deploymentUnit.getAttachment(org.jboss.as.server.deployment.Attachments.MODULE);
         if (module == null) {
-            throw EjbLogger.EJB3_LOGGER.moduleNotAttachedToDeploymentUnit(deploymentUnit);
+            throw EjbLogger.ROOT_LOGGER.moduleNotAttachedToDeploymentUnit(deploymentUnit);
         }
         ClassLoader cl = module.getClassLoader();
         Class<?> ejbClass = null;

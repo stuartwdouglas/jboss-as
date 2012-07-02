@@ -73,13 +73,13 @@ public class EntityBeanRemoteViewInstanceFactory implements ViewInstanceFactory 
     private Object invokeCreate(final Component component, final Map<Object, Object> contextData) throws Exception {
         final Method ejbCreate = (Method) contextData.get(EntityBeanHomeCreateInterceptorFactory.EJB_CREATE_METHOD_KEY);
         if (ejbCreate == null) {
-            throw EjbLogger.EJB3_LOGGER.entityCannotBeCreatedDueToMissingCreateMethod(this.beanName);
+            throw EjbLogger.ROOT_LOGGER.entityCannotBeCreatedDueToMissingCreateMethod(this.beanName);
         }
         final Method ejbPostCreate = (Method) contextData.get(EntityBeanHomeCreateInterceptorFactory.EJB_POST_CREATE_METHOD_KEY);
         final Object[] params = (Object[]) contextData.get(EntityBeanHomeCreateInterceptorFactory.PARAMETERS_KEY);
 
         if (!(component instanceof EntityBeanComponent)) {
-            throw EjbLogger.EJB3_LOGGER.notAnEntityBean(component);
+            throw EjbLogger.ROOT_LOGGER.notAnEntityBean(component);
         }
         final EntityBeanComponent entityBeanComponent = (EntityBeanComponent) component;
         //grab an unassociated entity bean from the pool

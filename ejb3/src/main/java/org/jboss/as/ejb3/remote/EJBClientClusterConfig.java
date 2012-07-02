@@ -77,7 +77,7 @@ public class EJBClientClusterConfig extends EJBClientCommonConnectionConfig impl
                 final Class<?> nodeSelectorClass = deploymentClassLoader.loadClass(nodeSelector);
                 this.clusterNodeSelector = (ClusterNodeSelector) nodeSelectorClass.newInstance();
             } catch (Exception e) {
-                throw EjbLogger.EJB3_LOGGER.failureDuringLoadOfClusterNodeSelector(nodeSelector, clusterConfig.getClusterName(), e);
+                throw EjbLogger.ROOT_LOGGER.failureDuringLoadOfClusterNodeSelector(nodeSelector, clusterConfig.getClusterName(), e);
             }
         } else {
             this.clusterNodeSelector = null;

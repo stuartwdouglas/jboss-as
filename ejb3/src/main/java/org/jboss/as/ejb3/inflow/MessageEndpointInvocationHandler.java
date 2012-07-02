@@ -26,7 +26,6 @@ import org.jboss.as.ejb3.EjbLogger;
 import javax.resource.ResourceException;
 import javax.resource.spi.ApplicationServerInternalException;
 import javax.resource.spi.LocalTransactionException;
-import javax.resource.spi.UnavailableException;
 import javax.resource.spi.endpoint.MessageEndpoint;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -130,7 +129,7 @@ public class MessageEndpointInvocationHandler extends AbstractInvocationHandler 
     protected Object doInvoke(Object proxy, Method method, Object[] args) throws Throwable {
         // Are we still usable?
         if (released.get())
-            throw EjbLogger.EJB3_LOGGER.messageEndpointAlreadyReleased(this);
+            throw EjbLogger.ROOT_LOGGER.messageEndpointAlreadyReleased(this);
 
         // TODO: check for concurrent invocation
 

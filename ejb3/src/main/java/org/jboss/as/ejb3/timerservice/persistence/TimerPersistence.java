@@ -77,4 +77,16 @@ public interface TimerPersistence {
      */
     List<TimerEntity> loadActiveTimers(String timedObjectId);
 
+    /**
+     * Adds a listener that is used to notify the container of changes to the underlying timers
+     * @param listener The listener to add
+     */
+    void addListener(TimerListener listener);
+
+    /**
+     * Removes the given lister that was added with {@link #addListener(TimerListener)}
+     * @param listener The listener to remove
+     */
+    void removeListener(TimerListener listener);
+
 }

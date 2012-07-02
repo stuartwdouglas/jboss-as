@@ -51,7 +51,7 @@ import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
 import org.jboss.util.propertyeditor.PropertyEditors;
 
-import static org.jboss.as.ejb3.EjbLogger.EJB3_LOGGER;
+import static org.jboss.as.ejb3.EjbLogger.ROOT_LOGGER;
 import static org.jboss.as.ejb3.EjbMessages.MESSAGES;
 
 /**
@@ -84,7 +84,7 @@ public class EJBUtilities implements EndpointDeployer, Service<EJBUtilities> {
             }
             final ResourceAdapterRepository resourceAdapterRepository = getResourceAdapterRepository();
             if (resourceAdapterRepository == null) {
-                throw EJB3_LOGGER.resourceAdapterRepositoryUnAvailable();
+                throw ROOT_LOGGER.resourceAdapterRepositoryUnAvailable();
             }
             // now get the message listeners for this specific ra identifier
             final List<MessageListener> messageListeners = resourceAdapterRepository.getMessageListeners(raIdentifier);
@@ -141,12 +141,12 @@ public class EJBUtilities implements EndpointDeployer, Service<EJBUtilities> {
         }
         final ResourceAdapterRepository resourceAdapterRepository = getResourceAdapterRepository();
         if (resourceAdapterRepository == null) {
-            throw EJB3_LOGGER.resourceAdapterRepositoryUnAvailable();
+            throw ROOT_LOGGER.resourceAdapterRepositoryUnAvailable();
         }
         try {
             return resourceAdapterRepository.getEndpoint(raIdentifier);
         } catch (NotFoundException nfe) {
-            throw EJB3_LOGGER.noSuchEndpointException(resourceAdapterName, nfe);
+            throw ROOT_LOGGER.noSuchEndpointException(resourceAdapterName, nfe);
         }
     }
 
@@ -242,7 +242,7 @@ public class EJBUtilities implements EndpointDeployer, Service<EJBUtilities> {
             if (raActivationConfigProps.containsKey(propName) == false && raRequiredConfigProps.contains(propName) == false) {
                 // not a valid activation config property, so log a WARN and filter it out from the valid activation config properties
                 validActivationConfigProps.remove(propName);
-                EJB3_LOGGER.activationConfigPropertyIgnored(propName, resourceAdapterName);
+                ROOT_LOGGER.activationConfigPropertyIgnored(propName, resourceAdapterName);
             }
         }
         return validActivationConfigProps;

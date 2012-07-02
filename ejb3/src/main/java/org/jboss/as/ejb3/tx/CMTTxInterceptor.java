@@ -77,7 +77,7 @@ public class CMTTxInterceptor implements Interceptor {
     protected void endTransaction(TransactionManager tm, Transaction tx) {
         try {
             if (tx != tm.getTransaction()) {
-                throw EjbLogger.EJB3_LOGGER.wrongTxOnThread(tx, tm.getTransaction());
+                throw EjbLogger.ROOT_LOGGER.wrongTxOnThread(tx, tm.getTransaction());
             }
 
             if (tx.getStatus() == Status.STATUS_MARKED_ROLLBACK) {
@@ -216,7 +216,7 @@ public class CMTTxInterceptor implements Interceptor {
             case SUPPORTS:
                 return supports(invocation, component);
             default:
-                throw EjbLogger.EJB3_LOGGER.unknownTxAttributeOnInvocation(attr, invocation);
+                throw EjbLogger.ROOT_LOGGER.unknownTxAttributeOnInvocation(attr, invocation);
         }
     }
 
@@ -275,7 +275,7 @@ public class CMTTxInterceptor implements Interceptor {
         final TransactionManager tm = component.getTransactionManager();
         Transaction tx = tm.getTransaction();
         if (tx == null) {
-            throw EjbLogger.EJB3_LOGGER.txRequiredForInvocation(invocation);
+            throw EjbLogger.ROOT_LOGGER.txRequiredForInvocation(invocation);
         }
         return invokeInCallerTx(invocation, tx, component);
     }
@@ -283,7 +283,7 @@ public class CMTTxInterceptor implements Interceptor {
     protected Object never(InterceptorContext invocation, final EJBComponent component) throws Exception {
         final TransactionManager tm = component.getTransactionManager();
         if (tm.getTransaction() != null) {
-            throw EjbLogger.EJB3_LOGGER.txPresentForNeverTxAttribute();
+            throw EjbLogger.ROOT_LOGGER.txPresentForNeverTxAttribute();
         }
         return invokeInNoTx(invocation);
     }
@@ -371,9 +371,9 @@ public class CMTTxInterceptor implements Interceptor {
         try {
             tx.setRollbackOnly();
         } catch (SystemException ex) {
-            EjbLogger.EJB3_LOGGER.failedToSetRollbackOnly(ex);
+            EjbLogger.ROOT_LOGGER.failedToSetRollbackOnly(ex);
         } catch (IllegalStateException ex) {
-            EjbLogger.EJB3_LOGGER.failedToSetRollbackOnly(ex);
+            EjbLogger.ROOT_LOGGER.failedToSetRollbackOnly(ex);
         }
     }
 

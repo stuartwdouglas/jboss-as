@@ -21,8 +21,6 @@
  */
 package org.jboss.as.ejb3.component.session;
 
-import javax.ejb.RemoveException;
-
 import org.jboss.as.ejb3.EjbLogger;
 import org.jboss.invocation.ImmediateInterceptorFactory;
 import org.jboss.invocation.Interceptor;
@@ -41,6 +39,6 @@ public class InvalidRemoveExceptionMethodInterceptor implements Interceptor {
 
     @Override
     public Object processInvocation(final InterceptorContext context) throws Exception {
-        throw EjbLogger.EJB3_LOGGER.illegalCallToEjbHomeRemove();
+        throw EjbLogger.ROOT_LOGGER.illegalCallToEjbHomeRemove();
     }
 }

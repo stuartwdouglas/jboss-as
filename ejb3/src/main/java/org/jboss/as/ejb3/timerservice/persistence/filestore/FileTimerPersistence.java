@@ -21,9 +21,6 @@
  */
 package org.jboss.as.ejb3.timerservice.persistence.filestore;
 
-import static org.jboss.as.ejb3.EjbLogger.ROOT_LOGGER;
-import static org.jboss.as.ejb3.EjbMessages.MESSAGES;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -48,6 +45,7 @@ import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.as.ejb3.component.stateful.CurrentSynchronizationCallback;
 import org.jboss.as.ejb3.timerservice.TimerState;
 import org.jboss.as.ejb3.timerservice.persistence.TimerEntity;
+import org.jboss.as.ejb3.timerservice.persistence.TimerListener;
 import org.jboss.as.ejb3.timerservice.persistence.TimerPersistence;
 import org.jboss.marshalling.InputStreamByteInput;
 import org.jboss.marshalling.Marshaller;
@@ -63,6 +61,9 @@ import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
+
+import static org.jboss.as.ejb3.EjbLogger.ROOT_LOGGER;
+import static org.jboss.as.ejb3.EjbMessages.MESSAGES;
 
 /**
  * File based persistent timer store.
@@ -264,6 +265,16 @@ public class FileTimerPersistence implements TimerPersistence, Service<FileTimer
     @Override
     public List<TimerEntity> loadActiveTimers(final String timedObjectId) {
         return loadActiveTimers(timedObjectId, null);
+    }
+
+    @Override
+    public void addListener(final TimerListener listener) {
+        //noop, this implementation does not need listener callbacks
+    }
+
+    @Override
+    public void removeListener(final TimerListener listener) {
+        //noop, this implementation does not need listener callbacks
     }
 
     /**

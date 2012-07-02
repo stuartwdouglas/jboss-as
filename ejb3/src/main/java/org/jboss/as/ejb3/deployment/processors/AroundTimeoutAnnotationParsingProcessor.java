@@ -77,7 +77,7 @@ public class AroundTimeoutAnnotationParsingProcessor implements DeploymentUnitPr
 
     private void processAroundInvoke(final AnnotationTarget target, final EEModuleDescription eeModuleDescription) {
         if (!(target instanceof MethodInfo)) {
-            throw EjbLogger.EJB3_LOGGER.annotationApplicableOnlyForMethods(AROUND_TIMEOUT_ANNOTATION_NAME.toString());
+            throw EjbLogger.ROOT_LOGGER.annotationApplicableOnlyForMethods(AROUND_TIMEOUT_ANNOTATION_NAME.toString());
         }
         final MethodInfo methodInfo = MethodInfo.class.cast(target);
         final ClassInfo classInfo = methodInfo.declaringClass();
@@ -93,17 +93,17 @@ public class AroundTimeoutAnnotationParsingProcessor implements DeploymentUnitPr
         final Type[] args = methodInfo.args();
         switch (args.length) {
             case 0:
-                throw EjbLogger.EJB3_LOGGER.aroundTimeoutMethodExpectedWithInvocationContextParam(methodInfo.name(), classInfo.toString());
+                throw EjbLogger.ROOT_LOGGER.aroundTimeoutMethodExpectedWithInvocationContextParam(methodInfo.name(), classInfo.toString());
             case 1:
                 if (!InvocationContext.class.getName().equals(args[0].name().toString())) {
-                    throw EjbLogger.EJB3_LOGGER.aroundTimeoutMethodExpectedWithInvocationContextParam(methodInfo.name(), classInfo.toString());
+                    throw EjbLogger.ROOT_LOGGER.aroundTimeoutMethodExpectedWithInvocationContextParam(methodInfo.name(), classInfo.toString());
                 }
                 break;
             default:
-                throw EjbLogger.EJB3_LOGGER.aroundTimeoutMethodExpectedWithInvocationContextParam(methodInfo.name(), classInfo.toString());
+                throw EjbLogger.ROOT_LOGGER.aroundTimeoutMethodExpectedWithInvocationContextParam(methodInfo.name(), classInfo.toString());
         }
         if (!methodInfo.returnType().name().toString().equals(Object.class.getName())) {
-            throw EjbLogger.EJB3_LOGGER.aroundTimeoutMethodMustReturnObjectType(methodInfo.name(), classInfo.toString());
+            throw EjbLogger.ROOT_LOGGER.aroundTimeoutMethodMustReturnObjectType(methodInfo.name(), classInfo.toString());
         }
     }
 }

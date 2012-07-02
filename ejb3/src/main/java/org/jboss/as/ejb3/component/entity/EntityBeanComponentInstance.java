@@ -238,7 +238,7 @@ public class EntityBeanComponentInstance extends EjbComponentInstance {
     public EJBObject getEjbObject() {
         final Object pk = getPrimaryKey();
         if (pk == null) {
-            throw EjbLogger.EJB3_LOGGER.cannotCallGetEjbObjectBeforePrimaryKeyAssociation();
+            throw EjbLogger.ROOT_LOGGER.cannotCallGetEjbObjectBeforePrimaryKeyAssociation();
         }
         return getComponent().getEJBObject(pk);
     }
@@ -246,7 +246,7 @@ public class EntityBeanComponentInstance extends EjbComponentInstance {
     public EJBLocalObject getEjbLocalObject() {
         final Object pk = getPrimaryKey();
         if (pk == null) {
-            throw EjbLogger.EJB3_LOGGER.cannotCallGetEjbLocalObjectBeforePrimaryKeyAssociation();
+            throw EjbLogger.ROOT_LOGGER.cannotCallGetEjbLocalObjectBeforePrimaryKeyAssociation();
         }
         return getComponent().getEJBLocalObject(pk);
     }

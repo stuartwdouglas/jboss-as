@@ -108,7 +108,7 @@ public class StatefulSessionBeanClassTable implements ClassTable {
     public Class<?> readClass(final Unmarshaller unmarshaller) throws IOException, ClassNotFoundException {
         int index = unmarshaller.readUnsignedByte();
         if (index >= classes.length) {
-            throw EjbLogger.EJB3_LOGGER.classNotFoundInClassTable(this.getClass().getName(), index);
+            throw EjbLogger.ROOT_LOGGER.classNotFoundInClassTable(this.getClass().getName(), index);
         }
         return classes[index];
     }

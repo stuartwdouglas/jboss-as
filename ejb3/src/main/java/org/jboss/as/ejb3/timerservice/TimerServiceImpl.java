@@ -42,7 +42,6 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 
 import javax.ejb.EJBException;
-import javax.ejb.NoSuchObjectLocalException;
 import javax.ejb.ScheduleExpression;
 import javax.ejb.Timer;
 import javax.ejb.TimerConfig;
@@ -80,7 +79,6 @@ import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
 
-import static org.jboss.as.ejb3.EjbLogger.EJB3_LOGGER;
 import static org.jboss.as.ejb3.EjbLogger.ROOT_LOGGER;
 import static org.jboss.as.ejb3.EjbMessages.MESSAGES;
 
@@ -866,7 +864,7 @@ public class TimerServiceImpl implements TimerService, Service<TimerService> {
 
         final TimerEntity timerEntity = timerPersistence.getValue().loadTimer(id, timedObjectId);
         if (timerEntity == null) {
-            throw EJB3_LOGGER.timerNotFound(id);
+            throw ROOT_LOGGER.timerNotFound(id);
         }
         if (timerEntity.isCalendarTimer()) {
             return new CalendarTimer((CalendarTimerEntity) timerEntity, this);

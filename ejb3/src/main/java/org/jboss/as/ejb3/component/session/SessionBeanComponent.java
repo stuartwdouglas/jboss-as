@@ -105,7 +105,7 @@ public abstract class SessionBeanComponent extends EJBComponent {
     public void setRollbackOnly() throws IllegalStateException {
         // NOT_SUPPORTED and NEVER will not have a transaction context, so we can ignore those
         if (getCurrentTransactionAttribute() == TransactionAttributeType.SUPPORTS) {
-            throw EjbLogger.EJB3_LOGGER.setRollbackOnlyNotAllowedForSupportsTxAttr();
+            throw EjbLogger.ROOT_LOGGER.setRollbackOnlyNotAllowedForSupportsTxAttr();
         }
         super.setRollbackOnly();
     }

@@ -75,7 +75,7 @@ public class EjbManagementDeploymentUnitProcessor implements DeploymentUnitProce
                     installManagementResource(configuration, deploymentUnit);
                 }
             } catch (RuntimeException e) {
-                throw EjbLogger.EJB3_LOGGER.failedToInstallManagementResource(e, configuration.getComponentName());
+                throw EjbLogger.ROOT_LOGGER.failedToInstallManagementResource(e, configuration.getComponentName());
             }
         }
     }

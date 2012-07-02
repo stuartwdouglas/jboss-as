@@ -67,7 +67,7 @@ public class TimerCMTTxInterceptor extends CMTTxInterceptor {
                 super.endTransaction(tm, tx);
             }
             if (rolledBack && EXCEPTION.get() == null) {
-                throw EjbLogger.EJB3_LOGGER.timerInvocationRolledBack();
+                throw EjbLogger.ROOT_LOGGER.timerInvocationRolledBack();
             }
         } finally {
             EXCEPTION.remove();

@@ -125,7 +125,7 @@ public class SessionBeanHomeProcessor extends AbstractComponentConfigProcessor {
                         try {
                             ejbObjectClass = classIndex.classIndex(ejbObjectView.getViewClassName()).getModuleClass();
                         } catch (ClassNotFoundException e) {
-                            throw EjbLogger.EJB3_LOGGER.failedToLoadViewClassForComponent(e, componentDescription.getComponentName());
+                            throw EjbLogger.ROOT_LOGGER.failedToLoadViewClassForComponent(e, componentDescription.getComponentName());
                         }
                         final EjbMetadataInterceptorFactory factory = new EjbMetadataInterceptorFactory(ejbObjectClass, configuration.getViewClass(), null, true, componentDescription instanceof StatelessComponentDescription);
 

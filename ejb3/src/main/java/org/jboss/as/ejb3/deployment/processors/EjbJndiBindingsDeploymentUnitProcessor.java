@@ -101,7 +101,7 @@ public class EjbJndiBindingsDeploymentUnitProcessor implements DeploymentUnitPro
     private void setupJNDIBindings(EJBComponentDescription sessionBean, DeploymentUnit deploymentUnit) throws DeploymentUnitProcessingException {
         final Collection<ViewDescription> views = sessionBean.getViews();
         if (views == null || views.isEmpty()) {
-            EjbLogger.EJB3_LOGGER.noJNDIBindingsForSessionBean(sessionBean.getEJBName());
+            EjbLogger.ROOT_LOGGER.noJNDIBindingsForSessionBean(sessionBean.getEJBName());
             return;
         }
 

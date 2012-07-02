@@ -93,7 +93,7 @@ class EJBClientCommonConnectionConfig implements EJBClientConfiguration.CommonCo
                 final Option<?> option = Option.fromString(propertyName, classLoader);
                 optionMapBuilder.parse(option, properties.getProperty(propertyName), classLoader);
             } catch (IllegalArgumentException e) {
-                EjbLogger.EJB3_LOGGER.failedToCreateOptionForProperty(propertyName, e.getMessage());
+                EjbLogger.ROOT_LOGGER.failedToCreateOptionForProperty(propertyName, e.getMessage());
             }
         }
         return optionMapBuilder.getMap();

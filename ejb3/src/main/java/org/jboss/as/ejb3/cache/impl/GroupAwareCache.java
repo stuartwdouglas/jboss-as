@@ -89,7 +89,7 @@ public class GroupAwareCache<K extends Serializable, V extends Cacheable<K>, G e
                     try {
                         entry.getValue().remove(id);
                     } catch (Exception toLog) {
-                        EjbLogger.EJB3_LOGGER.cacheRemoveFailed(id);
+                        EjbLogger.ROOT_LOGGER.cacheRemoveFailed(id);
                     }
                 }
             }

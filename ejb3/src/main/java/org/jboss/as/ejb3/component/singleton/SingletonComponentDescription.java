@@ -227,7 +227,7 @@ public class SingletonComponentDescription extends SessionBeanComponentDescripti
 
     @Override
     protected ViewConfigurator getSessionBeanObjectViewConfigurator() {
-        throw EjbLogger.EJB3_LOGGER.ejb2xViewNotApplicableForSingletonBeans();
+        throw EjbLogger.ROOT_LOGGER.ejb2xViewNotApplicableForSingletonBeans();
     }
 
     private void addConcurrencyManagementInterceptor() {

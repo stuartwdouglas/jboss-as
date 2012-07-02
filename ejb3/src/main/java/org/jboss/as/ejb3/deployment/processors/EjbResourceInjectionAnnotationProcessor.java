@@ -104,7 +104,7 @@ public class EjbResourceInjectionAnnotationProcessor implements DeploymentUnitPr
                     processClass(deploymentUnit, annotationWrapper, (ClassInfo) annotationTarget, moduleDescription);
                 }
             } else {
-                throw EjbLogger.EJB3_LOGGER.annotationOnlyAllowedOnClass(EJBs.class.getName(), annotation.target());
+                throw EjbLogger.ROOT_LOGGER.annotationOnlyAllowedOnClass(EJBs.class.getName(), annotation.target());
             }
         }
     }
@@ -124,7 +124,7 @@ public class EjbResourceInjectionAnnotationProcessor implements DeploymentUnitPr
     private void processMethod(final DeploymentUnit deploymentUnit, final EJBResourceWrapper annotation, final MethodInfo methodInfo, final EEModuleDescription eeModuleDescription) {
         final String methodName = methodInfo.name();
         if (!methodName.startsWith("set") || methodInfo.args().length != 1) {
-            throw EjbLogger.EJB3_LOGGER.onlySetterMethodsAllowedToHaveEJBAnnotation(methodInfo);
+            throw EjbLogger.ROOT_LOGGER.onlySetterMethodsAllowedToHaveEJBAnnotation(methodInfo);
         }
         final String methodParamType = methodInfo.args()[0].name().toString();
         final InjectionTarget targetDescription = new MethodInjectionTarget(methodInfo.declaringClass().name().toString(), methodName, methodParamType);
@@ -136,10 +136,10 @@ public class EjbResourceInjectionAnnotationProcessor implements DeploymentUnitPr
 
     private void processClass(final DeploymentUnit deploymentUnit, final EJBResourceWrapper annotation, final ClassInfo classInfo, final EEModuleDescription eeModuleDescription) throws DeploymentUnitProcessingException {
         if (isEmpty(annotation.name())) {
-            throw EjbLogger.EJB3_LOGGER.nameAttributeRequiredForEJBAnnotationOnClass(classInfo.toString());
+            throw EjbLogger.ROOT_LOGGER.nameAttributeRequiredForEJBAnnotationOnClass(classInfo.toString());
         }
         if (isEmpty(annotation.beanInterface())) {
-            throw EjbLogger.EJB3_LOGGER.beanInterfaceAttributeRequiredForEJBAnnotationOnClass(classInfo.toString());
+            throw EjbLogger.ROOT_LOGGER.beanInterfaceAttributeRequiredForEJBAnnotationOnClass(classInfo.toString());
         }
         process(deploymentUnit, annotation.beanInterface(), annotation.beanName(), annotation.lookup(), classInfo, null, annotation.name(), eeModuleDescription);
     }

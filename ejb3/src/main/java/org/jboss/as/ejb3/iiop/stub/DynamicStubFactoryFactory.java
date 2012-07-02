@@ -45,7 +45,7 @@ public class DynamicStubFactoryFactory extends StubFactoryFactoryDynamicBase {
                 try {
                     theClass = cl.loadClass(stubClassName);
                 } catch (ClassNotFoundException e1) {
-                    EjbLogger.EJB3_LOGGER.dynamicStubCreationFailed(stubClassName, ex);
+                    EjbLogger.ROOT_LOGGER.dynamicStubCreationFailed(stubClassName, ex);
                     throw ex;
                 }
             }

@@ -41,7 +41,7 @@ class EJBRemoteTransactionPropagatingInterceptorFactory extends ComponentInterce
     @Override
     protected Interceptor create(final Component component, final InterceptorFactoryContext context) {
         if (!(component instanceof EJBComponent)) {
-            throw EjbLogger.EJB3_LOGGER.notAnEJBComponent(component);
+            throw EjbLogger.ROOT_LOGGER.notAnEJBComponent(component);
         }
         final EJBRemoteTransactionsRepository ejbRemoteTransactionsRepository = ((EJBComponent) component).getEjbRemoteTransactionsRepository();
         return new EJBRemoteTransactionPropagatingInterceptor(ejbRemoteTransactionsRepository);

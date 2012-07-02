@@ -276,7 +276,7 @@ public class CalendarTimer extends TimerImpl {
                 try {
                     methodParamClass = Class.forName(paramClassName, false, timedObjectInvoker.getClassLoader());
                 } catch (ClassNotFoundException cnfe) {
-                    throw EjbLogger.EJB3_LOGGER.failedToLoadTimeoutMethodParamClass(cnfe, paramClassName);
+                    throw EjbLogger.ROOT_LOGGER.failedToLoadTimeoutMethodParamClass(cnfe, paramClassName);
                 }
                 timeoutMethodParamTypes[i++] = methodParamClass;
             }

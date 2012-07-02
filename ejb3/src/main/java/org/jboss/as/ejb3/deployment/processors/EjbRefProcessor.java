@@ -89,13 +89,13 @@ public class EjbRefProcessor extends AbstractDeploymentDescriptorBindingsProcess
                     try {
                         remoteInterfaceType = index.classIndex(home).getModuleClass();
                     } catch (ClassNotFoundException e) {
-                        throw EjbLogger.EJB3_LOGGER.failedToLoadViewClass(e, home);
+                        throw EjbLogger.ROOT_LOGGER.failedToLoadViewClass(e, home);
                     }
                 } else if (!isEmpty(remoteInterface)) {
                     try {
                         remoteInterfaceType = index.classIndex(remoteInterface).getModuleClass();
                     } catch (ClassNotFoundException e) {
-                        throw EjbLogger.EJB3_LOGGER.failedToLoadViewClass(e, remoteInterface);
+                        throw EjbLogger.ROOT_LOGGER.failedToLoadViewClass(e, remoteInterface);
                     }
                 }
 
@@ -121,7 +121,7 @@ public class EjbRefProcessor extends AbstractDeploymentDescriptorBindingsProcess
                 } else {
 
                     if (remoteInterfaceType == null) {
-                        throw EjbLogger.EJB3_LOGGER.couldNotDetermineEjbRefForInjectionTarget(name, resourceInjectionTarget);
+                        throw EjbLogger.ROOT_LOGGER.couldNotDetermineEjbRefForInjectionTarget(name, resourceInjectionTarget);
                     }
                     if (!isEmpty(ejbName)) {
                         bindingConfiguration = new BindingConfiguration(name, ejbInjectionSource = new EjbInjectionSource(ejbName, remoteInterfaceType.getName(), name, deploymentUnit, appclient));
@@ -153,13 +153,13 @@ public class EjbRefProcessor extends AbstractDeploymentDescriptorBindingsProcess
                         try {
                             localInterfaceType = index.classIndex(localHome).getModuleClass();
                         } catch (ClassNotFoundException e) {
-                            throw EjbLogger.EJB3_LOGGER.failedToLoadViewClass(e, localHome);
+                            throw EjbLogger.ROOT_LOGGER.failedToLoadViewClass(e, localHome);
                         }
                     } else if (!isEmpty(localInterface)) {
                         try {
                             localInterfaceType = index.classIndex(localInterface).getModuleClass();
                         } catch (ClassNotFoundException e) {
-                            throw EjbLogger.EJB3_LOGGER.failedToLoadViewClass(e, localInterface);
+                            throw EjbLogger.ROOT_LOGGER.failedToLoadViewClass(e, localInterface);
                         }
                     }
 
@@ -174,7 +174,7 @@ public class EjbRefProcessor extends AbstractDeploymentDescriptorBindingsProcess
                     localInterfaceType = processInjectionTargets(resourceInjectionTarget, injectionSource, classLoader, deploymentReflectionIndex, ejbRef, localInterfaceType);
 
                     if (localInterfaceType == null) {
-                        throw EjbLogger.EJB3_LOGGER.couldNotDetermineEjbLocalRefForInjectionTarget(name, resourceInjectionTarget);
+                        throw EjbLogger.ROOT_LOGGER.couldNotDetermineEjbLocalRefForInjectionTarget(name, resourceInjectionTarget);
                     }
                     final BindingConfiguration bindingConfiguration;
                     EjbInjectionSource ejbInjectionSource = null;

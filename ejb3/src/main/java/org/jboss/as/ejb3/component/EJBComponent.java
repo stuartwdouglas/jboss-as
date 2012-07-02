@@ -64,9 +64,7 @@ import org.jboss.logging.Logger;
 import org.jboss.msc.service.ServiceContainer;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
-import org.jboss.msc.service.StopContext;
 
-import static org.jboss.as.ejb3.EjbLogger.EJB3_LOGGER;
 import static org.jboss.as.ejb3.EjbLogger.ROOT_LOGGER;
 import static org.jboss.as.ejb3.EjbMessages.MESSAGES;
 
@@ -151,12 +149,12 @@ public abstract class EJBComponent extends BasicComponent {
 
     protected <T> T createViewInstanceProxy(final Class<T> viewInterface, final Map<Object, Object> contextData) {
         if (viewInterface == null)
-            throw EJB3_LOGGER.viewInterfaceCannotBeNull();
+            throw ROOT_LOGGER.viewInterfaceCannotBeNull();
         if (viewServices.containsKey(viewInterface.getName())) {
             final ServiceName serviceName = viewServices.get(viewInterface.getName());
             return createViewInstanceProxy(viewInterface, contextData, serviceName);
         } else {
-            throw EJB3_LOGGER.viewNotFound(viewInterface.getName(), this.getComponentName());
+            throw ROOT_LOGGER.viewNotFound(viewInterface.getName(), this.getComponentName());
         }
     }
 
