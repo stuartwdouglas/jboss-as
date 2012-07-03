@@ -23,10 +23,14 @@ package org.jboss.as.ejb3.timerservice.persistence;
 
 import java.util.List;
 
+import org.jboss.msc.service.ServiceName;
+
 /**
  * @author Stuart Douglas
  */
 public interface TimerPersistence {
+
+    ServiceName SERVICE_NAME = ServiceName.JBOSS.append("ejb3", "timerService", "timerPersistence");
 
     /**
      * Called when a timer is being persisted

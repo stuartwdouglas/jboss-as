@@ -62,7 +62,7 @@ public class EJB3Extension implements Extension {
     public static final String NAMESPACE_1_4 = EJB3SubsystemNamespace.EJB3_1_4.getUriString();
 
     private static final int MANAGEMENT_API_MAJOR_VERSION = 1;
-    private static final int MANAGEMENT_API_MINOR_VERSION = 1;
+    private static final int MANAGEMENT_API_MINOR_VERSION = 2;
     private static final int MANAGEMENT_API_MICRO_VERSION = 0;
 
     private static final String RESOURCE_NAME = EJB3Extension.class.getPackage().getName() + ".LocalDescriptions";
@@ -82,7 +82,7 @@ public class EJB3Extension implements Extension {
         final SubsystemRegistration subsystem = context.registerSubsystem(SUBSYSTEM_NAME, MANAGEMENT_API_MAJOR_VERSION,
                 MANAGEMENT_API_MINOR_VERSION, MANAGEMENT_API_MICRO_VERSION);
 
-        subsystem.registerXMLElementWriter(EJB3Subsystem14Parser.INSTANCE);
+        subsystem.registerXMLElementWriter(EJB3SubsystemXMLPersister.INSTANCE);
 
         final ManagementResourceRegistration subsystemRegistration = subsystem.registerSubsystemModel(EJB3SubsystemRootResourceDefinition.INSTANCE);
 
@@ -103,7 +103,13 @@ public class EJB3Extension implements Extension {
         subsystemRegistration.registerSubModel(ClusterPassivationStoreResourceDefinition.INSTANCE);
 
         // subsystem=ejb3/service=timerservice
-        subsystemRegistration.registerSubModel(TimerServiceResourceDefinition.INSTANCE);
+        final ManagementResourceRegistration timerServiceResource = subsystemRegistration.registerSubModel(TimerServiceResourceDefinition.INSTANCE);
+
+        // subsystem=ejb3/service=timerservice/file-data-store=*
+        timerServiceResource.registerSubModel(FileDataStoreResourceDefinition.INSTANCE);
+
+        // subsystem=ejb3/service=timerservice/infinispan-data-store=*
+        timerServiceResource.registerSubModel(InfinispanDataStoreResourceDefinition.INSTANCE);
 
         // subsystem=ejb3/thread-pool=*
         subsystemRegistration.registerSubModel(UnboundedQueueThreadPoolResourceDefinition.create(EJB3SubsystemModel.THREAD_POOL,

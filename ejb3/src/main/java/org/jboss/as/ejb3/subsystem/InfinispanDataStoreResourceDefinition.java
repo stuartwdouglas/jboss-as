@@ -29,31 +29,33 @@ import java.util.Map;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
-import org.jboss.as.controller.ResourceDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleResourceDefinition;
+import org.jboss.as.controller.operations.validation.ModelTypeValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.OperationEntry;
 import org.jboss.dmr.ModelType;
 
 /**
- * {@link ResourceDefinition} for the timer-service resource.
+ * {@link org.jboss.as.controller.ResourceDefinition} for the timer-service resource.
  *
  * @author Brian Stansberry (c) 2011 Red Hat Inc.
  */
-public class TimerServiceResourceDefinition extends SimpleResourceDefinition {
+public class InfinispanDataStoreResourceDefinition extends SimpleResourceDefinition {
 
-    public static final TimerServiceResourceDefinition INSTANCE = new TimerServiceResourceDefinition();
+    public static final InfinispanDataStoreResourceDefinition INSTANCE = new InfinispanDataStoreResourceDefinition();
 
-    public static final SimpleAttributeDefinition THREAD_POOL_NAME =
-            new SimpleAttributeDefinitionBuilder(EJB3SubsystemModel.THREAD_POOL_NAME, ModelType.STRING, false)
+    public static final SimpleAttributeDefinition CACHE_CONTAINER =
+            new SimpleAttributeDefinitionBuilder(EJB3SubsystemModel.CACHE_CONTAINER, ModelType.STRING, true)
+                    .setValidator(new ModelTypeValidator(ModelType.STRING, true, false))
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
                     .build();
 
-    public static final SimpleAttributeDefinition DEFAULT_DATA_STORE =
-            new SimpleAttributeDefinitionBuilder(EJB3SubsystemModel.DEFAULT_DATA_STORE, ModelType.STRING, false)
+    public static final SimpleAttributeDefinition CACHE =
+            new SimpleAttributeDefinitionBuilder(EJB3SubsystemModel.CACHE, ModelType.STRING, true)
+                    .setValidator(new ModelTypeValidator(ModelType.STRING, true, false))
                     .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
                     .build();
 
@@ -61,20 +63,18 @@ public class TimerServiceResourceDefinition extends SimpleResourceDefinition {
 
     static {
         Map<String, AttributeDefinition> map = new LinkedHashMap<String, AttributeDefinition>();
-        map.put(THREAD_POOL_NAME.getName(), THREAD_POOL_NAME);
-        map.put(DEFAULT_DATA_STORE.getName(), DEFAULT_DATA_STORE);
+        map.put(CACHE_CONTAINER.getName(), CACHE_CONTAINER);
+        map.put(CACHE.getName(), CACHE);
 
         ATTRIBUTES = Collections.unmodifiableMap(map);
     }
 
-
-    private TimerServiceResourceDefinition() {
-        super(EJB3SubsystemModel.TIMER_SERVICE_PATH,
-                EJB3Extension.getResourceDescriptionResolver(EJB3SubsystemModel.TIMER_SERVICE),
-                TimerServiceAdd.INSTANCE, ReloadRequiredRemoveStepHandler.INSTANCE,
+    private InfinispanDataStoreResourceDefinition() {
+        super(EJB3SubsystemModel.INFINISPAN_DATA_STORE_PATH,
+                EJB3Extension.getResourceDescriptionResolver(EJB3SubsystemModel.INFINISPAN_DATA_STORE),
+                InfinispanDataStoreAdd.INSTANCE, ReloadRequiredRemoveStepHandler.INSTANCE,
                 OperationEntry.Flag.RESTART_ALL_SERVICES, OperationEntry.Flag.RESTART_ALL_SERVICES);
     }
-
 
     @Override
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {

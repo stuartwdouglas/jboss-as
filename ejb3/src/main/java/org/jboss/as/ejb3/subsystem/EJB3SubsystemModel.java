@@ -54,6 +54,8 @@ public interface EJB3SubsystemModel {
 
     String ENABLE_STATISTICS = "enable-statistics";
 
+    String FILE_DATA_STORE = "file-data-store";
+
     String MAX_POOL_SIZE = "max-pool-size";
     String STRICT_MAX_BEAN_INSTANCE_POOL = "strict-max-bean-instance-pool";
 
@@ -65,6 +67,7 @@ public interface EJB3SubsystemModel {
 
     String DEFAULT_SINGLETON_BEAN_ACCESS_TIMEOUT = "default-singleton-bean-access-timeout";
     String DEFAULT_STATEFUL_BEAN_ACCESS_TIMEOUT = "default-stateful-bean-access-timeout";
+    String DEFAULT_DATA_STORE = "default-data-store";
 
     String REMOTE = "remote";
     String SERVICE = "service";
@@ -97,11 +100,15 @@ public interface EJB3SubsystemModel {
     String VALUE = "value";
     String TYPE = "type";
 
+    String INFINISPAN_DATA_STORE = "infinispan-data-store";
+
     PathElement REMOTE_SERVICE_PATH = PathElement.pathElement(SERVICE, REMOTE);
     PathElement ASYNC_SERVICE_PATH = PathElement.pathElement(SERVICE, ASYNC);
     PathElement TIMER_SERVICE_PATH = PathElement.pathElement(SERVICE, TIMER_SERVICE);
     PathElement THREAD_POOL_PATH = PathElement.pathElement(THREAD_POOL);
     PathElement IIOP_PATH = PathElement.pathElement(SERVICE, IIOP);
+    PathElement FILE_DATA_STORE_PATH = PathElement.pathElement(FILE_DATA_STORE);
+    PathElement INFINISPAN_DATA_STORE_PATH = PathElement.pathElement(INFINISPAN_DATA_STORE);
 
     ServiceName BASE_THREAD_POOL_SERVICE_NAME = ThreadsServices.EXECUTOR.append("ejb3");
 }

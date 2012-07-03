@@ -57,7 +57,6 @@ import org.jboss.marshalling.Unmarshaller;
 import org.jboss.marshalling.river.RiverMarshallerFactory;
 import org.jboss.modules.ModuleLoader;
 import org.jboss.msc.service.Service;
-import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
@@ -73,8 +72,6 @@ import static org.jboss.as.ejb3.EjbMessages.MESSAGES;
  * @author Stuart Douglas
  */
 public class FileTimerPersistence implements TimerPersistence, Service<FileTimerPersistence> {
-
-    public static final ServiceName SERVICE_NAME = ServiceName.JBOSS.append("ejb3", "timerService", "fileTimerPersistence");
 
     private final boolean createIfNotExists;
     private MarshallerFactory factory;

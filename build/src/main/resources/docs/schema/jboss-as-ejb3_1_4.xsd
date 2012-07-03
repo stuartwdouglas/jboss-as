@@ -223,9 +223,17 @@
 
     <xs:complexType name="timerServiceType">
         <xs:sequence>
-            <xs:element name="data-store" type="dataStoreType" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="data-stores" type="dataStoresType" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
         <xs:attribute name="thread-pool-name" type="xs:token" use="required"/>
+        <xs:attribute name="default-data-store" type="xs:token" use="required" />
+    </xs:complexType>
+
+    <xs:complexType name="dataStoresType">
+        <xs:sequence>
+            <xs:element name="file-data-store" type="fileDataStoreType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="infinispan-data-store" type="infinispanDataStoreType" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
     </xs:complexType>
 
     <xs:complexType name="threadPoolsType">
@@ -262,9 +270,16 @@
         <xs:attribute name="name" use="required" type="xs:string"/>
     </xs:complexType>
 
-    <xs:complexType name="dataStoreType">
+    <xs:complexType name="fileDataStoreType">
+        <xs:attribute name="name" type="xs:token"/>
         <xs:attribute name="path" type="xs:string"/>
         <xs:attribute name="relative-to" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:complexType name="infinispanDataStoreType">
+        <xs:attribute name="name" type="xs:token"/>
+        <xs:attribute name="cache-container" type="xs:token"/>
+        <xs:attribute name="cache" type="xs:token"/>
     </xs:complexType>
 
     <xs:complexType name="iiopType">

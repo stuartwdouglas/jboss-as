@@ -30,10 +30,8 @@ import org.infinispan.eviction.EvictionStrategy;
 import org.infinispan.manager.EmbeddedCacheManager;
 import org.infinispan.notifications.Listener;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryCreated;
-import org.infinispan.notifications.cachelistener.annotation.CacheEntryModified;
 import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
-import org.infinispan.notifications.cachelistener.event.CacheEntryModifiedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.jboss.as.ejb3.EjbMessages;
 import org.jboss.as.ejb3.timerservice.persistence.TimerEntity;
@@ -67,7 +65,7 @@ public class InfinispanTimerPersistence implements TimerPersistence, Service<Inf
         final Cache<String, TimerEntity> cache = embeddedCacheManager.getCache(cacheName, true);
         cache.addListener(infinispanListener);
         this.cache = cache;
-        if(embeddedCacheManager.getCacheConfiguration(cacheName).eviction().strategy() != EvictionStrategy.NONE) {
+        if(embeddedCacheManager.getDefaultCacheConfiguration().eviction().strategy() != EvictionStrategy.NONE) {
             throw EjbMessages.MESSAGES.infinispanShouldNotHaveEvictionConfigured(cacheName);
         }
 
@@ -146,16 +144,6 @@ public class InfinispanTimerPersistence implements TimerPersistence, Service<Inf
     @Listener(sync = true)
     private final class InfinispanListener {
 
-        @CacheEntryModified
-        public void cacheEntryModified(CacheEntryModifiedEvent<String, TimerEntity> event) {
-            synchronized (listeners) {
-                for (TimerListener listener : listeners) {
-                    listener.timerRemoved(event.getValue());
-                    listener.timerAdded(event.getValue());
-                }
-            }
-        }
-
         @CacheEntryCreated
         public void cacheEntryCreated(CacheEntryCreatedEvent<String, TimerEntity> event) {
             final TimerEntity timer = cache.get(event.getKey());
@@ -176,4 +164,7 @@ public class InfinispanTimerPersistence implements TimerPersistence, Service<Inf
         }
     }
 
+    public InjectedValue<EmbeddedCacheManager> getCacheContainerInjectedValue() {
+        return cacheContainerInjectedValue;
+    }
 }

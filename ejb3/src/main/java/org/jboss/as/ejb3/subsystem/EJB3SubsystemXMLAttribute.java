@@ -34,6 +34,7 @@ public enum EJB3SubsystemXMLAttribute {
 
     BEAN_CACHE("bean-cache"),
 
+    CACHE("cache"),
     CACHE_CONTAINER("cache-container"),
     CACHE_REF("cache-ref"),
     CLIENT_MAPPINGS_CACHE("client-mappings-cache"),
@@ -42,6 +43,7 @@ public enum EJB3SubsystemXMLAttribute {
     CORE_THREADS("core-threads"),
 
     DEFAULT_ACCESS_TIMEOUT("default-access-timeout"),
+    DEFAULT_DATA_STORE("default-data-store"),
 
     ENABLED("enabled"),
     ENABLE_BY_DEFAULT("enable-by-default"),

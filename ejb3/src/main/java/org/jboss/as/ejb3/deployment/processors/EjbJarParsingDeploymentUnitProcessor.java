@@ -296,9 +296,7 @@ public class EjbJarParsingDeploymentUnitProcessor implements DeploymentUnitProce
         parsers.put(EJBBoundResourceAdapterBindingMetaDataParser.LEGACY_NAMESPACE_URI, EJBBoundResourceAdapterBindingMetaDataParser.INSTANCE);
         parsers.put(EJBBoundResourceAdapterBindingMetaDataParser.NAMESPACE_URI, EJBBoundResourceAdapterBindingMetaDataParser.INSTANCE);
         parsers.put("urn:iiop", new IIOPMetaDataParser());
-        parsers.put("urn:iiop:1.0", new IIOPMetaDataParser());
         parsers.put("urn:trans-timeout", new TransactionTimeoutMetaDataParser());
-        parsers.put("urn:trans-timeout:1.0", new TransactionTimeoutMetaDataParser());
         parsers.put(EJBBoundPoolParser.NAMESPACE_URI, new EJBBoundPoolParser());
         parsers.put(EJBBoundCacheParser.NAMESPACE_URI, new EJBBoundCacheParser());
 
