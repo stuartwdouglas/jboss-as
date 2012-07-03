@@ -19,38 +19,13 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.test.smoke.osgi.bundleA;
 
-import java.io.IOException;
-import java.io.Writer;
+package org.jboss.as.test.smoke.osgi.bundleB;
 
-import javax.annotation.PostConstruct;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import org.jboss.as.test.smoke.osgi.bundleB.Echo;
 
-@SuppressWarnings("serial")
-@WebServlet(name = "SimpleServlet", urlPatterns = { "/simple" })
-public class SimpleServlet extends HttpServlet {
-
-    private volatile Echo echo;
-
-    @PostConstruct
-    public void messageSetup() {
-        echo = new Echo() {
-            @Override
-            public String echo(String msg) {
-                return "Simple Servlet called with input=" + msg;
-            }
-        };
-    }
-
-    @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String msg = req.getParameter("input");
-        Writer writer = resp.getWriter();
-        writer.write(echo.echo(msg));
-    }
+/**
+ * @author Thomas.Diesler@jboss.com
+ * @since 02-Jul-2012
+ */
+public interface RemoteEcho extends Echo {
 }

@@ -42,6 +42,7 @@ import org.jboss.logging.Logger;
 import org.jboss.logging.Message;
 import org.jboss.logging.MessageLogger;
 import org.jboss.modules.ModuleIdentifier;
+import org.osgi.framework.Bundle;
 
 /**
  * This module is using message IDs in the range 15700-15999 and 18700-18799.
@@ -377,5 +378,8 @@ public interface ServerLogger extends BasicLogger {
     @Message(id = 15964, value= "Http management interface is not enabled")
     void logNoHttpManagement();
 
-    // NOTE
+    @LogMessage(level = WARN)
+    @Message(id = 15965, value= "Cannot install relection index for unresolved bundle: %s")
+    void warnCannotInstallReflectionIndexForUnresolvedBundle(Bundle bundle);
+
 }

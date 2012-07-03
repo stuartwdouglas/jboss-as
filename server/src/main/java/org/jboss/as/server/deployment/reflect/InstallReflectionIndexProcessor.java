@@ -22,12 +22,16 @@
 
 package org.jboss.as.server.deployment.reflect;
 
+import static org.jboss.as.server.ServerLogger.DEPLOYMENT_LOGGER;
+import static org.jboss.as.server.ServerMessages.MESSAGES;
+
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
 import org.jboss.modules.Module;
+import org.jboss.osgi.resolver.XBundle;
 
 /**
  * The processor to install the reflection index.
@@ -36,10 +40,17 @@ import org.jboss.modules.Module;
  */
 public final class InstallReflectionIndexProcessor implements DeploymentUnitProcessor {
 
-    /** {@inheritDoc} */
     public void deploy(final DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
         DeploymentUnit deploymentUnit = phaseContext.getDeploymentUnit();
-        final Module module = deploymentUnit.getAttachment(Attachments.MODULE);
+        XBundle bundle = deploymentUnit.getAttachment(Attachments.INSTALLED_BUNDLE);
+        Module module = deploymentUnit.getAttachment(Attachments.MODULE);
+        if (bundle != null && !bundle.isResolved()) {
+            DEPLOYMENT_LOGGER.warnCannotInstallReflectionIndexForUnresolvedBundle(bundle);
+            return;
+        }
+        if (module == null) {
+            throw MESSAGES.nullModuleAttachment(deploymentUnit);
+        }
         if(deploymentUnit.getParent() == null) {
             final DeploymentReflectionIndex index = DeploymentReflectionIndex.create();
             deploymentUnit.putAttachment(Attachments.REFLECTION_INDEX, index);
@@ -53,7 +64,6 @@ public final class InstallReflectionIndexProcessor implements DeploymentUnitProc
         }
     }
 
-    /** {@inheritDoc} */
     public void undeploy(final DeploymentUnit context) {
         context.removeAttachment(Attachments.REFLECTION_INDEX);
     }
