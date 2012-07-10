@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2010, Red Hat, Inc., and individual contributors
+ * Copyright 2012, Red Hat, Inc., and individual contributors
  * as indicated by the @author tags. See the copyright.txt file in the
  * distribution for a full listing of individual contributors.
  *
@@ -22,49 +22,38 @@
 
 package org.jboss.as.osgi.deployment;
 
-import org.jboss.as.osgi.OSGiConstants;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
-import org.jboss.osgi.deployment.deployer.Deployment;
-import org.jboss.osgi.resolver.XBundle;
-import org.osgi.framework.BundleException;
-
-import static org.jboss.as.osgi.OSGiLogger.LOGGER;
+import org.jboss.as.web.deployment.WarMetaData;
+import org.jboss.metadata.web.jboss.JBossWebMetaData;
+import org.jboss.osgi.spi.BundleInfo;
 
 /**
- * Attempt to activate the OSGi deployment.
- *
- * @author Thomas.Diesler@jboss.com
- * @since 20-Jun-2012
+ * @author Stuart Douglas
  */
-public class BundleActivateProcessor implements DeploymentUnitProcessor {
-
+public class OSGIWebMetadataProcessor implements DeploymentUnitProcessor {
     @Override
     public void deploy(final DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
-        DeploymentUnit depUnit = phaseContext.getDeploymentUnit();
-        Deployment deployment = depUnit.getAttachment(OSGiConstants.DEPLOYMENT_KEY);
-        XBundle bundle = depUnit.getAttachment(OSGIAttachments.INSTALLED_BUNDLE);
-        if (bundle != null && deployment.isAutoStart() && bundle.isResolved()) {
-            try {
-                bundle.start();
-            } catch (BundleException ex) {
-                LOGGER.errorCannotStartBundle(ex, bundle);
-            }
+        final DeploymentUnit deploymentUnit = phaseContext.getDeploymentUnit();
+        final WarMetaData warMetaData = deploymentUnit.getAttachment(WarMetaData.ATTACHMENT_KEY);
+        if(warMetaData == null) {
+            return;
+        }
+        final JBossWebMetaData mergedMetaData = warMetaData.getMergedJBossWebMetaData();
+        if(mergedMetaData == null) {
+            return;
+        }
+
+        BundleInfo bundleInfo = deploymentUnit.getAttachment(OSGIAttachments.BUNDLE_INFO);
+        if (mergedMetaData.getContextRoot() == null && bundleInfo != null) {
+            mergedMetaData.setContextRoot(bundleInfo.getOSGiMetadata().getHeader("Web-ContextPath"));
         }
     }
 
     @Override
-    public void undeploy(final DeploymentUnit depUnit) {
-        Deployment deployment = depUnit.getAttachment(OSGiConstants.DEPLOYMENT_KEY);
-        XBundle bundle = depUnit.getAttachment(OSGIAttachments.INSTALLED_BUNDLE);
-        if (bundle != null && deployment.isAutoStart()) {
-            try {
-                bundle.stop();
-            } catch (BundleException ex) {
-                LOGGER.debugf(ex, "Cannot stop bundle: %s", bundle);
-            }
-        }
+    public void undeploy(final DeploymentUnit context) {
+
     }
 }

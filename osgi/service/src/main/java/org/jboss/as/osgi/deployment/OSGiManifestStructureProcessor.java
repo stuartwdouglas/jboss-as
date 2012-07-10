@@ -24,6 +24,8 @@ package org.jboss.as.osgi.deployment;
 
 import java.util.jar.Manifest;
 
+import org.jboss.as.ee.structure.DeploymentType;
+import org.jboss.as.ee.structure.DeploymentTypeMarker;
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
@@ -37,7 +39,7 @@ import org.jboss.osgi.spi.OSGiManifestBuilder;
 /**
  * Processes deployments that contain a valid OSGi manifest.
  *
- * If so it attaches the {@link Manifest} under key {@link Attachments#OSGI_MANIFEST}
+ * If so it attaches the {@link Manifest} under key {@link OSGIAttachments#OSGI_MANIFEST}
  *
  * @author Thomas.Diesler@jboss.com
  * @since 02-Dec-2010
@@ -48,7 +50,7 @@ public class OSGiManifestStructureProcessor implements DeploymentUnitProcessor {
     public void deploy(DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
 
         final DeploymentUnit depUnit = phaseContext.getDeploymentUnit();
-        if (depUnit.hasAttachment(Attachments.OSGI_MANIFEST) || depUnit.hasAttachment(Attachments.OSGI_METADATA))
+        if (depUnit.hasAttachment(OSGIAttachments.OSGI_MANIFEST) || depUnit.hasAttachment(OSGIAttachments.OSGI_METADATA))
             return;
 
         final ResourceRoot deploymentRoot = depUnit.getAttachment(Attachments.DEPLOYMENT_ROOT);
@@ -58,15 +60,25 @@ public class OSGiManifestStructureProcessor implements DeploymentUnitProcessor {
         // Check whether this is an OSGi manifest
         Manifest manifest = deploymentRoot.getAttachment(Attachments.MANIFEST);
         if (OSGiManifestBuilder.isValidBundleManifest(manifest)) {
-            depUnit.putAttachment(Attachments.OSGI_MANIFEST, manifest);
+            depUnit.putAttachment(Attachments.OSGI_DEPLOYMENT, true);
+            depUnit.putAttachment(OSGIAttachments.OSGI_MANIFEST, manifest);
             OSGiMetaData metadata = OSGiMetaDataBuilder.load(manifest);
-            depUnit.putAttachment(Attachments.OSGI_METADATA, metadata);
+            depUnit.putAttachment(OSGIAttachments.OSGI_METADATA, metadata);
+
+            // JAR deployments may contain OSGi metadata with a "Web-ContextPath" header
+            // This qualifies them as OSGi Web Application Bundle (WAB)
+            if (depUnit.getName().endsWith(".jar")) {
+                if (metadata.getHeader("Web-ContextPath") != null) {
+                    DeploymentTypeMarker.setType(DeploymentType.WAR, depUnit);
+                }
+            }
         }
     }
 
     @Override
     public void undeploy(DeploymentUnit deploymentUnit) {
-        deploymentUnit.removeAttachment(Attachments.OSGI_MANIFEST);
-        deploymentUnit.removeAttachment(Attachments.OSGI_METADATA);
+        deploymentUnit.removeAttachment(Attachments.OSGI_DEPLOYMENT);
+        deploymentUnit.removeAttachment(OSGIAttachments.OSGI_MANIFEST);
+        deploymentUnit.removeAttachment(OSGIAttachments.OSGI_METADATA);
     }
 }

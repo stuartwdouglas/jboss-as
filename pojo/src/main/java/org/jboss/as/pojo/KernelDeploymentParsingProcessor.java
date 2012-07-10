@@ -22,6 +22,17 @@
 
 package org.jboss.as.pojo;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+import javax.xml.namespace.QName;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamReader;
+
 import org.jboss.as.pojo.descriptor.KernelDeploymentXmlDescriptor;
 import org.jboss.as.pojo.descriptor.KernelDeploymentXmlDescriptorParser;
 import org.jboss.as.pojo.descriptor.LegacyKernelDeploymentXmlDescriptorParser;
@@ -36,16 +47,6 @@ import org.jboss.vfs.VFSUtils;
 import org.jboss.vfs.VirtualFile;
 import org.jboss.vfs.VirtualFileFilter;
 import org.jboss.vfs.util.SuffixMatchFilter;
-
-import javax.xml.namespace.QName;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * DeploymentUnitProcessor responsible for parsing a jboss-beans.xml
@@ -77,8 +78,10 @@ public class KernelDeploymentParsingProcessor implements DeploymentUnitProcessor
     @Override
     public void deploy(DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
         DeploymentUnit unit = phaseContext.getDeploymentUnit();
-        if (unit.hasAttachment(Attachments.OSGI_MANIFEST))
+        final Boolean osgi = unit.getAttachment(Attachments.OSGI_DEPLOYMENT);
+        if(osgi != null && osgi) {
             return;
+        }
         final VirtualFile deploymentRoot = unit.getAttachment(Attachments.DEPLOYMENT_ROOT).getRoot();
         parseDescriptors(unit, deploymentRoot);
         final List<ResourceRoot> resourceRoots = unit.getAttachmentList(Attachments.RESOURCE_ROOTS);

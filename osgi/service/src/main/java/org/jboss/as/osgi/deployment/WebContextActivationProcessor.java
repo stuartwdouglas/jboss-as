@@ -20,20 +20,18 @@
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
 
-package org.jboss.as.web.deployment;
-
-import static org.jboss.as.web.WebMessages.MESSAGES;
-import static org.jboss.as.web.WebSubsystemServices.JBOSS_WEB;
+package org.jboss.as.osgi.deployment;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
-import org.jboss.as.web.deployment.WebDeploymentService.ContextActivator;
+import org.jboss.as.web.WebMessages;
+import org.jboss.as.web.WebSubsystemServices;
+import org.jboss.as.web.deployment.ContextActivator;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceController.Mode;
@@ -66,7 +64,7 @@ public class WebContextActivationProcessor implements DeploymentUnitProcessor {
     public void deploy(final DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
         DeploymentUnit depUnit = phaseContext.getDeploymentUnit();
         ContextActivator activator = depUnit.getAttachment(ContextActivator.ATTACHMENT_KEY);
-        XBundle bundle = depUnit.getAttachment(Attachments.INSTALLED_BUNDLE);
+        XBundle bundle = depUnit.getAttachment(OSGIAttachments.INSTALLED_BUNDLE);
         if (activator != null && bundle != null) {
 
             // Start the context when the bundle will get started automatically
@@ -84,7 +82,7 @@ public class WebContextActivationProcessor implements DeploymentUnitProcessor {
     @Override
     public void undeploy(final DeploymentUnit depUnit) {
         ContextActivator activator = depUnit.getAttachment(ContextActivator.ATTACHMENT_KEY);
-        XBundle bundle = depUnit.getAttachment(Attachments.INSTALLED_BUNDLE);
+        XBundle bundle = depUnit.getAttachment(OSGIAttachments.INSTALLED_BUNDLE);
         if (activator != null && bundle != null) {
             bundle.adapt(Deployment.class).removeAttachment(ContextActivator.class);
         }
@@ -96,7 +94,7 @@ public class WebContextActivationProcessor implements DeploymentUnitProcessor {
         static final ServiceName SYSTEM_CONTEXT = ServiceName.of("jbosgi", "SystemContext");
         static final ServiceName FRAMEWORK_ACTIVE = ServiceName.of("jbosgi", "framework", "ACTIVE");
 
-        static final ServiceName JBOSS_WEB_LIFECYCLE_INTERCEPTOR = JBOSS_WEB.append("lifecycle-interceptor");
+        static final ServiceName JBOSS_WEB_LIFECYCLE_INTERCEPTOR = WebSubsystemServices.JBOSS_WEB.append("lifecycle-interceptor");
 
         private final InjectedValue<BundleContext> injectedSystemContext = new InjectedValue<BundleContext>();
         private ServiceRegistration registration;
@@ -132,7 +130,7 @@ public class WebContextActivationProcessor implements DeploymentUnitProcessor {
                     case Bundle.ACTIVE:
                         try {
                             if (!activator.start(4, TimeUnit.SECONDS)) {
-                                throw new LifecycleInterceptorException(MESSAGES.startContextFailed());
+                                throw new LifecycleInterceptorException(WebMessages.MESSAGES.startContextFailed());
                             }
                         } catch (TimeoutException ex) {
                             throw new LifecycleInterceptorException(ex.getMessage(), ex);

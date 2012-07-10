@@ -22,9 +22,6 @@
 
 package org.jboss.as.osgi.deployment;
 
-import static org.jboss.as.osgi.OSGiLogger.LOGGER;
-import static org.jboss.as.osgi.OSGiMessages.MESSAGES;
-
 import org.jboss.as.osgi.OSGiConstants;
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
@@ -42,6 +39,9 @@ import org.jboss.osgi.resolver.XEnvironment;
 import org.jboss.osgi.resolver.XResourceBuilder;
 import org.osgi.framework.BundleContext;
 
+import static org.jboss.as.osgi.OSGiLogger.LOGGER;
+import static org.jboss.as.osgi.OSGiMessages.MESSAGES;
+
 /**
  * Processes deployments that have a Module attached.
  *
@@ -57,20 +57,20 @@ public class ModuleRegisterProcessor implements DeploymentUnitProcessor {
 
         // Create the {@link ModuleRegisterService}
         final DeploymentUnit depUnit = phaseContext.getDeploymentUnit();
-        final XBundle bundle = depUnit.getAttachment(Attachments.INSTALLED_BUNDLE);
+        final XBundle bundle = depUnit.getAttachment(OSGIAttachments.INSTALLED_BUNDLE);
         final Module module = depUnit.getAttachment(Attachments.MODULE);
         final ModuleSpecification moduleSpecification = depUnit.getAttachment(Attachments.MODULE_SPECIFICATION);
         if (bundle == null && module != null && moduleSpecification.isPrivateModule() == false) {
             LOGGER.infoRegisterModule(module.getIdentifier());
             try {
-                final BundleContext context = depUnit.getAttachment(Attachments.SYSTEM_CONTEXT);
+                final BundleContext context = depUnit.getAttachment(OSGIAttachments.SYSTEM_CONTEXT);
                 XBundleRevisionBuilderFactory factory = new XBundleRevisionBuilderFactory() {
                     @Override
                     public XBundleRevision createResource() {
                         return new AbstractBundleRevisionAdaptor(context, module);
                     }
                 };
-                OSGiMetaData metadata = depUnit.getAttachment(Attachments.OSGI_METADATA);
+                OSGiMetaData metadata = depUnit.getAttachment(OSGIAttachments.OSGI_METADATA);
                 XEnvironment env = depUnit.getAttachment(OSGiConstants.ENVIRONMENT_KEY);
                 XResourceBuilder builder = XBundleRevisionBuilderFactory.create(factory);
                 if (metadata != null) {

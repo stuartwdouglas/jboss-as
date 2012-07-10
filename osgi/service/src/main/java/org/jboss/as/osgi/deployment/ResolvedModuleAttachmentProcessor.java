@@ -44,7 +44,7 @@ public class ResolvedModuleAttachmentProcessor implements DeploymentUnitProcesso
     public void deploy(final DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
 
         DeploymentUnit depUnit = phaseContext.getDeploymentUnit();
-        XBundle bundle = depUnit.getAttachment(Attachments.INSTALLED_BUNDLE);
+        XBundle bundle = depUnit.getAttachment(OSGIAttachments.INSTALLED_BUNDLE);
         if (bundle == null || bundle.isResolved() == false)
             return;
 

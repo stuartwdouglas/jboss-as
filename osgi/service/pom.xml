@@ -60,6 +60,10 @@
             <artifactId>jboss-as-server</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.jboss.as</groupId>
+            <artifactId>jboss-as-web</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.jboss.modules</groupId>
             <artifactId>jboss-modules</artifactId>
         </dependency>

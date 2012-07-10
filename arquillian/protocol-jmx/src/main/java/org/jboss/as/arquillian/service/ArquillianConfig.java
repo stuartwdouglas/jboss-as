@@ -28,6 +28,7 @@ import java.util.Set;
 
 import org.jboss.arquillian.testenricher.msc.ServiceTargetAssociation;
 import org.jboss.arquillian.testenricher.osgi.BundleAssociation;
+import org.jboss.as.osgi.deployment.OSGIAttachments;
 import org.jboss.as.server.deployment.AttachmentKey;
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentUnit;
@@ -106,7 +107,7 @@ class ArquillianConfig implements Service<ArquillianConfig> {
         if (testClasses.contains(className) == false)
             throw new ClassNotFoundException("Class '" + className + "' not found in: " + testClasses);
 
-        XBundle bundle = depUnit.getAttachment(Attachments.INSTALLED_BUNDLE);
+        XBundle bundle = depUnit.getAttachment(OSGIAttachments.INSTALLED_BUNDLE);
         Module module = depUnit.getAttachment(Attachments.MODULE);
         if (bundle == null && module == null)
             throw new IllegalStateException("Cannot determine deployment type: " + depUnit);

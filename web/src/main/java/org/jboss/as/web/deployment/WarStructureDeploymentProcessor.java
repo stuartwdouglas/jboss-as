@@ -22,8 +22,6 @@
 
 package org.jboss.as.web.deployment;
 
-import static org.jboss.as.web.WebMessages.MESSAGES;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -49,6 +47,8 @@ import org.jboss.vfs.VirtualFile;
 import org.jboss.vfs.VirtualFileFilter;
 import org.jboss.vfs.VisitorAttributes;
 import org.jboss.vfs.util.SuffixMatchFilter;
+
+import static org.jboss.as.web.WebMessages.MESSAGES;
 
 /**
  * Create and mount classpath entries in the .war deployment.
@@ -96,7 +96,8 @@ public class WarStructureDeploymentProcessor implements DeploymentUnitProcessor 
         PrivateSubDeploymentMarker.mark(deploymentUnit);
 
         // OSGi WebApp deployments (WAB) may use the deployment root
-        if (deploymentUnit.hasAttachment(Attachments.OSGI_METADATA)) {
+        final Boolean osgi = deploymentUnit.hasAttachment(Attachments.OSGI_DEPLOYMENT);
+        if (osgi != null && osgi) {
             deploymentUnit.addToAttachmentList(Attachments.RESOURCE_ROOTS, deploymentResourceRoot);
         } else {
             // we do not want to index the resource root, only WEB-INF/classes and WEB-INF/lib

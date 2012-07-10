@@ -45,7 +45,7 @@ public class SubsystemActivateProcessor implements DeploymentUnitProcessor {
     public void deploy(DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
 
         // Always make the system context & the environment available
-        phaseContext.addDeploymentDependency(Services.SYSTEM_CONTEXT, Attachments.SYSTEM_CONTEXT);
+        phaseContext.addDeploymentDependency(Services.SYSTEM_CONTEXT, OSGIAttachments.SYSTEM_CONTEXT);
         phaseContext.addDeploymentDependency(Services.ENVIRONMENT, OSGiConstants.ENVIRONMENT_KEY);
 
         DeploymentUnit depUnit = phaseContext.getDeploymentUnit();

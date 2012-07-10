@@ -287,6 +287,7 @@ public enum Phase {
     public static final int PARSE_EAR_MESSAGE_DESTINATIONS              = 0x4400;
     public static final int PARSE_DSXML_DEPLOYMENT                      = 0x4500;
     public static final int PARSE_MESSAGING_XML_RESOURCES               = 0x4600;
+    public static final int PARSE_OSGI_WEB_CONTEXT_ROOT                 = 0x4700;
 
     // REGISTER
     public static final int REGISTER_BUNDLE_INSTALL                     = 0x0100;

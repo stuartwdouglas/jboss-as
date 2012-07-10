@@ -22,8 +22,6 @@
 
 package org.jboss.as.web.deployment;
 
-import static org.jboss.as.web.WebMessages.MESSAGES;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,8 +59,9 @@ import org.jboss.metadata.web.spec.Web30MetaData;
 import org.jboss.metadata.web.spec.WebCommonMetaData;
 import org.jboss.metadata.web.spec.WebFragmentMetaData;
 import org.jboss.metadata.web.spec.WebMetaData;
-import org.jboss.osgi.spi.BundleInfo;
 import org.jboss.vfs.VirtualFile;
+
+import static org.jboss.as.web.WebMessages.MESSAGES;
 
 /**
  * Merge all metadata into a main JBossWebMetaData.
@@ -248,7 +247,9 @@ public class WarMetaDataProcessor implements DeploymentUnitProcessor {
         }
         // Augment with meta data from annotations in /WEB-INF/classes
         WebMetaData annotatedMetaData = annotationsMetaData.get("classes");
-        if (annotatedMetaData == null && deploymentUnit.hasAttachment(Attachments.OSGI_METADATA)) {
+        //if this is an osgi delpoyment we also check the deployent root
+        final Boolean osgi  = deploymentUnit.getAttachment(Attachments.OSGI_DEPLOYMENT);
+        if (annotatedMetaData == null && (osgi != null && osgi)) {
             annotatedMetaData = annotationsMetaData.get(deploymentUnit.getName());
         }
         if (annotatedMetaData != null) {
@@ -323,13 +324,6 @@ public class WarMetaDataProcessor implements DeploymentUnitProcessor {
         JBossWebMetaDataMerger.merge(mergedMetaData, metaData, specMetaData);
         // FIXME: Incorporate any ear level overrides
 
-        // Use the OSGi Web-ContextPath if not given otherwise
-        String contextRoot = mergedMetaData.getContextRoot();
-        BundleInfo bundleInfo = deploymentUnit.getAttachment(Attachments.BUNDLE_INFO);
-        if (contextRoot == null && bundleInfo != null) {
-            contextRoot = bundleInfo.getOSGiMetadata().getHeader("Web-ContextPath");
-            mergedMetaData.setContextRoot(contextRoot);
-        }
         warMetaData.setMergedJBossWebMetaData(mergedMetaData);
 
         if (mergedMetaData.isMetadataComplete()) {

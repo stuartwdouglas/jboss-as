@@ -22,12 +22,11 @@
 
 package org.jboss.as.osgi.deployment;
 
-import static org.jboss.as.osgi.OSGiLogger.LOGGER;
-
 import java.util.Collections;
 import java.util.Map;
 
 import org.jboss.as.osgi.OSGiConstants;
+import org.jboss.as.osgi.OSGiMessages;
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
@@ -58,7 +57,7 @@ public class BundleResolveProcessor implements DeploymentUnitProcessor {
 
         DeploymentUnit depUnit = phaseContext.getDeploymentUnit();
         Deployment deployment = depUnit.getAttachment(OSGiConstants.DEPLOYMENT_KEY);
-        XBundle bundle = depUnit.getAttachment(Attachments.INSTALLED_BUNDLE);
+        XBundle bundle = depUnit.getAttachment(OSGIAttachments.INSTALLED_BUNDLE);
         if (bundle == null || deployment.isAutoStart() == false)
             return;
 
@@ -74,7 +73,7 @@ public class BundleResolveProcessor implements DeploymentUnitProcessor {
             BundleWiring wiring = (BundleWiring) wiremap.get(brev);
             depUnit.putAttachment(OSGiConstants.BUNDLE_WIRING_KEY, wiring);
         } catch (ResolutionException ex) {
-            LOGGER.warnCannotResolve(ex.getUnresolvedRequirements());
+            throw OSGiMessages.MESSAGES.cannotResolve(ex.getUnresolvedRequirements(), ex);
         }
     }
 

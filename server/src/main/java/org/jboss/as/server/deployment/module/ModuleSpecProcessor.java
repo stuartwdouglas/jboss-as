@@ -49,7 +49,6 @@ import org.jboss.msc.service.ServiceController.Mode;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ValueService;
 import org.jboss.msc.value.ImmediateValue;
-import org.jboss.osgi.resolver.XBundle;
 
 /**
  * Processor responsible for creating the module spec service for this deployment. Once the module spec service is created the
@@ -74,11 +73,6 @@ public class ModuleSpecProcessor implements DeploymentUnitProcessor {
 
         final ResourceRoot mainRoot = deploymentUnit.getAttachment(Attachments.DEPLOYMENT_ROOT);
         if (mainRoot == null)
-            return;
-
-        // No {@link ModuleSpec} creation for OSGi deployments
-        final XBundle bundle = deploymentUnit.getAttachment(Attachments.INSTALLED_BUNDLE);
-        if (bundle != null)
             return;
 
         if (deploymentUnit.hasAttachment(MARKER))

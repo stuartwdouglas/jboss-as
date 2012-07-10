@@ -41,7 +41,8 @@ public class JaxrsAnnotationProcessor implements DeploymentUnitProcessor {
     @Override
     public void deploy(DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
         final DeploymentUnit deploymentUnit = phaseContext.getDeploymentUnit();
-        if(deploymentUnit.hasAttachment(Attachments.OSGI_MANIFEST)) {
+        final Boolean osgi = deploymentUnit.getAttachment(Attachments.OSGI_DEPLOYMENT);
+        if(osgi != null && osgi) {
             return;
         }
         final CompositeIndex index = deploymentUnit.getAttachment(Attachments.COMPOSITE_ANNOTATION_INDEX);

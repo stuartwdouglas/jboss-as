@@ -21,8 +21,6 @@
  */
 package org.jboss.as.osgi.parser;
 
-import static org.jboss.as.osgi.OSGiLogger.LOGGER;
-
 import java.util.List;
 import java.util.Locale;
 
@@ -38,12 +36,14 @@ import org.jboss.as.osgi.deployment.BundleContextBindingProcessor;
 import org.jboss.as.osgi.deployment.BundleDeploymentProcessor;
 import org.jboss.as.osgi.deployment.BundleInstallProcessor;
 import org.jboss.as.osgi.deployment.BundleResolveProcessor;
-import org.jboss.as.osgi.deployment.ResolvedModuleAttachmentProcessor;
 import org.jboss.as.osgi.deployment.ModuleRegisterProcessor;
+import org.jboss.as.osgi.deployment.OSGIWebMetadataProcessor;
 import org.jboss.as.osgi.deployment.OSGiBundleInfoParseProcessor;
 import org.jboss.as.osgi.deployment.OSGiManifestStructureProcessor;
 import org.jboss.as.osgi.deployment.OSGiXServiceParseProcessor;
+import org.jboss.as.osgi.deployment.ResolvedModuleAttachmentProcessor;
 import org.jboss.as.osgi.deployment.SubsystemActivateProcessor;
+import org.jboss.as.osgi.deployment.WebContextActivationProcessor;
 import org.jboss.as.osgi.management.OSGiRuntimeResource;
 import org.jboss.as.osgi.parser.SubsystemState.Activation;
 import org.jboss.as.osgi.service.FrameworkBootstrapService;
@@ -55,6 +55,8 @@ import org.jboss.as.server.deployment.Phase;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceTarget;
+
+import static org.jboss.as.osgi.OSGiLogger.LOGGER;
 
 /**
  * OSGi subsystem operation handler.
@@ -114,17 +116,22 @@ class OSGiSubsystemAdd extends AbstractBoottimeAddStepHandler {
                 processorTarget.addDeploymentProcessor(OSGiExtension.SUBSYSTEM_NAME, Phase.PARSE, Phase.PARSE_OSGI_PROPERTIES, new OSGiXServiceParseProcessor());
                 processorTarget.addDeploymentProcessor(OSGiExtension.SUBSYSTEM_NAME, Phase.PARSE, Phase.PARSE_OSGI_DEPLOYMENT, new BundleDeploymentProcessor());
                 processorTarget.addDeploymentProcessor(OSGiExtension.SUBSYSTEM_NAME, Phase.PARSE, Phase.PARSE_OSGI_ACTIVATOR, new SubsystemActivateProcessor());
+                processorTarget.addDeploymentProcessor(OSGiExtension.SUBSYSTEM_NAME, Phase.PARSE, Phase.PARSE_OSGI_WEB_CONTEXT_ROOT, new OSGIWebMetadataProcessor());
                 processorTarget.addDeploymentProcessor(OSGiExtension.SUBSYSTEM_NAME, Phase.REGISTER, Phase.REGISTER_BUNDLE_INSTALL, new BundleInstallProcessor(deploymentTracker));
                 processorTarget.addDeploymentProcessor(OSGiExtension.SUBSYSTEM_NAME, Phase.DEPENDENCIES, Phase.DEPENDENCIES_BUNDLE_RESOLVE, new BundleResolveProcessor());
                 processorTarget.addDeploymentProcessor(OSGiExtension.SUBSYSTEM_NAME, Phase.CONFIGURE_MODULE, Phase.CONFIGURE_RESOLVED_BUNDLE, new ResolvedModuleAttachmentProcessor());
                 processorTarget.addDeploymentProcessor(OSGiExtension.SUBSYSTEM_NAME, Phase.INSTALL, Phase.INSTALL_BUNDLE_CONTEXT_BINDING, new BundleContextBindingProcessor());
                 processorTarget.addDeploymentProcessor(OSGiExtension.SUBSYSTEM_NAME, Phase.INSTALL, Phase.INSTALL_RESOLVER_MODULE, new ModuleRegisterProcessor());
                 processorTarget.addDeploymentProcessor(OSGiExtension.SUBSYSTEM_NAME, Phase.INSTALL, Phase.INSTALL_BUNDLE_ACTIVATE, new BundleActivateProcessor());
+                processorTarget.addDeploymentProcessor(OSGiExtension.SUBSYSTEM_NAME, Phase.INSTALL, Phase.INSTALL_WAB_DEPLOYMENT, new WebContextActivationProcessor());
             }
         }, OperationContext.Stage.RUNTIME);
 
         // Add the subsystem state as a service
         newControllers.add(SubsystemState.addService(serviceTarget, activationMode));
+
+        // Add the OSGi {@link WebContextLifecycleInterceptor}
+        WebContextActivationProcessor.WebContextLifecycleInterceptor.addService(context.getServiceTarget());
     }
 
     private Activation getActivationMode(ModelNode operation) {

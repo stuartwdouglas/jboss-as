@@ -22,8 +22,6 @@
 
 package org.jboss.as.web.deployment;
 
-import static org.jboss.as.web.WebMessages.MESSAGES;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -60,7 +58,6 @@ import org.jboss.as.server.deployment.SetupAction;
 import org.jboss.as.web.VirtualHost;
 import org.jboss.as.web.WebDeploymentDefinition;
 import org.jboss.as.web.WebSubsystemServices;
-import org.jboss.as.web.deployment.WebDeploymentService.ContextActivator;
 import org.jboss.as.web.deployment.component.ComponentInstantiator;
 import org.jboss.as.web.ext.WebContextFactory;
 import org.jboss.as.web.security.JBossWebRealmService;
@@ -85,6 +82,8 @@ import org.jboss.msc.service.ServiceTarget;
 import org.jboss.security.SecurityConstants;
 import org.jboss.security.SecurityUtil;
 import org.jboss.vfs.VirtualFile;
+
+import static org.jboss.as.web.WebMessages.MESSAGES;
 
 /**
  * {@code DeploymentUnitProcessor} creating the actual deployment services.
@@ -301,8 +300,8 @@ public class WarDeploymentProcessor implements DeploymentUnitProcessor {
             }
 
             // OSGi web applications are activated in {@link WebContextActivationProcessor} according to bundle lifecycle changes
-            boolean osgiActivation = deploymentUnit.hasAttachment(Attachments.OSGI_METADATA);
-            if (osgiActivation) {
+            Boolean osgiActivation = deploymentUnit.getAttachment(Attachments.OSGI_DEPLOYMENT);
+            if (osgiActivation != null && osgiActivation) {
                 webappBuilder.setInitialMode(Mode.NEVER);
                 ContextActivator activator = new ContextActivator(webappBuilder.install());
                 deploymentUnit.putAttachment(ContextActivator.ATTACHMENT_KEY, activator);

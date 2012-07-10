@@ -22,16 +22,14 @@
 
 package org.jboss.as.server.deployment.reflect;
 
-import static org.jboss.as.server.ServerLogger.DEPLOYMENT_LOGGER;
-import static org.jboss.as.server.ServerMessages.MESSAGES;
-
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
 import org.jboss.modules.Module;
-import org.jboss.osgi.resolver.XBundle;
+
+import static org.jboss.as.server.ServerMessages.MESSAGES;
 
 /**
  * The processor to install the reflection index.
@@ -42,12 +40,8 @@ public final class InstallReflectionIndexProcessor implements DeploymentUnitProc
 
     public void deploy(final DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
         DeploymentUnit deploymentUnit = phaseContext.getDeploymentUnit();
-        XBundle bundle = deploymentUnit.getAttachment(Attachments.INSTALLED_BUNDLE);
         Module module = deploymentUnit.getAttachment(Attachments.MODULE);
-        if (bundle != null && !bundle.isResolved()) {
-            DEPLOYMENT_LOGGER.warnCannotInstallReflectionIndexForUnresolvedBundle(bundle);
-            return;
-        }
+
         if (module == null) {
             throw MESSAGES.nullModuleAttachment(deploymentUnit);
         }

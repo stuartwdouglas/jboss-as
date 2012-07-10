@@ -23,6 +23,8 @@
 package org.jboss.as.osgi;
 
 import java.io.File;
+import java.util.Collection;
+
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.logging.Cause;
@@ -34,6 +36,7 @@ import org.jboss.msc.service.StartException;
 import org.jboss.osgi.deployment.deployer.Deployment;
 import org.jboss.vfs.VirtualFile;
 import org.osgi.framework.BundleException;
+import org.osgi.resource.Requirement;
 
 /**
  * Logging Id ranges: 11950-11999
@@ -86,4 +89,7 @@ public interface OSGiMessages {
 
     @Message(id = 11962, value = "Illegal repository base location: %s")
     IllegalStateException illegalStateArtifactBaseLocation(File dir);
+
+    @Message(id = 11963, value = "Cannot resolve requirements: %s")
+    DeploymentUnitProcessingException cannotResolve(Collection<Requirement> requirements, @Cause Throwable ex);
 }
