@@ -66,7 +66,7 @@ class ArquillianConfig implements Service<ArquillianConfig> {
     private ServiceTarget serviceTarget;
 
     static ServiceName getServiceName(DeploymentUnit depUnit) {
-        return ServiceName.JBOSS.append("arquillian", "config", depUnit.getName());
+        return depUnit.getServiceName().append("arquillian", "config");
     }
 
     ArquillianConfig(ArquillianService arqService, DeploymentUnit depUnit, Set<String> testClasses) {

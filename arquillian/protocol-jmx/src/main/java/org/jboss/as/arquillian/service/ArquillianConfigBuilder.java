@@ -60,7 +60,7 @@ public class ArquillianConfigBuilder {
 
     private static final AttachmentKey<Set<String>> CLASSES = AttachmentKey.create(Set.class);
 
-    ArquillianConfigBuilder(DeploymentUnit deploymentUnit) {
+    ArquillianConfigBuilder() {
     }
 
     static ArquillianConfig processDeployment(ArquillianService arqService, DeploymentUnit depUnit) {

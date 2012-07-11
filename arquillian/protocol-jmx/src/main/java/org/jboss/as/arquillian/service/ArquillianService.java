@@ -28,6 +28,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import javax.management.MBeanServer;
 
@@ -125,12 +127,53 @@ public class ArquillianService implements Service<ArquillianService> {
                     case STARTING: {
                         ServiceName serviceName = serviceController.getName();
                         String simpleName = serviceName.getSimpleName();
-                        if(JBOSS_DEPLOYMENT.isParentOf(serviceName) && simpleName.equals(Phase.DEPENDENCIES.toString())) {
+                        if (JBOSS_DEPLOYMENT.isParentOf(serviceName) && simpleName.equals(Phase.DEPENDENCIES.toString())) {
                             ServiceName parentName = serviceName.getParent();
                             ServiceController<?> parentController = serviceContainer.getService(parentName);
                             DeploymentUnit depUnit = (DeploymentUnit) parentController.getValue();
                             ArquillianConfigBuilder.handleParseAnnotations(depUnit);
                             FrameworkActivationProcessor.handleParseAnnotations(depUnit);
+                        }
+                    }
+                    case DOWN: {
+                        //we need to make sure the Arquillian config is removed before we go any further
+                        //even though it will have definitely stopped, there is a slight chance of a race if it
+                        //is not removed before Arquillian deploys the next deployment
+                        //but only if the next deployment has the same deployment name
+                        ServiceName serviceName = serviceController.getName();
+                        String simpleName = serviceName.getSimpleName();
+                        if (JBOSS_DEPLOYMENT.isParentOf(serviceName) && simpleName.equals(Phase.INSTALL.toString())) {
+                            ServiceName parentName = serviceName.getParent();
+                            ServiceController<?> parentController = serviceContainer.getService(parentName);
+                            DeploymentUnit depUnit = (DeploymentUnit) parentController.getValue();
+                            final ServiceName arquillianConfig = ArquillianConfig.getServiceName(depUnit);
+                            final ServiceController<?> arqService = serviceContainer.getService(arquillianConfig);
+                            if (arqService != null && arqService.getMode() == ServiceController.Mode.REMOVE) {
+                                final CountDownLatch latch = new CountDownLatch(1);
+                                arqService.addListener(new AbstractServiceListener<Object>() {
+
+                                    @Override
+                                    public void listenerAdded(final ServiceController<? extends Object> serviceController) {
+                                        if (serviceController.getState() == ServiceController.State.REMOVED) {
+                                            latch.countDown();
+                                        }
+                                    }
+
+                                    @Override
+                                    public void transition(final ServiceController<? extends Object> serviceController, final ServiceController.Transition transition) {
+                                        if (transition.getAfter() == ServiceController.Substate.REMOVED) {
+                                            latch.countDown();
+                                        }
+                                    }
+                                });
+                                try {
+                                    if (!latch.await(20, TimeUnit.SECONDS)) {
+                                        throw new RuntimeException("Arqullian configuration service " + arquillianConfig + " not removed");
+                                    }
+                                } catch (InterruptedException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }
                         }
                     }
                 }
