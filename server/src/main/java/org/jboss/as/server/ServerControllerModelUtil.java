@@ -99,6 +99,7 @@ import org.jboss.as.server.operations.ServerRestartRequiredHandler;
 import org.jboss.as.server.operations.ServerResumeHandler;
 import org.jboss.as.server.operations.ServerShutdownHandler;
 import org.jboss.as.server.operations.ServerSuspendHandler;
+import org.jboss.as.server.operations.SuspendStateHandler;
 import org.jboss.as.server.services.net.BindingGroupAddHandler;
 import org.jboss.as.server.services.net.LocalDestinationOutboundSocketBindingResourceDefinition;
 import org.jboss.as.server.services.net.NetworkInterfaceRuntimeHandler;
@@ -303,6 +304,10 @@ public class ServerControllerModelUtil {
             if (serverEnvironment.getLaunchType() == ServerEnvironment.LaunchType.STANDALONE) {
                 root.registerOperationHandler(ServerSuspendHandler.OPERATION_NAME, ServerSuspendHandler.INSTANCE, ServerSuspendHandler.INSTANCE, false);
                 root.registerOperationHandler(ServerResumeHandler.OPERATION_NAME, ServerResumeHandler.INSTANCE, ServerResumeHandler.INSTANCE, false);
+                root.registerOperationHandler(SuspendStateHandler.OPERATION_NAME, ServerResumeHandler.INSTANCE, ServerResumeHandler.INSTANCE, false);
+
+
+                root.registerReadOnlyAttribute(SuspendStateHandler.SUSPEND_STATE, SuspendStateHandler.INSTANCE);
             }
 
             root.registerReadOnlyAttribute(ServerDescriptionConstants.LAUNCH_TYPE, new LaunchTypeHandler(serverEnvironment.getLaunchType()), Storage.RUNTIME);

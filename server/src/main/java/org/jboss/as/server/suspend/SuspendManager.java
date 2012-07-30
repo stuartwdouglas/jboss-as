@@ -46,52 +46,50 @@ public class SuspendManager {
 
     private Map<ShutdownCompleteCallback, SuspendPermitManager> outstandingManagers;
 
-    private SuspendState suspendState;
+    private volatile SuspendState suspendState;
 
     /**
      * Begin the suspension process for a deployment
      */
-    public void suspend() {
-        synchronized (this) {
-            if (suspendState == SuspendState.SUSPENDING) {
-                AS_ROOT_LOGGER.suspendIgnoredAlreadyInProgress();
-                return;
-            } else if (suspendState == SuspendState.SUSPENDED) {
-                AS_ROOT_LOGGER.suspendIgnoredAlreadySuspended();
-                return;
-            }
-            AS_ROOT_LOGGER.suspendingServerOperations();
+    public synchronized void suspend() {
+        if (suspendState == SuspendState.SUSPENDING) {
+            AS_ROOT_LOGGER.suspendIgnoredAlreadyInProgress();
+            return;
+        } else if (suspendState == SuspendState.SUSPENDED) {
+            AS_ROOT_LOGGER.suspendIgnoredAlreadySuspended();
+            return;
+        }
+        AS_ROOT_LOGGER.suspendingServerOperations();
 
-            //notify the listeners
-            for (final SuspendListener listener : listeners) {
-                try {
-                    listener.suspendStarted();
-                } catch (Exception e) {
-                    AS_ROOT_LOGGER.suspendListenerThrewException(e, listener.toString(), "shutdownStarted");
+        //notify the listeners
+        for (final SuspendListener listener : listeners) {
+            try {
+                listener.suspendStarted();
+            } catch (Exception e) {
+                AS_ROOT_LOGGER.suspendListenerThrewException(e, listener.toString(), "shutdownStarted");
+            }
+        }
+
+        //shut down all the managers
+        suspendState = SuspendState.SUSPENDING;
+        final Map<ShutdownCompleteCallback, SuspendPermitManager> outstandingManagers = new HashMap<ShutdownCompleteCallback, SuspendPermitManager>();
+        for (SuspendPermitManager permitManager : permitManagers) {
+            try {
+                final ShutdownCompleteCallback callBack = new ShutdownCompleteCallback();
+                if (!permitManager.shutdown(callBack)) {
+                    outstandingManagers.put(callBack, permitManager);
                 }
+            } catch (Exception e) {
+                AS_ROOT_LOGGER.couldNotShutDownPermitManager(e, permitManager.getName());
             }
+        }
 
-            //shut down all the managers
-            suspendState = SuspendState.SUSPENDING;
-            final Map<ShutdownCompleteCallback, SuspendPermitManager> outstandingManagers = new HashMap<ShutdownCompleteCallback, SuspendPermitManager>();
-            for (SuspendPermitManager permitManager : permitManagers) {
-                try {
-                    final ShutdownCompleteCallback callBack = new ShutdownCompleteCallback();
-                    if (!permitManager.shutdown(callBack)) {
-                        outstandingManagers.put(callBack, permitManager);
-                    }
-                } catch (Exception e) {
-                    AS_ROOT_LOGGER.couldNotShutDownPermitManager(e, permitManager.getName());
-                }
-            }
-
-            if (outstandingManagers.isEmpty()) {
-                //there were no threads active, the deployment can be shut down immediately
-                AS_ROOT_LOGGER.serverSuspended();
-                finishSuspend();
-            } else {
-                this.outstandingManagers = outstandingManagers;
-            }
+        if (outstandingManagers.isEmpty()) {
+            //there were no threads active, the deployment can be shut down immediately
+            AS_ROOT_LOGGER.serverSuspended();
+            finishSuspend();
+        } else {
+            this.outstandingManagers = outstandingManagers;
         }
     }
 
@@ -99,66 +97,58 @@ public class SuspendManager {
      * Resume normal server operations. This may be called while the server is in the process of being suspended,
      * which will abort the suspend operation.
      */
-    public void resume() {
+    public synchronized void resume() {
 
-        synchronized (this) {
-            suspendState = SuspendState.RUNNING;
-            outstandingManagers = null;
+        suspendState = SuspendState.RUNNING;
+        outstandingManagers = null;
 
-            for (final SuspendPermitManager manager : permitManagers) {
-                try {
-                    manager.resume();
-                } catch (Exception e) {
-                    AS_ROOT_LOGGER.couldNotResumePermitManager(e, manager.getName());
-                }
+        for (final SuspendPermitManager manager : permitManagers) {
+            try {
+                manager.resume();
+            } catch (Exception e) {
+                AS_ROOT_LOGGER.couldNotResumePermitManager(e, manager.getName());
             }
+        }
 
-            //notify the listeners
-            for (final SuspendListener listener : listeners) {
-                try {
-                    listener.resumed();
-                } catch (Exception e) {
-                    AS_ROOT_LOGGER.suspendListenerThrewException(e, listener.toString(), "resumed");
-                }
+        //notify the listeners
+        for (final SuspendListener listener : listeners) {
+            try {
+                listener.resumed();
+            } catch (Exception e) {
+                AS_ROOT_LOGGER.suspendListenerThrewException(e, listener.toString(), "resumed");
             }
         }
     }
 
-    public void addListener(final SuspendListener listener) {
-        synchronized (this) {
-            if (listener.listenerAdded(suspendState)) {
-                this.listeners.add(listener);
-            }
+    public synchronized void addListener(final SuspendListener listener) {
+        if (listener.listenerAdded(suspendState)) {
+            this.listeners.add(listener);
         }
     }
 
-    public void removeListener(final SuspendListener listener) {
-        synchronized (this) {
-            this.listeners.remove(listener);
-        }
+    public synchronized void removeListener(final SuspendListener listener) {
+        this.listeners.remove(listener);
     }
 
-    public void addPermitManager(final SuspendPermitManager manager) {
-        synchronized (this) {
-            this.permitManagers.add(manager);
-        }
+    public synchronized void addPermitManager(final SuspendPermitManager manager) {
+        manager.start(this);
+        this.permitManagers.add(manager);
     }
 
-    public void removePermitManager(final SuspendPermitManager manager) {
-        synchronized (this) {
-            this.permitManagers.remove(manager);
-            //if the manager is removed while the server is shutting down
-            //we want to ignore it from now on
-            if(outstandingManagers != null) {
-                Iterator<Map.Entry<ShutdownCompleteCallback, SuspendPermitManager>> it = outstandingManagers.entrySet().iterator();
-                while (it.hasNext()) {
-                    final Map.Entry<ShutdownCompleteCallback, SuspendPermitManager> entry = it.next();
-                    if(entry.getValue() == manager) {
-                        it.remove();
-                        if(outstandingManagers.isEmpty()) {
-                            finishSuspend();
-                            AS_ROOT_LOGGER.serverSuspended();
-                        }
+    public synchronized void removePermitManager(final SuspendPermitManager manager) {
+        manager.stop();
+        this.permitManagers.remove(manager);
+        //if the manager is removed while the server is shutting down
+        //we want to ignore it from now on
+        if (outstandingManagers != null) {
+            Iterator<Map.Entry<ShutdownCompleteCallback, SuspendPermitManager>> it = outstandingManagers.entrySet().iterator();
+            while (it.hasNext()) {
+                final Map.Entry<ShutdownCompleteCallback, SuspendPermitManager> entry = it.next();
+                if (entry.getValue() == manager) {
+                    it.remove();
+                    if (outstandingManagers.isEmpty()) {
+                        finishSuspend();
+                        AS_ROOT_LOGGER.serverSuspended();
                     }
                 }
             }
@@ -195,6 +185,9 @@ public class SuspendManager {
         }
     }
 
+    public SuspendState getSuspendState() {
+        return suspendState;
+    }
 
     /**
      * Listener that thread managers can use to notify the shutdown manager that

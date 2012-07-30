@@ -31,11 +31,11 @@ import org.jboss.as.server.ServerMessages;
 
 /**
  * A suspend permit manager, responsible for issuing permits at a gateway into the application server.
- *
+ * <p/>
  * A gateway is considered to be anywhere that a request starts, and includes things like web, remote EJB, EJB timers
  * etc.
- *
- * One permit manager is created for each gateay, which allows for fine grained control of graceful shutdown for each
+ * <p/>
+ * One permit manager is created for each gateway into the server, which allows for fine grained control of graceful shutdown for each
  * request type.
  *
  * @author Stuart Douglas
@@ -60,9 +60,21 @@ public class SuspendPermitManager {
 
     private final Object lock = new Object();
 
+
     public SuspendPermitManager(final String name) {
         this.name = name;
     }
+
+    public void start(final SuspendManager manager) {
+        this.suspendState = manager.getSuspendState();
+    }
+
+    public void stop() {
+        //if we are not associated with a manager we just allow all operations
+        suspendState = SuspendState.RUNNING;
+    }
+
+
     /**
      * Acquires a permit to allow a resource to do some work. IF the server is shutting down the permit will
      * not be granted.
@@ -80,7 +92,7 @@ public class SuspendPermitManager {
                     //turns out we are not eligible for a permit
                     //decrement the count
                     long outstanding = OUTSTANDING_UPDATER.decrementAndGet(this);
-                    if(outstanding == 0) {
+                    if (outstanding == 0) {
                         lock.notifyAll();
                     }
                     throw new ServerSuspendingException();
@@ -99,14 +111,14 @@ public class SuspendPermitManager {
      * @param permit The permit to release
      */
     public void releasePermit(final SuspendPermit permit) {
-        if(!outstandingPermits.remove(permit)) {
+        if (!outstandingPermits.remove(permit)) {
             throw ServerMessages.MESSAGES.permitReturnedTwice(permit);
         }
         long outstanding = OUTSTANDING_UPDATER.decrementAndGet(this);
         if (suspendState != SuspendState.RUNNING) {
             synchronized (lock) {
                 if (suspendState != SuspendState.RUNNING) {
-                    if(outstanding == 0) {
+                    if (outstanding == 0) {
                         callback.shutdownComplete();
                         callback = null;
                         suspendState = SuspendState.SUSPENDED;
@@ -123,7 +135,6 @@ public class SuspendPermitManager {
      * callback to notify the manager that it's shutdown has completed.
      *
      * @param callback The callback that must be called when the manager is shut down
-     *
      * @return true if the manager can be shut down immediately
      */
     boolean shutdown(final SuspendManager.ShutdownCompleteCallback callback) {
@@ -147,7 +158,6 @@ public class SuspendPermitManager {
 
     /**
      * Resume normal operations. This can be called both during a shutdown, and after a shutdown has taken place.
-     *
      */
     void resume() {
         synchronized (lock) {
@@ -158,9 +168,8 @@ public class SuspendPermitManager {
 
 
     /**
-     *
      * @return The name of this permit manager. Permit managers may be referenced by name
-     * in the management API
+     *         in the management API
      */
     public String getName() {
         return name;
