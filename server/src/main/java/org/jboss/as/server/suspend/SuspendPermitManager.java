@@ -175,4 +175,7 @@ public class SuspendPermitManager {
         return name;
     }
 
+    public long getOutstandingPermits() {
+        return outstandingPermitCount;
+    }
 }

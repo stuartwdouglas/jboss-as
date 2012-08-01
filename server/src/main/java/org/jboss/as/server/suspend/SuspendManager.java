@@ -46,7 +46,7 @@ public class SuspendManager {
 
     private Map<ShutdownCompleteCallback, SuspendPermitManager> outstandingManagers;
 
-    private volatile SuspendState suspendState;
+    private volatile SuspendState suspendState = SuspendState.RUNNING;
 
     /**
      * Begin the suspension process for a deployment
@@ -153,6 +153,10 @@ public class SuspendManager {
                 }
             }
         }
+    }
+
+    public synchronized List<SuspendPermitManager> getPermitManagers() {
+        return new ArrayList<SuspendPermitManager>(permitManagers);
     }
 
     /**

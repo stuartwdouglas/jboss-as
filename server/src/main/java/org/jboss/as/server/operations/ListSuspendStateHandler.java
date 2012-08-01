@@ -27,25 +27,25 @@ import java.util.Locale;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
-import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.controller.descriptions.DescriptionProvider;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.server.controller.descriptions.ServerRootDescription;
 import org.jboss.as.server.suspend.SuspendManager;
+import org.jboss.as.server.suspend.SuspendPermitManager;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
 
 /**
- * Handler that resumes the standalone server.
+ * Handler that suspends the standalone server.
  *
  * @author Stuart Douglas
  */
-public class ServerResumeHandler implements OperationStepHandler, DescriptionProvider {
+public class ListSuspendStateHandler implements OperationStepHandler, DescriptionProvider {
 
-    public static final String OPERATION_NAME = ModelDescriptionConstants.RESUME;
-    public static final ServerResumeHandler INSTANCE = new ServerResumeHandler();
+    public static final String OPERATION_NAME = ModelDescriptionConstants.LIST_SUSPEND_STATE;
+    public static final ListSuspendStateHandler INSTANCE = new ListSuspendStateHandler();
 
-    private ServerResumeHandler() {
+    private ListSuspendStateHandler() {
     }
 
     /**
@@ -57,16 +57,19 @@ public class ServerResumeHandler implements OperationStepHandler, DescriptionPro
             @Override
             public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {
                 final ServiceController<?> service = context.getServiceRegistry(true).getRequiredService(SuspendManager.SERVICE_NAME);
-
                 SuspendManager manager = (SuspendManager) service.getValue();
-                manager.resume();
-
-                //TODO: Is the the correct behaviour
-                if (context.completeStep() == OperationContext.ResultAction.ROLLBACK) {
-                    final ServiceVerificationHandler resumeHandler = new ServiceVerificationHandler();
-                    manager.suspend();
-                    context.addStep(resumeHandler, OperationContext.Stage.VERIFY);
+                final ModelNode result = new ModelNode();
+                result.setEmptyList();
+                for(final SuspendPermitManager p : manager.getPermitManagers()) {
+                    ModelNode sp = new ModelNode();
+                    sp.get(ModelDescriptionConstants.NAME).set(p.getName());
+                    sp.get(ModelDescriptionConstants.OUTSTANDING_PERMITS).set(p.getOutstandingPermits());
+                    result.add(sp);
                 }
+
+
+                context.getResult().set(result);
+                context.completeStep();
             }
         }, OperationContext.Stage.RUNTIME);
         context.completeStep();
@@ -76,6 +79,6 @@ public class ServerResumeHandler implements OperationStepHandler, DescriptionPro
      * {@inheritDoc}
      */
     public ModelNode getModelDescription(final Locale locale) {
-        return ServerRootDescription.getResumeOperationDescription(locale);
+        return ServerRootDescription.getSuspendOperationDescription(locale);
     }
 }

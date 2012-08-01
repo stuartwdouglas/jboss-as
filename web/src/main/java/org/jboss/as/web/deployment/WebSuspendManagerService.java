@@ -55,7 +55,7 @@ public class WebSuspendManagerService implements Service<WebSuspendManagerServic
 
     @Override
     public synchronized void start(final StartContext context) throws StartException {
-        suspendPermitManager = new SuspendPermitManager(deploymentName + "-web");
+        suspendPermitManager = new SuspendPermitManager(deploymentName + "-web-requests");
         suspendManager.getValue().addPermitManager(suspendPermitManager);
     }
 

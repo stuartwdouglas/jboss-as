@@ -127,6 +127,7 @@ public class ModelDescriptionConstants {
     public static final String JVM = "jvm";
     public static final String LDAP = "ldap";
     public static final String LDAP_CONNECTION = "ldap-connection";
+    public static final String LIST_SUSPEND_STATE = "list-suspend-state";
     public static final String LOCAL = "local";
     public static final String LOCAL_DESTINATION_OUTBOUND_SOCKET_BINDING = "local-destination-outbound-socket-binding";
     public static final String LOCAL_HOST_NAME = "local-host-name";
@@ -173,6 +174,7 @@ public class ModelDescriptionConstants {
     public static final String OUTBOUND_CONNECTION = "outbound-connection";
     /** Use this standard operation address field in the operation *description* ModelNode */
     public static final String OUTCOME = "outcome";
+    public static final String OUTSTANDING_PERMITS = "outstanding-permits";
     public static final String PASSWORD = "password";
     public static final String PATH = "path";
     public static final String PERSISTENT = "persistent";

@@ -91,6 +91,7 @@ import org.jboss.as.server.mgmt.NativeManagementResourceDefinition;
 import org.jboss.as.server.mgmt.NativeRemotingManagementResourceDefinition;
 import org.jboss.as.server.operations.DumpServicesHandler;
 import org.jboss.as.server.operations.LaunchTypeHandler;
+import org.jboss.as.server.operations.ListSuspendStateHandler;
 import org.jboss.as.server.operations.ProcessTypeHandler;
 import org.jboss.as.server.operations.RootResourceHack;
 import org.jboss.as.server.operations.RunningModeReadHandler;
@@ -304,8 +305,7 @@ public class ServerControllerModelUtil {
             if (serverEnvironment.getLaunchType() == ServerEnvironment.LaunchType.STANDALONE) {
                 root.registerOperationHandler(ServerSuspendHandler.OPERATION_NAME, ServerSuspendHandler.INSTANCE, ServerSuspendHandler.INSTANCE, false);
                 root.registerOperationHandler(ServerResumeHandler.OPERATION_NAME, ServerResumeHandler.INSTANCE, ServerResumeHandler.INSTANCE, false);
-                root.registerOperationHandler(SuspendStateHandler.OPERATION_NAME, ServerResumeHandler.INSTANCE, ServerResumeHandler.INSTANCE, false);
-
+                root.registerOperationHandler(ListSuspendStateHandler.OPERATION_NAME, ListSuspendStateHandler.INSTANCE, ListSuspendStateHandler.INSTANCE, false);
 
                 root.registerReadOnlyAttribute(SuspendStateHandler.SUSPEND_STATE, SuspendStateHandler.INSTANCE);
             }

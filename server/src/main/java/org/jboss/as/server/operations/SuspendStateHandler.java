@@ -45,7 +45,6 @@ public class SuspendStateHandler implements OperationStepHandler {
 
     public static final AttributeDefinition SUSPEND_STATE = new SimpleAttributeDefinition(ModelDescriptionConstants.SUSPEND_STATE, ModelType.STRING, false, AttributeAccess.Flag.STORAGE_RUNTIME );
 
-
     private SuspendStateHandler() {
     }
 
@@ -56,7 +55,8 @@ public class SuspendStateHandler implements OperationStepHandler {
             public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {
                 final ServiceController<?> service = context.getServiceRegistry(true).getRequiredService(SuspendManager.SERVICE_NAME);
                 SuspendManager manager = (SuspendManager) service.getValue();
-                context.getResult().get(ModelDescriptionConstants.RESULT).set(manager.getSuspendState().toString());
+                context.getResult().set(manager.getSuspendState().toString());
+                context.completeStep();
             }
         }, OperationContext.Stage.RUNTIME);
         context.completeStep();

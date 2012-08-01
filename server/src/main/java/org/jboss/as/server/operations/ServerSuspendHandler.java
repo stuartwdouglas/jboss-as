@@ -28,19 +28,22 @@ import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.descriptions.DescriptionProvider;
+import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.server.controller.descriptions.ServerRootDescription;
 import org.jboss.as.server.suspend.SuspendManager;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceController;
 
 /**
- * Handler that suspends the standalone server.
+ * Handler that lists the suspend state of every permit manager in the container.
+ *
+ * This allows an administrator to see what is keeping the server from shutting down
  *
  * @author Stuart Douglas
  */
 public class ServerSuspendHandler implements OperationStepHandler, DescriptionProvider {
 
-    public static final String OPERATION_NAME = "suspend";
+    public static final String OPERATION_NAME = ModelDescriptionConstants.SUSPEND;
     public static final ServerSuspendHandler INSTANCE = new ServerSuspendHandler();
 
     private ServerSuspendHandler() {
