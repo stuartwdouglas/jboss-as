@@ -641,6 +641,6 @@ public interface ServerMessages {
     @Message(id = 18778, value = "Suspend permit %s has been returned twice")
     IllegalArgumentException permitReturnedTwice(SuspendPermit permit);
 
-    @Message(id = 18777, value = "Attempted to acquire a permit before calling start()")
+    @Message(id = 18779, value = "Attempted to acquire a permit before calling start()")
     IllegalStateException attemptToAcquirePermitBeforeStartCalled();
 }

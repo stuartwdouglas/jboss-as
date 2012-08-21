@@ -41,7 +41,8 @@ import org.jboss.msc.service.ServiceController;
  *
  * @author Stuart Douglas
  */
-public class ServerSuspendHandler implements OperationStepHandler, DescriptionProvider {
+public class
+        ServerSuspendHandler implements OperationStepHandler, DescriptionProvider {
 
     public static final String OPERATION_NAME = ModelDescriptionConstants.SUSPEND;
     public static final ServerSuspendHandler INSTANCE = new ServerSuspendHandler();
