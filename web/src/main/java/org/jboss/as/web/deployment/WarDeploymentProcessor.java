@@ -22,6 +22,21 @@
 
 package org.jboss.as.web.deployment;
 
+import static org.jboss.as.web.WebMessages.MESSAGES;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import javax.security.jacc.PolicyConfiguration;
+
+import org.jboss.as.ee.component.EEApplicationDescription;
+import org.jboss.as.web.common.ServletContextAttribute;
+import org.jboss.as.web.common.WarMetaData;
 import org.apache.catalina.ContainerListener;
 import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleListener;
@@ -49,7 +64,7 @@ import org.jboss.as.web.VirtualHost;
 import org.jboss.as.web.WebDeploymentDefinition;
 import org.jboss.as.web.WebSubsystemServices;
 import org.jboss.as.web.deployment.WebDeploymentService.ContextActivator;
-import org.jboss.as.web.deployment.component.ComponentInstantiator;
+import org.jboss.as.web.common.WebComponentDescription;
 import org.jboss.as.web.ext.WebContextFactory;
 import org.jboss.as.web.security.JBossWebRealmService;
 import org.jboss.as.web.security.SecurityContextAssociationValve;
@@ -73,17 +88,6 @@ import org.jboss.msc.service.ServiceTarget;
 import org.jboss.security.SecurityConstants;
 import org.jboss.security.SecurityUtil;
 import org.jboss.vfs.VirtualFile;
-
-import javax.security.jacc.PolicyConfiguration;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.jboss.as.web.WebMessages.MESSAGES;
 
 /**
  * {@code DeploymentUnitProcessor} creating the actual deployment services.
@@ -145,7 +149,7 @@ public class WarDeploymentProcessor implements DeploymentUnitProcessor {
         final ClassLoader classLoader = module.getClassLoader();
         final JBossWebMetaData metaData = warMetaData.getMergedJBossWebMetaData();
         final List<SetupAction> setupActions = deploymentUnit.getAttachmentList(org.jboss.as.ee.component.Attachments.WEB_SETUP_ACTIONS);
-
+        final EEApplicationDescription applicationDescription = deploymentUnit.getAttachment(org.jboss.as.ee.component.Attachments.EE_APPLICATION_DESCRIPTION);
         // Resolve the context factory
         WebContextFactory contextFactory = deploymentUnit.getAttachment(WebContextFactory.ATTACHMENT);
         if (contextFactory == null) {
@@ -175,25 +179,16 @@ public class WarDeploymentProcessor implements DeploymentUnitProcessor {
         // Hook for post processing the web context (e.g. for SIP)
         contextFactory.postProcessContext(deploymentUnit, webContext);
 
-        final WebInjectionContainer injectionContainer = new WebInjectionContainer(module.getClassLoader());
-
+        final Set<ServiceName> dependentComponents = new HashSet<ServiceName>();
         // see AS7-2077
         // basically we want to ignore components that have failed for whatever reason
         // if they are important they will be picked up when the web deployment actually starts
-        final Map<String, ComponentInstantiator> components = deploymentUnit.getAttachment(WebAttachments.WEB_COMPONENT_INSTANTIATORS);
-        if (components != null) {
-            final Set<ServiceName> failed = deploymentUnit.getAttachment(org.jboss.as.ee.component.Attachments.FAILED_COMPONENTS);
-            for (Map.Entry<String, ComponentInstantiator> entry : components.entrySet()) {
-                boolean skip = false;
-                for (final ServiceName serviceName : entry.getValue().getServiceNames()) {
-                    if (failed.contains(serviceName)) {
-                        skip = true;
-                        break;
-                    }
-                }
-                if (!skip) {
-                    injectionContainer.addInstantiator(entry.getKey(), entry.getValue());
-                }
+        final List<ServiceName> components = deploymentUnit.getAttachmentList(WebComponentDescription.WEB_COMPONENTS);
+        final Set<ServiceName> failed = deploymentUnit.getAttachment(org.jboss.as.ee.component.Attachments.FAILED_COMPONENTS);
+        for (final ServiceName component : components) {
+            boolean skip = false;
+            if (!failed.contains(component)) {
+                dependentComponents.add(component);
             }
         }
 
@@ -278,10 +273,10 @@ public class WarDeploymentProcessor implements DeploymentUnitProcessor {
                     .addDependency(DependencyType.REQUIRED, SecurityDomainService.SERVICE_NAME.append(securityDomain), SecurityDomainContext.class,
                             realmService.getSecurityDomainContextInjector()).setInitialMode(Mode.ACTIVE).install();
 
-            final WebDeploymentService webappService = new WebDeploymentService(webContext, injectionContainer, setupActions, attributes);
+            final WebDeploymentService webappService = new WebDeploymentService(webContext, new WebInjectionContainer(module.getClassLoader(), applicationDescription.getComponentRegistry()), setupActions, attributes);
             ServiceBuilder<StandardContext> webappBuilder = serviceTarget.addService(webappServiceName, webappService)
                     .addDependency(WebSubsystemServices.JBOSS_WEB_HOST.append(hostName), VirtualHost.class, new WebContextInjector(webContext))
-                    .addDependencies(injectionContainer.getServiceNames()).addDependency(realmServiceName, Realm.class, webappService.getRealm())
+                    .addDependencies(dependentComponents).addDependency(realmServiceName, Realm.class, webappService.getRealm())
                     .addDependencies(deploymentUnit.getAttachmentList(Attachments.WEB_DEPENDENCIES))
                     .addDependency(JndiNamingDependencyProcessor.serviceName(deploymentUnit));
 

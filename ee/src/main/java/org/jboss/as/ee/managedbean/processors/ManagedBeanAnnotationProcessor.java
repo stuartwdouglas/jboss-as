@@ -80,7 +80,6 @@ public class ManagedBeanAnnotationProcessor implements DeploymentUnitProcessor {
         final DeploymentUnit deploymentUnit = phaseContext.getDeploymentUnit();
         final EEResourceReferenceProcessorRegistry registry = deploymentUnit.getAttachment(org.jboss.as.ee.component.Attachments.RESOURCE_REFERENCE_PROCESSOR_REGISTRY);
         final EEModuleDescription moduleDescription = deploymentUnit.getAttachment(org.jboss.as.ee.component.Attachments.EE_MODULE_DESCRIPTION);
-        final EEApplicationClasses applicationClasses = deploymentUnit.getAttachment(org.jboss.as.ee.component.Attachments.EE_APPLICATION_CLASSES_DESCRIPTION);
         final CompositeIndex compositeIndex = deploymentUnit.getAttachment(Attachments.COMPOSITE_ANNOTATION_INDEX);
         if(compositeIndex == null) {
             return;

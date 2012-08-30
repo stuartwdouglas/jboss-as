@@ -82,7 +82,7 @@ import org.jboss.as.server.deployment.DeploymentUtils;
 import org.jboss.as.server.deployment.JPADeploymentMarker;
 import org.jboss.as.server.deployment.SubDeploymentMarker;
 import org.jboss.as.server.deployment.module.ResourceRoot;
-import org.jboss.as.web.deployment.WarMetaData;
+import org.jboss.as.web.common.WarMetaData;
 import org.jboss.dmr.ModelNode;
 import org.jboss.jandex.Index;
 import org.jboss.metadata.web.jboss.ValveMetaData;

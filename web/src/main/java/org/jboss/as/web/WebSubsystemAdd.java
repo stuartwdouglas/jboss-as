@@ -38,8 +38,9 @@ import org.jboss.as.server.AbstractDeploymentChainStep;
 import org.jboss.as.server.DeploymentProcessorTarget;
 import org.jboss.as.server.deployment.Phase;
 import org.jboss.as.server.deployment.jbossallxml.JBossAllXmlParserRegisteringProcessor;
-import org.jboss.as.web.deployment.ELExpressionFactoryProcessor;
+import org.jboss.as.web.common.SharedTldsMetaDataBuilder;
 import org.jboss.as.web.deployment.EarContextRootProcessor;
+import org.jboss.as.web.deployment.ELExpressionFactoryProcessor;
 import org.jboss.as.web.deployment.JBossWebParsingDeploymentProcessor;
 import org.jboss.as.web.deployment.ServletContainerInitializerDeploymentProcessor;
 import org.jboss.as.web.deployment.TldParsingDeploymentProcessor;
@@ -63,6 +64,7 @@ import org.jboss.msc.service.ServiceTarget;
 import org.jboss.msc.value.InjectedValue;
 
 import javax.management.MBeanServer;
+
 import java.util.List;
 
 /**
@@ -106,7 +108,7 @@ class WebSubsystemAdd extends AbstractBoottimeAddStepHandler {
             protected void execute(DeploymentProcessorTarget processorTarget) {
 
                 final SharedWebMetaDataBuilder sharedWebBuilder = new SharedWebMetaDataBuilder(config.clone());
-                final SharedTldsMetaDataBuilder sharedTldsBuilder = new SharedTldsMetaDataBuilder(config.clone());
+                final SharedTldsMetaDataBuilder sharedTldsBuilder = new SharedTldsMetaDataBuilder();
 
                 processorTarget.addDeploymentProcessor(WebExtension.SUBSYSTEM_NAME, Phase.STRUCTURE, Phase.STRUCTURE_REGISTER_JBOSS_ALL_XML_PARSER, new JBossAllXmlParserRegisteringProcessor<JBossWebMetaData>(WebJBossAllParser.ROOT_ELEMENT, WebJBossAllParser.ATTACHMENT_KEY, new WebJBossAllParser()));
                 processorTarget.addDeploymentProcessor(WebExtension.SUBSYSTEM_NAME, Phase.STRUCTURE, Phase.STRUCTURE_WAR_DEPLOYMENT_INIT, new WarDeploymentInitializingProcessor());

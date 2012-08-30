@@ -32,11 +32,13 @@ import static org.powermock.api.mockito.PowerMockito.when;
 import java.io.File;
 
 import org.apache.catalina.core.StandardContext;
+import org.jboss.as.ee.component.EEApplicationDescription;
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.Services;
 import org.jboss.as.server.deployment.module.ResourceRoot;
+import org.jboss.as.web.common.WarMetaData;
 import org.jboss.as.web.ext.WebContextFactory;
 import org.jboss.dmr.ModelNode;
 import org.jboss.metadata.web.jboss.JBossWebMetaData;
@@ -91,6 +93,7 @@ public class WarDeploymentProcessorTest {
         final ServiceTarget serviceTarget = mock(ServiceTarget.class, RETURNS_DEEP_STUBS);
         when(phaseContext.getServiceTarget()).thenReturn(serviceTarget);
         when(deploymentUnit.getAttachment(WarMetaData.ATTACHMENT_KEY)).thenReturn(warMetaData);
+        when(deploymentUnit.getAttachment(org.jboss.as.ee.component.Attachments.EE_APPLICATION_DESCRIPTION)).thenReturn(new EEApplicationDescription(null));
 
         final ResourceRoot resourceRoot = mock(ResourceRoot.class);
         final VirtualFile deploymentRoot = mock(VirtualFile.class);

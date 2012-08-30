@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Map;
 
 import org.jboss.as.ee.component.Attachments;
 import org.jboss.as.ee.component.EEApplicationClasses;
@@ -36,11 +35,7 @@ import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
-import org.jboss.as.web.deployment.WarMetaData;
-import org.jboss.as.web.deployment.WebAttachments;
-import org.jboss.as.web.deployment.component.ComponentInstantiator;
-import org.jboss.as.web.deployment.component.WebComponentDescription;
-import org.jboss.as.web.deployment.component.WebComponentInstantiator;
+import org.jboss.as.web.common.WarMetaData;
 import org.jboss.as.weld.WeldDeploymentMarker;
 import org.jboss.as.weld.WeldLogger;
 import org.jboss.as.weld.webtier.jsp.JspInitializationListener;
@@ -131,12 +126,6 @@ public class WebIntegrationProcessor implements DeploymentUnitProcessor {
         }
         listeners.add(0, WBL);
         listeners.add(1, JIL);
-
-        //This uses resource injection, so it needs to be a component
-        final WebComponentDescription componentDescription = new WebComponentDescription(JSP_LISTENER, JSP_LISTENER, module, deploymentUnit.getServiceName(), applicationClasses);
-        module.addComponent(componentDescription);
-        final Map<String, ComponentInstantiator> instantiators = deploymentUnit.getAttachment(WebAttachments.WEB_COMPONENT_INSTANTIATORS);
-        instantiators.put(JSP_LISTENER, new WebComponentInstantiator(deploymentUnit, componentDescription));
 
         FiltersMetaData filters = webMetaData.getFilters();
         if (filters == null) {

@@ -21,37 +21,49 @@
  */
 package org.jboss.as.jsf.injection;
 
-import org.apache.myfaces.config.annotation.LifecycleProvider2;
-import org.jboss.as.jsf.JSFMessages;
-import org.jboss.as.web.deployment.WebInjectionContainer;
+import java.lang.reflect.InvocationTargetException;
+import java.util.EnumSet;
+import java.util.Map;
 
 import javax.naming.NamingException;
-import java.lang.reflect.InvocationTargetException;
+
+import org.apache.myfaces.config.annotation.LifecycleProvider2;
+import org.jboss.as.ee.component.ComponentRegistry;
+import org.jboss.as.naming.ManagedReference;
+import org.jboss.as.web.common.StartupContext;
+import org.jboss.as.web.common.util.ConcurrentReferenceHashMap;
 
 /**
  * @author Stan Silvert ssilvert@redhat.com (C) 2012 Red Hat Inc.
  */
 public class MyFacesLifecycleProvider implements LifecycleProvider2 {
 
-    private final WebInjectionContainer container;
+    private final ComponentRegistry componentRegistry;
+    private final Map<Object, ManagedReference> instanceMap;
 
     public MyFacesLifecycleProvider() {
-        this.container = WebInjectionContainer.getCurrentInjectionContainer();
-        if (this.container == null) {
-            throw JSFMessages.MESSAGES.noThreadLocalInjectionContainer();
-        }
+        this.componentRegistry = StartupContext.getComponentRegistry();
+        this.instanceMap = new ConcurrentReferenceHashMap<Object, ManagedReference>
+                (256, ConcurrentReferenceHashMap.DEFAULT_LOAD_FACTOR,
+                        Runtime.getRuntime().availableProcessors(), ConcurrentReferenceHashMap.ReferenceType.STRONG,
+                        ConcurrentReferenceHashMap.ReferenceType.STRONG, EnumSet.of(ConcurrentReferenceHashMap.Option.IDENTITY_COMPARISONS));
     }
 
     public Object newInstance(String className) throws ClassNotFoundException, IllegalAccessException, InstantiationException, NamingException, InvocationTargetException {
-        return container.newInstance(className);
+        ManagedReference instance =  componentRegistry.createInstance(Thread.currentThread().getContextClassLoader().loadClass(className));
+        instanceMap.put(instance.getInstance(), instance);
+        return instance.getInstance();
     }
 
     public void postConstruct(Object obj) throws IllegalAccessException, InvocationTargetException {
-       // do nothing.  container.newInstance() took care of this.
+        // do nothing.  container.newInstance() took care of this.
     }
 
     public void destroyInstance(Object obj) throws IllegalAccessException, InvocationTargetException {
-        container.destroyInstance(obj);
+        ManagedReference instance = instanceMap.get(obj);
+        if(instance != null) {
+            instance.release();
+        }
     }
 
 }

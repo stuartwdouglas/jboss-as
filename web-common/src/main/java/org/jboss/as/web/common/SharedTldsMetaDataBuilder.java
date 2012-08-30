@@ -19,7 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.web;
+package org.jboss.as.web.common;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,8 +58,7 @@ public class SharedTldsMetaDataBuilder {
     /** The common container config. */
     //private final ModelNode containerConfig;
 
-    SharedTldsMetaDataBuilder(final ModelNode containerConfig) {
-        //this.containerConfig = containerConfig;
+    public SharedTldsMetaDataBuilder() {
         init();
     }
 

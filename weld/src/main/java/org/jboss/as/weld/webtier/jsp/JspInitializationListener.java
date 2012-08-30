@@ -22,25 +22,24 @@
  */
 package org.jboss.as.weld.webtier.jsp;
 
-import org.apache.jasper.runtime.JspApplicationContextImpl;
-import org.jboss.as.weld.util.Reflections;
-import org.jboss.weld.servlet.api.helpers.AbstractServletListener;
-
 import javax.el.ELContextListener;
 import javax.el.ExpressionFactory;
 import javax.enterprise.inject.spi.BeanManager;
-import javax.inject.Inject;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import javax.servlet.ServletRequestEvent;
 import javax.servlet.jsp.JspApplicationContext;
 import javax.servlet.jsp.JspFactory;
 
+import org.apache.jasper.runtime.JspApplicationContextImpl;
+import org.jboss.as.weld.util.Reflections;
+import org.jboss.weld.servlet.api.helpers.AbstractServletListener;
+
 /**
  * The Web Beans JSP initialization listener
  *
- *
  * @author Pete Muir
  * @author Stuart Douglas
- *
  */
 public class JspInitializationListener extends AbstractServletListener {
 
@@ -67,35 +66,44 @@ public class JspInitializationListener extends AbstractServletListener {
 
     }
 
-    @Inject
-    private BeanManager beanManager;
 
     @Override
     public void requestInitialized(ServletRequestEvent sre) {
-        if (!installed && beanManager!= null && JspFactory.getDefaultFactory() != null) {
-            synchronized (this) {
-                if (!installed) {
-                    installed = true;
-                    // get JspApplicationContext.
-                    JspApplicationContext jspAppContext = JspFactory.getDefaultFactory().getJspApplicationContext(
-                            sre.getServletContext());
+        if (!installed) {
+            BeanManager beanManager = getBeanManager();
+            if (beanManager != null && JspFactory.getDefaultFactory() != null) {
+                synchronized (this) {
+                    if (!installed) {
+                        installed = true;
+                        // get JspApplicationContext.
+                        JspApplicationContext jspAppContext = JspFactory.getDefaultFactory().getJspApplicationContext(
+                                sre.getServletContext());
 
-                    // register compositeELResolver with JSP
-                    jspAppContext.addELResolver(beanManager.getELResolver());
+                        // register compositeELResolver with JSP
+                        jspAppContext.addELResolver(beanManager.getELResolver());
 
-                    jspAppContext.addELContextListener(Reflections.<ELContextListener> newInstance(
-                            "org.jboss.weld.el.WeldELContextListener", getClass().getClassLoader()));
+                        jspAppContext.addELContextListener(Reflections.<ELContextListener>newInstance(
+                                "org.jboss.weld.el.WeldELContextListener", getClass().getClassLoader()));
 
-                    // Hack into JBoss Web/Catalina to replace the ExpressionFactory
-                    JspApplicationContextImpl wrappedJspApplicationContextImpl = new WeldJspApplicationContextImpl(
-                            JspApplicationContextImpl.getInstance(sre.getServletContext()), beanManager
-                                    .wrapExpressionFactory(jspAppContext.getExpressionFactory()));
-                    sre.getServletContext().setAttribute(JspApplicationContextImpl.class.getName(),
-                            wrappedJspApplicationContextImpl);
+                        // Hack into JBoss Web/Catalina to replace the ExpressionFactory
+                        JspApplicationContextImpl wrappedJspApplicationContextImpl = new WeldJspApplicationContextImpl(
+                                JspApplicationContextImpl.getInstance(sre.getServletContext()), beanManager
+                                .wrapExpressionFactory(jspAppContext.getExpressionFactory()));
+                        sre.getServletContext().setAttribute(JspApplicationContextImpl.class.getName(),
+                                wrappedJspApplicationContextImpl);
+                    }
                 }
             }
         }
         // otherwise something went wrong starting Weld, so don't register with JSP
+    }
+
+    private BeanManager getBeanManager() {
+        try {
+            return (BeanManager) new InitialContext().lookup("java:comp/BeanManager");
+        } catch (NamingException e) {
+            return null;
+        }
     }
 
 }

@@ -32,11 +32,11 @@
         <version>7.2.0.Alpha1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>jboss-as-web</artifactId>
+    <artifactId>jboss-as-web-common</artifactId>
 
     <packaging>jar</packaging>
 
-    <name>JBoss Application Server: Web Subsystem</name>
+    <name>JBoss Application Server: Web Common Classes</name>
 
     <build>
         <plugins>
@@ -61,11 +61,6 @@
         </dependency>
 
         <dependency>
-            <groupId>org.jboss</groupId>
-            <artifactId>jboss-common-core</artifactId>
-        </dependency>
-
-        <dependency>
             <groupId>org.jboss.msc</groupId>
             <artifactId>jboss-msc</artifactId>
         </dependency>
@@ -77,27 +72,7 @@
 
         <dependency>
             <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-clustering-registry</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-clustering-web-spi</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.as</groupId>
             <artifactId>jboss-as-ee</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-security</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-web-common</artifactId>
         </dependency>
 
         <dependency>
@@ -144,50 +119,10 @@
             <optional>true</optional>
         </dependency>
 
-        <dependency>
-            <groupId>org.jboss.web</groupId>
-            <artifactId>jasper-jdt</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.web</groupId>
-            <artifactId>jbossweb</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-clustering-web-infinispan</artifactId>
-            <scope>test</scope>
-        </dependency>
         <!-- Unfortunately we have to include this because of http://bugs.sun.com/view_bug.do?bug_id=6550655 -->
         <dependency>
             <groupId>org.rhq.helpers</groupId>
             <artifactId>rhq-pluginAnnotations</artifactId>
-            <scope>test</scope>
-         </dependency>
-        <dependency>
-            <groupId>org.jboss.marshalling</groupId>
-            <artifactId>jboss-marshalling-river</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-all</artifactId>
-            <scope>test</scope>
-        </dependency>
-		<dependency>
-			<groupId>org.powermock</groupId>
-			<artifactId>powermock-module-junit4</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.powermock</groupId>
-			<artifactId>powermock-api-mockito</artifactId>
-			<scope>test</scope>
-		</dependency>
-        <dependency>
-            <groupId>org.jboss.as</groupId>
-            <artifactId>jboss-as-subsystem-test</artifactId>
             <scope>test</scope>
          </dependency>
     </dependencies>

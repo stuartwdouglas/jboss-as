@@ -21,20 +21,17 @@
  */
 package org.jboss.as.web.deployment;
 
-import org.apache.tomcat.InstanceManager;
-import org.jboss.as.naming.ManagedReference;
-import org.jboss.as.web.deployment.ConcurrentReferenceHashMap.Option;
-import org.jboss.as.web.deployment.component.ComponentInstantiator;
-import org.jboss.msc.service.ServiceName;
+import java.lang.reflect.InvocationTargetException;
+import java.util.EnumSet;
+import java.util.Map;
 
 import javax.naming.NamingException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+
+import org.apache.tomcat.InstanceManager;
+import org.jboss.as.ee.component.ComponentRegistry;
+import org.jboss.as.naming.ManagedReference;
+import org.jboss.as.web.common.util.ConcurrentReferenceHashMap;
+import org.jboss.as.web.common.util.ConcurrentReferenceHashMap.Option;
 
 /**
  * The web injection container.
@@ -43,25 +40,19 @@ import java.util.Set;
  */
 public class WebInjectionContainer implements InstanceManager {
 
-    private static final ThreadLocal<WebInjectionContainer> CURRENT_INJECTION_CONTAINER = new ThreadLocal<WebInjectionContainer>();
-
     private final ClassLoader classloader;
-    private final Map<String, ComponentInstantiator> webComponentInstantiatorMap = new HashMap<String, ComponentInstantiator>();
-    private final Set<ServiceName> serviceNames = new HashSet<ServiceName>();
+    private final ComponentRegistry componentRegistry;
     private final Map<Object, ManagedReference> instanceMap;
 
-    public WebInjectionContainer(ClassLoader classloader) {
+    public WebInjectionContainer(ClassLoader classloader, final ComponentRegistry componentRegistry) {
         this.classloader = classloader;
+        this.componentRegistry = componentRegistry;
         this.instanceMap = new ConcurrentReferenceHashMap<Object, ManagedReference>
                 (256, ConcurrentReferenceHashMap.DEFAULT_LOAD_FACTOR,
                         Runtime.getRuntime().availableProcessors(), ConcurrentReferenceHashMap.ReferenceType.STRONG,
                         ConcurrentReferenceHashMap.ReferenceType.STRONG, EnumSet.of(Option.IDENTITY_COMPARISONS));
     }
 
-    public void addInstantiator(String className, ComponentInstantiator instantiator) {
-        webComponentInstantiatorMap.put(className, instantiator);
-        serviceNames.addAll(instantiator.getServiceNames());
-    }
 
     public void destroyInstance(Object instance) throws IllegalAccessException, InvocationTargetException {
         final ManagedReference reference = instanceMap.remove(instance);
@@ -75,43 +66,22 @@ public class WebInjectionContainer implements InstanceManager {
     }
 
     public Object newInstance(Class<?> clazz) throws IllegalAccessException, InvocationTargetException, NamingException, InstantiationException {
-        final ComponentInstantiator instantiator = webComponentInstantiatorMap.get(clazz.getName());
-        if (instantiator != null) {
-            return instantiate(instantiator);
+        final ManagedReference reference = componentRegistry.createInstance(clazz);
+        if (reference != null) {
+            instanceMap.put(reference.getInstance(), reference);
+            return reference.getInstance();
         }
         return clazz.newInstance();
     }
 
     public void newInstance(Object arg0) throws IllegalAccessException, InvocationTargetException, NamingException {
-        final ComponentInstantiator instantiator = webComponentInstantiatorMap.get(arg0.getClass().getName());
-        if (instantiator != null) {
-            instanceMap.put(arg0, instantiator.initializeInstance(arg0));
+        final ManagedReference reference = componentRegistry.createInstance(arg0);
+        if (reference != null) {
+            instanceMap.put(arg0, reference);
         }
     }
 
     public Object newInstance(String className, ClassLoader cl) throws IllegalAccessException, InvocationTargetException, NamingException, InstantiationException, ClassNotFoundException {
-        final ComponentInstantiator instantiator = webComponentInstantiatorMap.get(className);
-        if (instantiator != null) {
-            return instantiate(instantiator);
-        }
-        return cl.loadClass(className).newInstance();
-    }
-
-    private Object instantiate(ComponentInstantiator instantiator) {
-        ManagedReference reference = instantiator.getReference();
-        instanceMap.put(reference.getInstance(), reference);
-        return reference.getInstance();
-    }
-
-    public Set<ServiceName> getServiceNames() {
-        return Collections.unmodifiableSet(serviceNames);
-    }
-
-    public static void setCurrentInjectionContainer(final WebInjectionContainer webInjectionContainer) {
-        CURRENT_INJECTION_CONTAINER.set(webInjectionContainer);
-    }
-
-    public static WebInjectionContainer getCurrentInjectionContainer() {
-        return CURRENT_INJECTION_CONTAINER.get();
+        return newInstance(cl.loadClass(className));
     }
 }

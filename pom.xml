@@ -1208,6 +1208,12 @@
 
             <dependency>
                 <groupId>org.jboss.as</groupId>
+                <artifactId>jboss-as-web-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jboss.as</groupId>
                 <artifactId>jboss-as-webservices-server-integration</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -6167,26 +6173,31 @@
                 <artifactId>aether-api</artifactId>
                 <version>${version.org.eclipse.aether}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.eclipse.aether</groupId>
                 <artifactId>aether-spi</artifactId>
                 <version>${version.org.eclipse.aether}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.eclipse.aether</groupId>
                 <artifactId>aether-util</artifactId>
                 <version>${version.org.eclipse.aether}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.eclipse.aether</groupId>
                 <artifactId>aether-impl</artifactId>
                 <version>${version.org.eclipse.aether}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.eclipse.aether</groupId>
                 <artifactId>aether-connector-file</artifactId>
                 <version>${version.org.eclipse.aether}</version>
             </dependency>
+
             <dependency>
                 <groupId>org.eclipse.aether</groupId>
                 <artifactId>aether-connector-asynchttpclient</artifactId>
@@ -6199,6 +6210,7 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+
             <dependency>
                 <groupId>org.eclipse.aether</groupId>
                 <artifactId>aether-connector-wagon</artifactId>
@@ -6363,6 +6375,7 @@
                 <module>spec-api</module>
                 <module>transactions</module>
                 <module>web</module>
+                <module>web-common</module>
                 <module>webservices</module>
                 <module>weld</module>
                 <module>xts</module>

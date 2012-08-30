@@ -21,26 +21,30 @@
  */
 package org.jboss.as.jsf.injection;
 
+import java.util.EnumSet;
+import java.util.Map;
+
 import com.sun.faces.spi.DiscoverableInjectionProvider;
 import com.sun.faces.spi.InjectionProviderException;
-import org.jboss.as.jsf.JSFMessages;
-import org.jboss.as.web.deployment.WebInjectionContainer;
-
-import javax.naming.NamingException;
-import java.lang.reflect.InvocationTargetException;
+import org.jboss.as.ee.component.ComponentRegistry;
+import org.jboss.as.naming.ManagedReference;
+import org.jboss.as.web.common.StartupContext;
+import org.jboss.as.web.common.util.ConcurrentReferenceHashMap;
 
 /**
  * @author Stuart Douglas
  */
 public class JSFInjectionProvider extends DiscoverableInjectionProvider {
 
-    private final WebInjectionContainer container;
+    private final ComponentRegistry componentRegistry;
+    private final Map<Object, ManagedReference> instanceMap;
 
     public JSFInjectionProvider() {
-        this.container = WebInjectionContainer.getCurrentInjectionContainer();
-        if (this.container == null) {
-            throw JSFMessages.MESSAGES.noThreadLocalInjectionContainer();
-        }
+        this.componentRegistry = StartupContext.getComponentRegistry();
+        this.instanceMap = new ConcurrentReferenceHashMap<Object, ManagedReference>
+                (256, ConcurrentReferenceHashMap.DEFAULT_LOAD_FACTOR,
+                        Runtime.getRuntime().availableProcessors(), ConcurrentReferenceHashMap.ReferenceType.STRONG,
+                        ConcurrentReferenceHashMap.ReferenceType.STRONG, EnumSet.of(ConcurrentReferenceHashMap.Option.IDENTITY_COMPARISONS));
     }
 
     @Override
@@ -50,25 +54,17 @@ public class JSFInjectionProvider extends DiscoverableInjectionProvider {
 
     @Override
     public void invokePreDestroy(final Object managedBean) throws InjectionProviderException {
-        try {
-            container.destroyInstance(managedBean);
-        } catch (IllegalAccessException e) {
-            throw JSFMessages.MESSAGES.instanceDestructionFailed(e);
-        } catch (InvocationTargetException e) {
-            throw JSFMessages.MESSAGES.instanceDestructionFailed(e);
+        ManagedReference handle = instanceMap.remove(managedBean);
+        if (handle != null) {
+            handle.release();
         }
     }
 
     @Override
     public void invokePostConstruct(final Object managedBean) throws InjectionProviderException {
-        try {
-            container.newInstance(managedBean);
-        } catch (IllegalAccessException e) {
-            throw JSFMessages.MESSAGES.instanceCreationFailed(e);
-        } catch (InvocationTargetException e) {
-            throw JSFMessages.MESSAGES.instanceCreationFailed(e);
-        } catch (NamingException e) {
-            throw JSFMessages.MESSAGES.instanceCreationFailed(e);
+        ManagedReference ref = componentRegistry.createInstance(managedBean);
+        if (ref != null) {
+            instanceMap.put(managedBean, ref);
         }
     }
 }

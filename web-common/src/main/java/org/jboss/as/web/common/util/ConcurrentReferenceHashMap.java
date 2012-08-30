@@ -26,7 +26,7 @@
  * http://creativecommons.org/licenses/publicdomain
  */
 
-package org.jboss.as.web.deployment;
+package org.jboss.as.web.common.util;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.ref.Reference;
@@ -146,7 +146,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @param <K> the type of keys maintained by this map
  * @param <V> the type of mapped values
  */
-final class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
+public final class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
         implements java.util.concurrent.ConcurrentMap<K, V>, Serializable {
     private static final long serialVersionUID = 7249069246763182397L;
 
@@ -177,28 +177,28 @@ final class ConcurrentReferenceHashMap<K, V> extends AbstractMap<K, V>
 
     /* ---------------- Constants -------------- */
 
-    static final ReferenceType DEFAULT_KEY_TYPE = ReferenceType.WEAK;
+    public static final ReferenceType DEFAULT_KEY_TYPE = ReferenceType.WEAK;
 
-    static final ReferenceType DEFAULT_VALUE_TYPE = ReferenceType.STRONG;
+    public static final ReferenceType DEFAULT_VALUE_TYPE = ReferenceType.STRONG;
 
 
     /**
      * The default initial capacity for this table,
      * used when not otherwise specified in a constructor.
      */
-    static final int DEFAULT_INITIAL_CAPACITY = 16;
+    public static final int DEFAULT_INITIAL_CAPACITY = 16;
 
     /**
      * The default load factor for this table, used when not
      * otherwise specified in a constructor.
      */
-    static final float DEFAULT_LOAD_FACTOR = 0.75f;
+    public static final float DEFAULT_LOAD_FACTOR = 0.75f;
 
     /**
      * The default concurrency level for this table, used when not
      * otherwise specified in a constructor.
      */
-    static final int DEFAULT_CONCURRENCY_LEVEL = 16;
+    public static final int DEFAULT_CONCURRENCY_LEVEL = 16;
 
     /**
      * The maximum capacity, used if a higher value is implicitly

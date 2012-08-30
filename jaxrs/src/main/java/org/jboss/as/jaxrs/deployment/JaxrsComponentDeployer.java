@@ -10,7 +10,6 @@ import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
-import org.jboss.as.web.deployment.component.WebComponentDescription;
 import org.jboss.modules.Module;
 import org.jboss.resteasy.util.GetRestful;
 
@@ -59,25 +58,22 @@ public class JaxrsComponentDeployer implements DeploymentUnitProcessor {
             }
             if (!GetRestful.isRootResource(componentClass)) continue;
 
-            if (component instanceof WebComponentDescription) {
-                continue;
-            }
             if (component instanceof SessionBeanComponentDescription) {
                 Class jaxrsType = GetRestful.getSubResourceClass(componentClass);
                 final String jndiName;
-                if(component.getViews().size() == 1) {
+                if (component.getViews().size() == 1) {
                     //only 1 view, just use the simple JNDI name
                     jndiName = "java:app/" + moduleDescription.getModuleName() + "/" + componentClass.getSimpleName();
                 } else {
                     final String jaxRsTypeName = jaxrsType.getName();
                     boolean found = false;
-                    for(final ViewDescription view : component.getViews()) {
-                        if(view.getViewClassName().equals(jaxRsTypeName)) {
+                    for (final ViewDescription view : component.getViews()) {
+                        if (view.getViewClassName().equals(jaxRsTypeName)) {
                             found = true;
                             break;
                         }
                     }
-                    if(!found) {
+                    if (!found) {
                         throw JaxrsMessages.MESSAGES.typeNameNotAnEjbView(jaxRsTypeName, component.getComponentName());
                     }
                     jndiName = "java:app/" + moduleDescription.getModuleName() + "/" + componentClass.getSimpleName() + "!" + jaxRsTypeName;
@@ -90,8 +86,8 @@ public class JaxrsComponentDeployer implements DeploymentUnitProcessor {
                 resteasy.getScannedJndiComponentResources().add(buf.toString());
                 // make sure its removed from list
                 resteasy.getScannedResourceClasses().remove(component.getComponentClassName());
-            } else {
-
+            } else if (ComponentDescription.class.equals(component.getClass())) {
+                //this should only be true for managed beans
                 String jndiName = "java:app/" + moduleDescription.getModuleName() + "/" + component.getComponentName();
                 JAXRS_LOGGER.debugf("Found JAX-RS Managed Bean: %s local jndi name: %s", component.getComponentClassName(), jndiName);
                 StringBuilder buf = new StringBuilder();

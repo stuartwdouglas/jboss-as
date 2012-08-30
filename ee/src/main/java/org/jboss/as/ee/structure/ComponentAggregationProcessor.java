@@ -53,7 +53,7 @@ public final class ComponentAggregationProcessor implements DeploymentUnitProces
 
         if (deploymentUnit.getAttachment(Attachments.DEPLOYMENT_TYPE) == DeploymentType.EAR) {
 
-            final EEApplicationDescription applicationDescription = new EEApplicationDescription();
+            final EEApplicationDescription applicationDescription = new EEApplicationDescription(phaseContext.getServiceRegistry());
             deploymentUnit.putAttachment(org.jboss.as.ee.component.Attachments.EE_APPLICATION_DESCRIPTION, applicationDescription);
 
             final EEModuleDescription earDesc = deploymentUnit.getAttachment(EE_MODULE_DESCRIPTION);
@@ -90,7 +90,7 @@ public final class ComponentAggregationProcessor implements DeploymentUnitProces
             }
         } else if (deploymentUnit.getParent() == null) {
 
-            final EEApplicationDescription applicationDescription = new EEApplicationDescription();
+            final EEApplicationDescription applicationDescription = new EEApplicationDescription(phaseContext.getServiceRegistry());
             deploymentUnit.putAttachment(org.jboss.as.ee.component.Attachments.EE_APPLICATION_DESCRIPTION, applicationDescription);
             /*
              * We are a top-level EE deployment, or a non-EE deployment.  Our "aggregate" index is just a copy of

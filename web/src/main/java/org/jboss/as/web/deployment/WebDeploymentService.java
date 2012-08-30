@@ -21,9 +21,6 @@
  */
 package org.jboss.as.web.deployment;
 
-import static org.jboss.as.web.WebLogger.WEB_LOGGER;
-import static org.jboss.as.web.WebMessages.MESSAGES;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -38,6 +35,7 @@ import org.apache.catalina.core.StandardContext;
 import org.jboss.as.server.deployment.AttachmentKey;
 import org.jboss.as.server.deployment.SetupAction;
 import org.jboss.as.web.ThreadSetupBindingListener;
+import org.jboss.as.web.common.ServletContextAttribute;
 import org.jboss.msc.service.AbstractServiceListener;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceController;
@@ -48,6 +46,9 @@ import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
+
+import static org.jboss.as.web.WebLogger.WEB_LOGGER;
+import static org.jboss.as.web.WebMessages.MESSAGES;
 
 /**
  * A service starting a web deployment.
@@ -64,7 +65,7 @@ public class WebDeploymentService implements Service<StandardContext> {
     final List<ServletContextAttribute> attributes;
 
     public WebDeploymentService(final StandardContext context, final WebInjectionContainer injectionContainer, final List<SetupAction> setupActions,
-            final List<ServletContextAttribute> attributes) {
+                                final List<ServletContextAttribute> attributes) {
         this.context = context;
         this.injectionContainer = injectionContainer;
         this.setupActions = setupActions;
@@ -84,30 +85,26 @@ public class WebDeploymentService implements Service<StandardContext> {
             }
         }
 
+
         context.setRealm(realm.getValue());
 
-        WebInjectionContainer.setCurrentInjectionContainer(injectionContainer);
         final List<SetupAction> actions = new ArrayList<SetupAction>();
         actions.addAll(setupActions);
         context.setInstanceManager(injectionContainer);
         context.setThreadBindingListener(new ThreadSetupBindingListener(actions));
         WEB_LOGGER.registerWebapp(context.getName());
         try {
-            try {
-                context.create();
-            } catch (Exception e) {
-                throw new StartException(MESSAGES.createContextFailed(), e);
-            }
-            try {
-                context.start();
-            } catch (LifecycleException e) {
-                throw new StartException(MESSAGES.startContextFailed(), e);
-            }
-            if (context.getState() != 1) {
-                throw new StartException(MESSAGES.startContextFailed());
-            }
-        } finally {
-            WebInjectionContainer.setCurrentInjectionContainer(null);
+            context.create();
+        } catch (Exception e) {
+            throw new StartException(MESSAGES.createContextFailed(), e);
+        }
+        try {
+            context.start();
+        } catch (LifecycleException e) {
+            throw new StartException(MESSAGES.startContextFailed(), e);
+        }
+        if (context.getState() != 1) {
+            throw new StartException(MESSAGES.startContextFailed());
         }
     }
 
@@ -157,9 +154,9 @@ public class WebDeploymentService implements Service<StandardContext> {
 
         /**
          * Start the web context asynchronously.
-         *
+         * <p/>
          * This would happen during OSGi webapp deployment.
-         *
+         * <p/>
          * No DUP can assume that all dependencies are available to make a blocking call
          * instead it should call this method.
          */
@@ -169,7 +166,7 @@ public class WebDeploymentService implements Service<StandardContext> {
 
         /**
          * Start the web context synchronously.
-         *
+         * <p/>
          * This would happen when the OSGi webapp gets explicitly started.
          */
         public synchronized boolean start(long timeout, TimeUnit unit) throws TimeoutException {
@@ -183,7 +180,7 @@ public class WebDeploymentService implements Service<StandardContext> {
 
         /**
          * Stop the web context synchronously.
-         *
+         * <p/>
          * This would happen when the OSGi webapp gets explicitly stops.
          */
         public synchronized boolean stop(long timeout, TimeUnit unit) {
