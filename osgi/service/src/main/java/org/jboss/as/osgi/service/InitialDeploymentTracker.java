@@ -64,6 +64,7 @@ public class InitialDeploymentTracker extends ServiceTracker<Object> {
     private final Set<ServiceName> installedServices = new HashSet<ServiceName>();
     private final ServiceTarget serviceTarget;
     private final Set<String> deploymentNames;
+    private final ServiceVerificationHandler verificationHandler;
 
     private ServiceTarget listenerTarget;
 
@@ -84,6 +85,8 @@ public class InitialDeploymentTracker extends ServiceTracker<Object> {
             listenerTarget = serviceRegistry.getService(JBOSS_SERVER_CONTROLLER).getServiceContainer();
             listenerTarget.addListener(Inheritance.ALL, this);
         }
+
+        this.verificationHandler = verificationHandler;
 
         // Check the tracker for completeness
         checkAndComplete();
@@ -112,7 +115,7 @@ public class InitialDeploymentTracker extends ServiceTracker<Object> {
             listenerTarget.removeListener(this);
         }
         deploymentInstallComplete.set(true);
-        initialDeploymentsComplete(serviceTarget);
+        initialDeploymentsComplete(serviceTarget, verificationHandler);
     }
 
     public boolean isComplete() {
@@ -148,7 +151,9 @@ public class InitialDeploymentTracker extends ServiceTracker<Object> {
         return result;
     }
 
-    private ServiceController<Void> initialDeploymentsComplete(ServiceTarget serviceTarget) {
-        return serviceTarget.addService(INITIAL_DEPLOYMENTS_COMPLETE, new ValueService<Void>(new ImmediateValue<Void>(null))).install();
+    private ServiceController<Void> initialDeploymentsComplete(ServiceTarget serviceTarget, final ServiceVerificationHandler serviceVerificationHandler) {
+        return serviceTarget.addService(INITIAL_DEPLOYMENTS_COMPLETE, new ValueService<Void>(new ImmediateValue<Void>(null)))
+                .addListener(serviceVerificationHandler)
+                .install();
     }
 }
