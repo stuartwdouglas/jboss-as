@@ -59,6 +59,11 @@ public final class Attachments {
      */
     public static final AttachmentKey<AttachmentList<ServiceName>> NEXT_PHASE_DEPS = AttachmentKey.createList(ServiceName.class);
     /**
+     * If this is true then the next phase will be marked as passive. If all its service dependencies do not exist then
+     * the deployment process will pause, and will resume later
+     */
+    public static final AttachmentKey<Boolean> NEXT_PHASE_PASSIVE = AttachmentKey.create(Boolean.class);
+    /**
      * A list of service dependencies that must be satisfied before the next deployment phase can begin executing.
      */
     public static final AttachmentKey<AttachmentList<AttachableDependency>> NEXT_PHASE_ATTACHABLE_DEPS = AttachmentKey.createList(AttachableDependency.class);

@@ -33,6 +33,7 @@ import org.jboss.msc.service.DelegatingServiceRegistry;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceContainer;
+import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ServiceTarget;
 import org.jboss.msc.service.StartContext;
@@ -149,6 +150,11 @@ final class DeploymentUnitPhaseService<T> implements Service<T> {
             // make sure all sub deployments have finished this phase before moving to the next one
             for (DeploymentUnit du : subDeployments) {
                 phaseServiceBuilder.addDependencies(du.getServiceName().append(phase.name()));
+            }
+
+            Boolean passive = processorContext.getAttachment(Attachments.NEXT_PHASE_PASSIVE);
+            if(passive != null && passive) {
+                phaseServiceBuilder.setInitialMode(ServiceController.Mode.PASSIVE);
             }
 
             phaseServiceBuilder.install();

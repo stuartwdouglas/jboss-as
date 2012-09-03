@@ -26,6 +26,7 @@ import static org.jboss.as.osgi.OSGiLogger.LOGGER;
 
 import java.util.Collections;
 import org.jboss.as.osgi.OSGiConstants;
+import org.jboss.as.osgi.service.ResolveGateService;
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.Attachments.BundleState;
 import org.jboss.as.server.deployment.AttachmentKey;
@@ -51,6 +52,9 @@ import org.osgi.service.resolver.ResolutionException;
  * @since 01-Jul-2012
  */
 public class BundleResolveProcessor implements DeploymentUnitProcessor {
+
+
+
 
     @Override
     public void deploy(final DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
@@ -88,6 +92,8 @@ public class BundleResolveProcessor implements DeploymentUnitProcessor {
             phaseContext.addDeploymentDependency(moduleService, Attachments.MODULE);
         } catch (ResolutionException ex) {
             LOGGER.warnCannotResolve(ex.getUnresolvedRequirements());
+            phaseContext.putAttachment(Attachments.NEXT_PHASE_PASSIVE, true);
+            phaseContext.addToAttachmentList(Attachments.NEXT_PHASE_DEPS, ResolveGateService.gateService(depUnit));
         }
     }
 
