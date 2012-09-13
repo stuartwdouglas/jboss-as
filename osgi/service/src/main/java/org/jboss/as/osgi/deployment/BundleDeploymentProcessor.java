@@ -35,6 +35,7 @@ import org.jboss.as.server.deployment.DeploymentUnitProcessor;
 import org.jboss.as.server.deployment.annotation.CompositeIndex;
 import org.jboss.jandex.AnnotationInstance;
 import org.jboss.jandex.DotName;
+import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceController.Mode;
 import org.jboss.osgi.deployment.deployer.Deployment;
 import org.jboss.osgi.deployment.deployer.DeploymentFactory;
@@ -79,7 +80,9 @@ public class BundleDeploymentProcessor implements DeploymentUnitProcessor {
 
         // Attach the deployment and activate the framework
         if (deployment != null) {
-            phaseContext.getServiceRegistry().getRequiredService(Services.FRAMEWORK_ACTIVE).setMode(Mode.ACTIVE);
+            ServiceController<?> requiredService = phaseContext.getServiceRegistry().getRequiredService(Services.FRAMEWORK_ACTIVE);
+            requiredService.addListener(depUnit.getAttachment(Attachments.SERVICE_VERIFICATION_HANDLER));
+            requiredService.setMode(Mode.ACTIVE);
             phaseContext.addDependency(IntegrationServices.AUTOINSTALL_COMPLETE, AttachmentKey.create(Object.class));
             phaseContext.addDeploymentDependency(Services.BUNDLE_MANAGER, OSGiConstants.BUNDLE_MANAGER_KEY);
             depUnit.putAttachment(OSGiConstants.DEPLOYMENT_KEY, deployment);
