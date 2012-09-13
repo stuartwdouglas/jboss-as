@@ -47,7 +47,7 @@ public class ActivateOperationHandler extends AbstractRuntimeOnlyHandler  {
 
         // This verification handler will cause context.completeStep() to wait until controller is active.
         ServiceVerificationHandler verificationHandler = new ServiceVerificationHandler();
-        if (FrameworkActivator.activateEagerly(verificationHandler)) {
+        if (FrameworkActivator.activate(verificationHandler)) {
             context.addStep(verificationHandler, Stage.VERIFY);
         }
 

@@ -65,7 +65,7 @@ public class FrameworkActivateProcessor implements DeploymentUnitProcessor {
         DeploymentUnit depUnit = phaseContext.getDeploymentUnit();
         Deployment deployment = depUnit.getAttachment(OSGiConstants.DEPLOYMENT_KEY);
         boolean hasInjectionPoint = hasValidInjectionPoint(depUnit);
-        if (deployment == null && hasInjectionPoint == false)
+        if (deployment == null && !hasInjectionPoint)
             return;
 
         // Activate the framework if not done so already

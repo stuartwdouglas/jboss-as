@@ -28,8 +28,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.osgi.parser.SubsystemState.Activation;
 import org.jboss.msc.service.AbstractService;
+import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceContainer;
+import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceController.Mode;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ServiceTarget;
@@ -72,14 +74,6 @@ public final class FrameworkActivator {
         return INSTANCE.activateInternal(Activation.LAZY, verificationHandler);
     }
 
-    /**
-     * Activates the framework eagerly.
-     * All services are started and {@link Services#FRAMEWORK_ACTIVE} is verified
-     */
-    public static boolean activateEagerly(ServiceVerificationHandler verificationHandler) {
-        return INSTANCE.activateInternal(Activation.EAGER, verificationHandler);
-    }
-
     private FrameworkActivator(ServiceTarget serviceTarget, boolean enabled) {
         this.serviceTarget = serviceTarget;
         this.activated = new AtomicBoolean(!enabled);
@@ -93,43 +87,15 @@ public final class FrameworkActivator {
             new PersistentBundlesIntegration().install(serviceTarget, verificationHandler);
 
             ServiceName serviceName = Services.FRAMEWORK_ACTIVE.getParent().append(activation.toString(), "ACTIVATOR");
-            switch (activation) {
-                case EAGER:
-                    EagerActivatorService.addService(serviceTarget, serviceName, verificationHandler);
-                    break;
-                case LAZY:
-                    LazyActivatorService.addService(serviceTarget, serviceName, verificationHandler);
-                    break;
-            }
+            addActivationService(serviceTarget, serviceName, verificationHandler);
         }
         return activate;
     }
 
-    static class EagerActivatorService extends AbstractService<Void> {
-
-        // The {@link EagerActivatorService} has a dependency on {@link Services#FRAMEWORK_ACTIVE}
-        static void addService (ServiceTarget serviceTarget, ServiceName serviceName, ServiceVerificationHandler verificationHandler) {
-            ServiceBuilder<Void> eagerbuilder = serviceTarget.addService(serviceName, new EagerActivatorService());
-            eagerbuilder.addDependency(Services.FRAMEWORK_ACTIVE);
-            eagerbuilder.addListener(verificationHandler);
-            eagerbuilder.install();
-        }
-    }
-
-    static class LazyActivatorService extends AbstractService<Void> {
-
-        // The {@link LazyActivatorService} has no framework dependency.
-        // Instead it explicitly activates {@link Services#FRAMEWORK_ACTIVE}
-        static void addService (ServiceTarget serviceTarget, ServiceName serviceName, ServiceVerificationHandler verificationHandler) {
-            ServiceBuilder<Void> eagerbuilder = serviceTarget.addService(serviceName, new LazyActivatorService());
-            eagerbuilder.addListener(verificationHandler);
-            eagerbuilder.install();
-        }
-
-        @Override
-        public void start(StartContext context) throws StartException {
-            ServiceContainer serviceContainer = context.getController().getServiceContainer();
-            serviceContainer.getRequiredService(Services.FRAMEWORK_ACTIVE).setMode(Mode.ACTIVE);
-        }
+    static void addActivationService (ServiceTarget serviceTarget, ServiceName serviceName, ServiceVerificationHandler verificationHandler) {
+        ServiceBuilder<Void> eagerbuilder = serviceTarget.addService(serviceName, Service.NULL);
+        eagerbuilder.addDependency(Services.FRAMEWORK_ACTIVE);
+        eagerbuilder.addListener(verificationHandler);
+        eagerbuilder.install();
     }
 }
