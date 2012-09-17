@@ -63,8 +63,15 @@ public class BundleInstallProcessor implements DeploymentUnitProcessor {
     public void deploy(final DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
         final DeploymentUnit depUnit = phaseContext.getDeploymentUnit();
         final Deployment deployment = depUnit.getAttachment(OSGiConstants.DEPLOYMENT_KEY);
+
+        ServiceVerificationHackService hack = depUnit.getAttachment(ServiceVerificationHackService.ATTACHMENT_KEY);
+        if(hack != null) {
+            hack.done();
+        }
+
         if (deployment == null)
             return;
+
 
         ServiceName serviceName;
         try {

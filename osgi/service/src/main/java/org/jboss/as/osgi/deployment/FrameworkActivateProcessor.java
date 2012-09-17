@@ -27,6 +27,7 @@ import static org.jboss.as.osgi.service.ModuleRegistrationTracker.MODULE_REGISTR
 
 import java.util.List;
 
+import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.osgi.OSGiConstants;
 import org.jboss.as.osgi.service.FrameworkActivator;
 import org.jboss.as.osgi.service.InitialDeploymentTracker;
@@ -68,8 +69,16 @@ public class FrameworkActivateProcessor implements DeploymentUnitProcessor {
         if (deployment == null && hasInjectionPoint == false)
             return;
 
+
+
         // Activate the framework if not done so already
-        FrameworkActivator.activate(depUnit.getAttachment(Attachments.SERVICE_VERIFICATION_HANDLER));
+        ServiceVerificationHandler serviceVerificationHandler = depUnit.getAttachment(Attachments.SERVICE_VERIFICATION_HANDLER);
+        FrameworkActivator.activate(serviceVerificationHandler);
+
+        ServiceVerificationHackService hack = new ServiceVerificationHackService();
+        phaseContext.getServiceTarget().addService(depUnit.getServiceName().append(ServiceVerificationHackService.SERVICE_NAME), hack)
+                .install();
+        depUnit.putAttachment(ServiceVerificationHackService.ATTACHMENT_KEY, hack);
 
         // Setup a dependency on the the next phase. Persistent bundles have a dependency on the bootstrap bundles
         if (deploymentTracker.isComplete()) {
