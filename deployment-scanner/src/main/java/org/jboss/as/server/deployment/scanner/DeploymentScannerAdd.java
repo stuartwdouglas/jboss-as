@@ -87,7 +87,7 @@ class DeploymentScannerAdd implements OperationStepHandler {
         populateModel(context, operation, resource);
         final ModelNode model = resource.getModel();
 
-        boolean stepCompleted = false;
+        final CountDownLatch deploymentDoneLatch = new CountDownLatch(1);
 
         if (context.isNormalServer()) {
 
@@ -97,7 +97,7 @@ class DeploymentScannerAdd implements OperationStepHandler {
 
             final String path = DeploymentScannerDefinition.PATH.resolveModelAttribute(context, operation).asString();
             final ModelNode relativeToNode = RELATIVE_TO.resolveModelAttribute(context, operation);
-            final String relativeTo = relativeToNode.isDefined() ?  relativeToNode.asString() : null;
+            final String relativeTo = relativeToNode.isDefined() ? relativeToNode.asString() : null;
             final Boolean autoDeployZip = AUTO_DEPLOY_ZIPPED.resolveModelAttribute(context, operation).asBoolean();
             final Boolean autoDeployExp = AUTO_DEPLOY_EXPLODED.resolveModelAttribute(context, operation).asBoolean();
             final Boolean autoDeployXml = AUTO_DEPLOY_XML.resolveModelAttribute(context, operation).asBoolean();
@@ -150,7 +150,6 @@ class DeploymentScannerAdd implements OperationStepHandler {
                 final AtomicReference<ModelNode> deploymentOperation = new AtomicReference<ModelNode>();
                 final AtomicReference<ModelNode> deploymentResults = new AtomicReference<ModelNode>();
                 final CountDownLatch scanDoneLatch = new CountDownLatch(1);
-                final CountDownLatch deploymentDoneLatch = new CountDownLatch(1);
                 final DeploymentOperations deploymentOps = new BootTimeScannerDeployment(deploymentOperation, deploymentDoneLatch, deploymentResults, scanDoneLatch);
 
                 scheduledExecutorService.submit(new Runnable() {
@@ -158,49 +157,53 @@ class DeploymentScannerAdd implements OperationStepHandler {
                     public void run() {
                         try {
                             bootTimeScanner.oneOffScan(deploymentOps);
-                        } catch (Throwable t){
+                        } catch (Throwable t) {
                             DeploymentScannerLogger.ROOT_LOGGER.initialScanFailed(t);
                         } finally {
                             scanDoneLatch.countDown();
                         }
                     }
                 });
-                boolean interrupted = false;
                 try {
                     scanDoneLatch.await();
 
                     final ModelNode op = deploymentOperation.get();
                     if (op != null) {
                         final ModelNode result = new ModelNode();
+                        deploymentResults.set(result);
                         final PathAddress opPath = PathAddress.pathAddress(op.get(OP_ADDR));
                         final OperationStepHandler handler = context.getRootResourceRegistration().getOperationHandler(opPath, op.get(OP).asString());
+                        //HORRIBLE HORRIBLE HACK
+                        //we add the handler, and then add our verify step after it is done
+                        //we need to make sure our verify step is the last one, so we add yet another verify step
+                        //once we are already in the verify step
                         context.addStep(result, op, handler, OperationContext.Stage.MODEL);
-                        try {
-                            stepCompleted = true;
-                            context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
-                        } finally {
-                            deploymentResults.set(result);
-                            deploymentDoneLatch.countDown();
-                        }
-                    } else {
-                        stepCompleted = true;
-                        context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
+                        context.addStep(new OperationStepHandler() {
+                            @Override
+                            public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {
+                                context.addStep(new OperationStepHandler() {
+                                    @Override
+                                    public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {
+                                        deploymentDoneLatch.countDown();
+                                        context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
+                                    }
+                                }, OperationContext.Stage.VERIFY);
+                                context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
+                            }
+                        }, OperationContext.Stage.VERIFY);
                     }
                 } catch (InterruptedException e) {
-                    interrupted = true;
+                    Thread.currentThread().interrupt();
                     throw new RuntimeException(e);
-                } finally {
-                    deploymentDoneLatch.countDown();
-                    if (interrupted) {
-                        Thread.currentThread().interrupt();
-                    }
                 }
             }
         }
-
-        if (!stepCompleted) {
-            context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
-        }
+        context.completeStep(new OperationContext.RollbackHandler() {
+            @Override
+            public void handleRollback(final OperationContext context, final ModelNode operation) {
+                deploymentDoneLatch.countDown();
+            }
+        });
     }
 
     protected void populateModel(final OperationContext context, final ModelNode operation, final Resource resource) throws OperationFailedException {
