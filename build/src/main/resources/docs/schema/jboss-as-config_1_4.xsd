@@ -2327,7 +2327,6 @@
 
     <xs:complexType name="deployment-overlay-deploymentType">
         <xs:attribute name="name" type="xs:string" use="required"/>
-        <xs:attribute name="regular-expression" type="xs:boolean" use="optional"/>
     </xs:complexType>
 
 

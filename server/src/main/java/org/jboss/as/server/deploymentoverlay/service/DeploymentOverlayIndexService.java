@@ -50,11 +50,7 @@ public class DeploymentOverlayIndexService implements Service<DeploymentOverlayI
 
         final List<DeploymentOverlayLinkService> matched = new ArrayList<DeploymentOverlayLinkService>();
         for (final DeploymentOverlayLinkService service : services) {
-            if (service.isRegex()) {
-                if (service.getPattern().matcher(deploymentName).matches()) {
-                    matched.add(service);
-                }
-            } else if (service.getDeployment().equals(deploymentName)) {
+            if (service.getPattern().matcher(deploymentName).matches()) {
                 matched.add(service);
             }
         }
@@ -65,9 +61,9 @@ public class DeploymentOverlayIndexService implements Service<DeploymentOverlayI
                 if (res != 0) {
                     return res;
                 }
-                if (o2.isRegex() && !o1.isRegex()) {
+                if (o2.isWildcard() && !o1.isWildcard()) {
                     return -1;
-                } else if (o1.isRegex() && !o2.isRegex()) {
+                } else if (o1.isWildcard() && !o2.isWildcard()) {
                     return 1;
                 }
                 return 0;
@@ -79,15 +75,6 @@ public class DeploymentOverlayIndexService implements Service<DeploymentOverlayI
             ret.add(i.getDeploymentOverlayServiceInjectedValue().getValue());
         }
         return ret;
-    }
-
-    private boolean wildcardMatch(final String wildcard, final String deploymentName) {
-        if (wildcard.startsWith("*")) {
-            return deploymentName.endsWith(wildcard.substring(1));
-        } else if (wildcard.endsWith("*")) {
-            return deploymentName.startsWith(wildcard.substring(0, wildcard.length() - 1));
-        }
-        return false;
     }
 
     @Override

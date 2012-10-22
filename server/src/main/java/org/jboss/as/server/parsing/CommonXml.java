@@ -45,7 +45,6 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.NOT
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.PATH;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.REGULAR_EXPRESSION;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.RELATIVE_TO;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.REMOTE_DESTINATION_OUTBOUND_SOCKET_BINDING;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.RUNTIME_NAME;
@@ -1172,7 +1171,6 @@ public abstract class CommonXml implements XMLElementReader<List<ModelNode>>, XM
 
         final EnumSet<Attribute> required = EnumSet.of(Attribute.NAME);
         String depName = null;
-        boolean regEx = false;
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i++) {
             requireNoNamespaceAttribute(reader, i);
@@ -1182,10 +1180,6 @@ public abstract class CommonXml implements XMLElementReader<List<ModelNode>>, XM
             switch (attribute) {
                 case NAME: {
                     depName = value;
-                    break;
-                }
-                case REGULAR_EXPRESSION: {
-                    regEx = Boolean.parseBoolean(value);
                     break;
                 }
                 default:
@@ -1206,7 +1200,6 @@ public abstract class CommonXml implements XMLElementReader<List<ModelNode>>, XM
         final ModelNode op = new ModelNode();
         op.get(OP).set(ADD);
         op.get(OP_ADDR).set(address);
-        op.get(REGULAR_EXPRESSION).set(regEx);
         list.add(op);
 
     }
@@ -1642,13 +1635,8 @@ public abstract class CommonXml implements XMLElementReader<List<ModelNode>>, XM
                     Set<String> deploymentNames = deployments.keys();
                     if (deploymentNames.size() > 0) {
                         for (String deploymentName : deploymentNames) {
-                            final ModelNode depNode = deployments.get(deploymentName);
-                            final boolean regEx = depNode.hasDefined(REGULAR_EXPRESSION) ? depNode.get(REGULAR_EXPRESSION).asBoolean() : false;
                             writer.writeStartElement(Element.DEPLOYMENT.getLocalName());
                             writeAttribute(writer, Attribute.NAME, deploymentName);
-                            if (regEx) {
-                                writeAttribute(writer, Attribute.REGULAR_EXPRESSION, "true");
-                            }
                             writer.writeEndElement();
                         }
                     }
