@@ -35,6 +35,7 @@ import java.util.Set;
 import javax.security.jacc.PolicyConfiguration;
 
 import org.jboss.as.ee.component.EEApplicationDescription;
+import org.jboss.as.web.common.ExpressionFactoryWrapper;
 import org.jboss.as.web.common.ServletContextAttribute;
 import org.jboss.as.web.common.WarMetaData;
 import org.apache.catalina.ContainerListener;
@@ -77,6 +78,7 @@ import org.jboss.metadata.web.jboss.ContainerListenerMetaData;
 import org.jboss.metadata.web.jboss.JBossServletMetaData;
 import org.jboss.metadata.web.jboss.JBossWebMetaData;
 import org.jboss.metadata.web.jboss.ValveMetaData;
+import org.jboss.metadata.web.spec.ListenerMetaData;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
 import org.jboss.msc.service.ServiceBuilder;
@@ -175,6 +177,18 @@ public class WarDeploymentProcessor implements DeploymentUnitProcessor {
         webContext.setPath(pathName);
         webContext.setIgnoreAnnotations(true);
         webContext.setCrossContext(!metaData.isDisableCrossContext());
+
+        //setup JSP expression factory wrapper
+        List<ExpressionFactoryWrapper> wrappers = deploymentUnit.getAttachmentList(ExpressionFactoryWrapper.ATTACHMENT_KEY);
+        if (!wrappers.isEmpty()) {
+            if (metaData.getListeners() == null) {
+                metaData.setListeners(new ArrayList<ListenerMetaData>());
+            }
+            final ListenerMetaData listenerMetaData = new ListenerMetaData();
+            listenerMetaData.setListenerClass(JspInitializationListener.class.getName());
+            metaData.getListeners().add(listenerMetaData);
+            deploymentUnit.addToAttachmentList(ServletContextAttribute.ATTACHMENT_KEY, new ServletContextAttribute(JspInitializationListener.CONTEXT_KEY, wrappers));
+        }
 
         // Hook for post processing the web context (e.g. for SIP)
         contextFactory.postProcessContext(deploymentUnit, webContext);

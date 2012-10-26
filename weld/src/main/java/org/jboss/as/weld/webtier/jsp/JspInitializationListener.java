@@ -27,11 +27,13 @@ import javax.el.ExpressionFactory;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletRequestEvent;
 import javax.servlet.jsp.JspApplicationContext;
 import javax.servlet.jsp.JspFactory;
 
 import org.apache.jasper.runtime.JspApplicationContextImpl;
+import org.jboss.as.web.common.ExpressionFactoryWrapper;
 import org.jboss.as.weld.util.Reflections;
 import org.jboss.weld.servlet.api.helpers.AbstractServletListener;
 
@@ -41,61 +43,25 @@ import org.jboss.weld.servlet.api.helpers.AbstractServletListener;
  * @author Pete Muir
  * @author Stuart Douglas
  */
-public class JspInitializationListener extends AbstractServletListener {
+public class JspInitializationListener implements ExpressionFactoryWrapper{
 
-    private volatile boolean installed = false;
-
-    private static class WeldJspApplicationContextImpl extends ForwardingJspApplicationContextImpl {
-        private final JspApplicationContextImpl delegate;
-        private final ExpressionFactory expressionFactory;
-
-        public WeldJspApplicationContextImpl(JspApplicationContextImpl delegate, ExpressionFactory expressionFactory) {
-            this.delegate = delegate;
-            this.expressionFactory = expressionFactory;
-        }
-
-        @Override
-        protected JspApplicationContextImpl delegate() {
-            return delegate;
-        }
-
-        @Override
-        public ExpressionFactory getExpressionFactory() {
-            return expressionFactory;
-        }
-
-    }
-
+    public static final JspInitializationListener INSTANCE = new JspInitializationListener();
 
     @Override
-    public void requestInitialized(ServletRequestEvent sre) {
-        if (!installed) {
-            BeanManager beanManager = getBeanManager();
-            if (beanManager != null && JspFactory.getDefaultFactory() != null) {
-                synchronized (this) {
-                    if (!installed) {
-                        installed = true;
-                        // get JspApplicationContext.
-                        JspApplicationContext jspAppContext = JspFactory.getDefaultFactory().getJspApplicationContext(
-                                sre.getServletContext());
-
-                        // register compositeELResolver with JSP
-                        jspAppContext.addELResolver(beanManager.getELResolver());
-
-                        jspAppContext.addELContextListener(Reflections.<ELContextListener>newInstance(
-                                "org.jboss.weld.el.WeldELContextListener", getClass().getClassLoader()));
-
-                        // Hack into JBoss Web/Catalina to replace the ExpressionFactory
-                        JspApplicationContextImpl wrappedJspApplicationContextImpl = new WeldJspApplicationContextImpl(
-                                JspApplicationContextImpl.getInstance(sre.getServletContext()), beanManager
-                                .wrapExpressionFactory(jspAppContext.getExpressionFactory()));
-                        sre.getServletContext().setAttribute(JspApplicationContextImpl.class.getName(),
-                                wrappedJspApplicationContextImpl);
-                    }
-                }
-            }
+    public ExpressionFactory wrap(ExpressionFactory expressionFactory, ServletContext servletContext) {
+        BeanManager beanManager = getBeanManager();
+        if(beanManager == null) {
+            //this should never happen
+            return expressionFactory;
         }
-        // otherwise something went wrong starting Weld, so don't register with JSP
+        // get JspApplicationContext.
+        JspApplicationContext jspAppContext = JspFactory.getDefaultFactory().getJspApplicationContext( servletContext);
+
+        // register compositeELResolver with JSP
+        jspAppContext.addELResolver(beanManager.getELResolver());
+        jspAppContext.addELContextListener(Reflections.<ELContextListener>newInstance("org.jboss.weld.el.WeldELContextListener", getClass().getClassLoader()));
+
+        return beanManager.wrapExpressionFactory(expressionFactory);
     }
 
     private BeanManager getBeanManager() {

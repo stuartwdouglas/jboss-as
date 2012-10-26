@@ -35,6 +35,7 @@ import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
+import org.jboss.as.web.common.ExpressionFactoryWrapper;
 import org.jboss.as.web.common.WarMetaData;
 import org.jboss.as.weld.WeldDeploymentMarker;
 import org.jboss.as.weld.WeldLogger;
@@ -54,13 +55,10 @@ import org.jboss.weld.servlet.WeldListener;
  */
 public class WebIntegrationProcessor implements DeploymentUnitProcessor {
     private final ListenerMetaData WBL;
-    private final ListenerMetaData JIL;
     private final FilterMetaData CPF;
     private final FilterMappingMetaData CPFM;
 
     private static final String WELD_LISTENER = WeldListener.class.getName();
-
-    private static final String JSP_LISTENER = JspInitializationListener.class.getName();
 
     private static final String CONVERSATION_FILTER = ConversationPropagationFilter.class.getName();
 
@@ -71,8 +69,6 @@ public class WebIntegrationProcessor implements DeploymentUnitProcessor {
         // create wbl listener
         WBL = new ListenerMetaData();
         WBL.setListenerClass(WELD_LISTENER);
-        JIL = new ListenerMetaData();
-        JIL.setListenerClass(JSP_LISTENER);
         CPF = new FilterMetaData();
         CPF.setFilterName("Weld Conversation Propagation Filter");
         CPF.setFilterClass(CONVERSATION_FILTER);
@@ -125,7 +121,8 @@ public class WebIntegrationProcessor implements DeploymentUnitProcessor {
             }
         }
         listeners.add(0, WBL);
-        listeners.add(1, JIL);
+
+        deploymentUnit.addToAttachmentList(ExpressionFactoryWrapper.ATTACHMENT_KEY, JspInitializationListener.INSTANCE);
 
         FiltersMetaData filters = webMetaData.getFilters();
         if (filters == null) {

@@ -22,6 +22,7 @@
 
 package org.jboss.as.ee.component;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -99,6 +100,10 @@ public class ComponentRegistry implements Service<ComponentRegistry> {
     @Override
     public ComponentRegistry getValue() throws IllegalStateException, IllegalArgumentException {
         return this;
+    }
+
+    public Collection<ServiceName> serviceNames() {
+        return componentsByClass.values();
     }
 
     private static class ComponentManagedReference implements ManagedReference {
