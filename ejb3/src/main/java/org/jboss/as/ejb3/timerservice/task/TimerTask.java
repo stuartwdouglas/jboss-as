@@ -51,10 +51,9 @@ import static org.jboss.as.ejb3.EjbMessages.MESSAGES;
  */
 public class TimerTask<T extends TimerImpl> implements Runnable {
 
-    /**
-     * The timer to which this {@link TimerTask} belongs
-     */
-    protected final T timer;
+    protected final String timedObjectId;
+    protected final String timerId;
+
 
     /**
      * {@link org.jboss.as.ejb3.timerservice.TimerServiceImpl} to which this {@link TimerTask} belongs
@@ -72,7 +71,8 @@ public class TimerTask<T extends TimerImpl> implements Runnable {
             throw MESSAGES.timerIsNull();
         }
 
-        this.timer = timer;
+        this.timedObjectId = timer.getTimedObjectId();
+        this.timerId = timer.getId();
         this.timerService = timer.getTimerService();
     }
 
@@ -90,53 +90,54 @@ public class TimerTask<T extends TimerImpl> implements Runnable {
      */
     @Override
     public void run() {
+        TimerImpl timer = timerService.getTimer(timedObjectId, timerId);
         Date now = new Date();
         if(ROOT_LOGGER.isDebugEnabled()) {
-            ROOT_LOGGER.debug("Timer task invoked at: " + now + " for timer " + this.timer);
+            ROOT_LOGGER.debug("Timer task invoked at: " + now + " for timer " + timer);
         }
 
         // If a retry thread is in progress, we don't want to allow another
         // interval to execute until the retry is complete. See JIRA-1926.
-        if (this.timer.isInRetry()) {
+        if (timer.isInRetry()) {
             ROOT_LOGGER.debug("Timer in retry mode, skipping this scheduled execution at: " + now);
             // compute the next timeout, See JIRA AS7-2995.
-            this.timer.setNextTimeout(calculateNextTimeout());
-            this.timerService.persistTimer(this.timer, false);
+            timer.setNextTimeout(calculateNextTimeout(timer));
+            this.timerService.persistTimer(timer, false);
             scheduleTimeoutIfRequired();
             return;
         }
         // If the recurring timer running longer than the interval is, we don't want to allow another
         // execution until the it is complete. See JIRA AS7-3119
-        if(this.timer.getState() == TimerState.IN_TIMEOUT && !this.timer.isCalendarTimer()) {
-            ROOT_LOGGER.skipOverlappingInvokeTimeout(this.timer.getId(), now);
-            this.timer.setNextTimeout(this.calculateNextTimeout());
-            this.timerService.persistTimer(this.timer, false);
+        if(timer.getState() == TimerState.IN_TIMEOUT && !timer.isCalendarTimer()) {
+            ROOT_LOGGER.skipOverlappingInvokeTimeout(timer.getId(), now);
+            timer.setNextTimeout(this.calculateNextTimeout(timer));
+            this.timerService.persistTimer(timer, false);
             return;
         }
 
-        if (this.timer.isActive() == false) {
+        if (!timer.isActive()) {
             ROOT_LOGGER.debug("Timer is not active, skipping this scheduled execution at: " + now);
         }
         // set the current date as the "previous run" of the timer.
-        this.timer.setPreviousRun(new Date());
-        Date nextTimeout = this.calculateNextTimeout();
-        this.timer.setNextTimeout(nextTimeout);
+        timer.setPreviousRun(new Date());
+        Date nextTimeout = this.calculateNextTimeout(timer);
+        timer.setNextTimeout(nextTimeout);
         // change the state to mark it as in timeout method
-        this.timer.setTimerState(TimerState.IN_TIMEOUT);
+        timer.setTimerState(TimerState.IN_TIMEOUT);
 
         // persist changes
-        this.timerService.persistTimer(this.timer, false);
+        this.timerService.persistTimer(timer, false);
 
         try {
             // invoke timeout
             this.callTimeout();
         } catch (BeanRemovedException e) {
-            ROOT_LOGGER.debugf("Removing timer %s as EJB has been removed ", this.timer);
+            ROOT_LOGGER.debugf("Removing timer %s as EJB has been removed ", timer);
             timer.cancel();
         } catch (Exception e) {
-            ROOT_LOGGER.errorInvokeTimeout(this.timer, e);
+            ROOT_LOGGER.errorInvokeTimeout(timer, e);
             try {
-                ROOT_LOGGER.timerRetried(this.timer);
+                ROOT_LOGGER.timerRetried(timer);
                 retryTimeout();
             } catch (Exception retryException) {
                 // that's it, we can't do anything more. Let's just log the exception
@@ -146,22 +147,22 @@ public class TimerTask<T extends TimerImpl> implements Runnable {
         } finally {
             this.postTimeoutProcessing();
             //if it has expired we need to persist it
-            this.timerService.persistTimer(this.timer, false);
+            this.timerService.persistTimer(timer, false);
         }
     }
 
     protected void scheduleTimeoutIfRequired() {
     }
 
-    protected void callTimeout() throws Exception {
-        this.timerService.getInvoker().callTimeout(this.timer);
+    protected void callTimeout(TimerImpl timer) throws Exception {
+        this.timerService.getInvoker().callTimeout(timer);
     }
 
-    protected Date calculateNextTimeout() {
-        long intervalDuration = this.timer.getInterval();
+    protected Date calculateNextTimeout(TimerImpl timer) {
+        long intervalDuration = timer.getInterval();
         if (intervalDuration > 0) {
             long now = new Date().getTime();
-            long nextExpiration = this.timer.getNextExpiration().getTime();
+            long nextExpiration = timer.getNextExpiration().getTime();
             // compute skipped number of interval
             int periods = (int)((now-nextExpiration)/intervalDuration);
             // compute the next timeout date
@@ -169,10 +170,6 @@ public class TimerTask<T extends TimerImpl> implements Runnable {
         }
         return null;
 
-    }
-
-    protected T getTimer() {
-        return this.timer;
     }
 
     protected void retryTimeout() throws Exception {

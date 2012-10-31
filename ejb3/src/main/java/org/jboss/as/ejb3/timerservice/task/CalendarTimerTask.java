@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 
 import org.jboss.as.ejb3.timerservice.CalendarTimer;
+import org.jboss.as.ejb3.timerservice.TimerImpl;
 import org.jboss.as.ejb3.timerservice.TimerState;
 import org.jboss.as.ejb3.timerservice.spi.TimedObjectInvoker;
 
@@ -64,10 +65,10 @@ public class CalendarTimerTask extends TimerTask<CalendarTimer> {
     }
 
     @Override
-    protected Date calculateNextTimeout() {
+    protected Date calculateNextTimeout(TimerImpl timer) {
         // The next timeout for the calendar timer will have to be computed using the
         // current "nextExpiration"
-        Date currentTimeout = this.getTimer().getNextExpiration();
+        Date currentTimeout = timer.getNextExpiration();
         if (currentTimeout == null) {
             return null;
         }

@@ -23,6 +23,7 @@
 package org.jboss.as.ejb3.timerservice.persistence.infinispan;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.infinispan.Cache;
@@ -34,6 +35,8 @@ import org.infinispan.notifications.cachelistener.annotation.CacheEntryRemoved;
 import org.infinispan.notifications.cachelistener.event.CacheEntryCreatedEvent;
 import org.infinispan.notifications.cachelistener.event.CacheEntryRemovedEvent;
 import org.jboss.as.ejb3.EjbMessages;
+import org.jboss.as.ejb3.timerservice.TimerImpl;
+import org.jboss.as.ejb3.timerservice.TimerState;
 import org.jboss.as.ejb3.timerservice.persistence.TimerEntity;
 import org.jboss.as.ejb3.timerservice.persistence.TimerListener;
 import org.jboss.as.ejb3.timerservice.persistence.TimerPersistence;
@@ -126,6 +129,28 @@ public class InfinispanTimerPersistence implements TimerPersistence, Service<Inf
         synchronized (listeners) {
             listeners.remove(listener);
         }
+    }
+
+    @Override
+    public boolean shouldRun(TimerImpl timer, Date target) {
+        cache.startBatch();
+        boolean done = false;
+        try {
+            TimerEntity entity = cache.get(timer.getId());
+            if(!entity.getNextDate().equals(target) ||
+                    entity.getTimerState() != TimerState.ACTIVE) {
+                return false;
+            }
+            TimerEntity newEntity = new TimerEntity(timer);
+
+            cache.endBatch(true);
+            done = true;
+        } finally {
+            if(!done) {
+                cache.endBatch(false);
+            }
+        }
+        return false;
     }
 
     @Override

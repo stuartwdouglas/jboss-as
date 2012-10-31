@@ -65,6 +65,7 @@ import org.jboss.as.ejb3.context.CurrentInvocationContext;
 import org.jboss.as.ejb3.timerservice.persistence.CalendarTimerEntity;
 import org.jboss.as.ejb3.timerservice.persistence.TimeoutMethod;
 import org.jboss.as.ejb3.timerservice.persistence.TimerEntity;
+import org.jboss.as.ejb3.timerservice.persistence.TimerListener;
 import org.jboss.as.ejb3.timerservice.persistence.TimerPersistence;
 import org.jboss.as.ejb3.timerservice.schedule.CalendarBasedTimeout;
 import org.jboss.as.ejb3.timerservice.spi.ScheduleTimer;
@@ -124,11 +125,6 @@ public class TimerServiceImpl implements TimerService, Service<TimerService> {
      * Used for persistent timers
      */
     private final InjectedValue<TimerPersistence> timerPersistence = new InjectedValue<TimerPersistence>();
-
-    /**
-     * All non-persistent timers which were created by this {@link TimerService}
-     */
-    private final Map<String, TimerImpl> persistentTimers = Collections.synchronizedMap(new HashMap<String, TimerImpl>());
 
     /**
      * All non-persistent timers which were created by this {@link TimerService}
@@ -487,6 +483,18 @@ public class TimerServiceImpl implements TimerService, Service<TimerService> {
         this.persistTimer(timer, true);
         // return the timer
         return timer;
+    }
+
+    public TimerImpl getTimer(final String timedObjectId, final String timerId) {
+        TimerImpl ret = nonPersistentTimers.get(timedObjectId);
+        if(ret != null) {
+            return ret;
+        }
+        TimerEntity entity = timerPersistence.getValue().loadTimer(timerId, timedObjectId);
+        if(entity != null) {
+            return new TimerImpl(entity, this);
+        }
+        return null;
     }
 
     /**
@@ -1164,6 +1172,22 @@ public class TimerServiceImpl implements TimerService, Service<TimerService> {
             if (executor != null) {
                 executor.submit(delegate);
             }
+        }
+    }
+
+    private class TimerChangeListener implements TimerListener {
+
+        @Override
+        public void timerAdded(TimerEntity timer) {
+            TimerImpl t = new TimerImpl(timer, TimerServiceImpl.this);
+            TimerServiceImpl.this.scheduleTimeout(t, false);
+
+        }
+
+        @Override
+        public void timerRemoved(TimerEntity timer) {
+            TimerImpl t = new TimerImpl(timer, TimerServiceImpl.this);
+            TimerServiceImpl.this.cancelTimeout(t);
         }
     }
 

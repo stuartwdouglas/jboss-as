@@ -93,4 +93,11 @@ public interface TimerPersistence {
      */
     void removeListener(TimerListener listener);
 
+    /**
+     * Tests to see if this timer should be run on this node
+     *
+     * @return true if the timer invocation should be run on this node
+     */
+    boolean shouldRun(String timedObjectId);
+
 }

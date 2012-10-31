@@ -274,6 +274,11 @@ public class FileTimerPersistence implements TimerPersistence, Service<FileTimer
         //noop, this implementation does not need listener callbacks
     }
 
+    @Override
+    public boolean shouldRun(String timedObjectId) {
+        return true;
+    }
+
     /**
      * Returns either the loaded entity or the most recent version of the entity that has
      * been persisted in this transaction.
