@@ -36,6 +36,7 @@ import org.jboss.as.server.deployment.AttachmentKey;
 import org.jboss.as.server.deployment.SetupAction;
 import org.jboss.as.web.ThreadSetupBindingListener;
 import org.jboss.as.web.common.ServletContextAttribute;
+import org.jboss.as.web.common.StartupContext;
 import org.jboss.msc.service.AbstractServiceListener;
 import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceController;
@@ -78,33 +79,38 @@ public class WebDeploymentService implements Service<StandardContext> {
 
     @Override
     public synchronized void start(StartContext startContext) throws StartException {
-        if (attributes != null) {
-            final ServletContext context = this.context.getServletContext();
-            for (ServletContextAttribute attribute : attributes) {
-                context.setAttribute(attribute.getName(), attribute.getValue());
+        StartupContext.setComponentRegistry(injectionContainer.getComponentRegistry());
+        try {
+            if (attributes != null) {
+                final ServletContext context = this.context.getServletContext();
+                for (ServletContextAttribute attribute : attributes) {
+                    context.setAttribute(attribute.getName(), attribute.getValue());
+                }
             }
-        }
 
 
-        context.setRealm(realm.getValue());
+            context.setRealm(realm.getValue());
 
-        final List<SetupAction> actions = new ArrayList<SetupAction>();
-        actions.addAll(setupActions);
-        context.setInstanceManager(injectionContainer);
-        context.setThreadBindingListener(new ThreadSetupBindingListener(actions));
-        WEB_LOGGER.registerWebapp(context.getName());
-        try {
-            context.create();
-        } catch (Exception e) {
-            throw new StartException(MESSAGES.createContextFailed(), e);
-        }
-        try {
-            context.start();
-        } catch (LifecycleException e) {
-            throw new StartException(MESSAGES.startContextFailed(), e);
-        }
-        if (context.getState() != 1) {
-            throw new StartException(MESSAGES.startContextFailed());
+            final List<SetupAction> actions = new ArrayList<SetupAction>();
+            actions.addAll(setupActions);
+            context.setInstanceManager(injectionContainer);
+            context.setThreadBindingListener(new ThreadSetupBindingListener(actions));
+            WEB_LOGGER.registerWebapp(context.getName());
+            try {
+                context.create();
+            } catch (Exception e) {
+                throw new StartException(MESSAGES.createContextFailed(), e);
+            }
+            try {
+                context.start();
+            } catch (LifecycleException e) {
+                throw new StartException(MESSAGES.startContextFailed(), e);
+            }
+            if (context.getState() != 1) {
+                throw new StartException(MESSAGES.startContextFailed());
+            }
+        } finally {
+            StartupContext.setComponentRegistry(null);
         }
     }
 
