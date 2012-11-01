@@ -21,17 +21,10 @@
  */
 package org.jboss.as.web.deployment;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
-import static org.powermock.api.mockito.PowerMockito.mock;
-import static org.powermock.api.mockito.PowerMockito.when;
-
 import java.io.File;
 
 import org.apache.catalina.core.StandardContext;
+import org.jboss.as.ee.component.ComponentRegistry;
 import org.jboss.as.ee.component.EEApplicationDescription;
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
@@ -56,6 +49,14 @@ import org.mockito.Mockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.core.classloader.annotations.SuppressStaticInitializationFor;
 import org.powermock.modules.junit4.PowerMockRunner;
+
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
+import static org.powermock.api.mockito.PowerMockito.mock;
+import static org.powermock.api.mockito.PowerMockito.when;
 
 /**
  * Unit tests for replacing {@link StandardContext} in web deployment processors
@@ -93,7 +94,9 @@ public class WarDeploymentProcessorTest {
         final ServiceTarget serviceTarget = mock(ServiceTarget.class, RETURNS_DEEP_STUBS);
         when(phaseContext.getServiceTarget()).thenReturn(serviceTarget);
         when(deploymentUnit.getAttachment(WarMetaData.ATTACHMENT_KEY)).thenReturn(warMetaData);
-        when(deploymentUnit.getAttachment(org.jboss.as.ee.component.Attachments.EE_APPLICATION_DESCRIPTION)).thenReturn(new EEApplicationDescription(null));
+        when(deploymentUnit.getAttachment(org.jboss.as.ee.component.Attachments.EE_APPLICATION_DESCRIPTION)).thenReturn(new EEApplicationDescription());
+        when(deploymentUnit.getAttachment(org.jboss.as.ee.component.Attachments.COMPONENT_REGISTRY)).thenReturn(new ComponentRegistry(null));
+
 
         final ResourceRoot resourceRoot = mock(ResourceRoot.class);
         final VirtualFile deploymentRoot = mock(VirtualFile.class);

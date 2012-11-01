@@ -22,8 +22,6 @@
 
 package org.jboss.as.web.deployment;
 
-import static org.jboss.as.web.WebMessages.MESSAGES;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,10 +32,6 @@ import java.util.Set;
 
 import javax.security.jacc.PolicyConfiguration;
 
-import org.jboss.as.ee.component.EEApplicationDescription;
-import org.jboss.as.web.common.ExpressionFactoryWrapper;
-import org.jboss.as.web.common.ServletContextAttribute;
-import org.jboss.as.web.common.WarMetaData;
 import org.apache.catalina.ContainerListener;
 import org.apache.catalina.Lifecycle;
 import org.apache.catalina.LifecycleListener;
@@ -49,6 +43,7 @@ import org.apache.tomcat.util.IntrospectionUtils;
 import org.jboss.as.clustering.web.DistributedCacheManagerFactory;
 import org.jboss.as.clustering.web.DistributedCacheManagerFactoryService;
 import org.jboss.as.controller.PathElement;
+import org.jboss.as.ee.component.EEApplicationDescription;
 import org.jboss.as.ee.component.EEModuleDescription;
 import org.jboss.as.naming.deployment.JndiNamingDependencyProcessor;
 import org.jboss.as.security.deployment.AbstractSecurityDeployer;
@@ -64,8 +59,11 @@ import org.jboss.as.server.deployment.SetupAction;
 import org.jboss.as.web.VirtualHost;
 import org.jboss.as.web.WebDeploymentDefinition;
 import org.jboss.as.web.WebSubsystemServices;
-import org.jboss.as.web.deployment.WebDeploymentService.ContextActivator;
+import org.jboss.as.web.common.ExpressionFactoryWrapper;
+import org.jboss.as.web.common.ServletContextAttribute;
+import org.jboss.as.web.common.WarMetaData;
 import org.jboss.as.web.common.WebComponentDescription;
+import org.jboss.as.web.deployment.WebDeploymentService.ContextActivator;
 import org.jboss.as.web.ext.WebContextFactory;
 import org.jboss.as.web.security.JBossWebRealmService;
 import org.jboss.as.web.security.SecurityContextAssociationValve;
@@ -90,6 +88,8 @@ import org.jboss.msc.service.ServiceTarget;
 import org.jboss.security.SecurityConstants;
 import org.jboss.security.SecurityUtil;
 import org.jboss.vfs.VirtualFile;
+
+import static org.jboss.as.web.WebMessages.MESSAGES;
 
 /**
  * {@code DeploymentUnitProcessor} creating the actual deployment services.
@@ -287,7 +287,7 @@ public class WarDeploymentProcessor implements DeploymentUnitProcessor {
                     .addDependency(DependencyType.REQUIRED, SecurityDomainService.SERVICE_NAME.append(securityDomain), SecurityDomainContext.class,
                             realmService.getSecurityDomainContextInjector()).setInitialMode(Mode.ACTIVE).install();
 
-            final WebDeploymentService webappService = new WebDeploymentService(webContext, new WebInjectionContainer(module.getClassLoader(), applicationDescription.getComponentRegistry()), setupActions, attributes);
+            final WebDeploymentService webappService = new WebDeploymentService(webContext, new WebInjectionContainer(module.getClassLoader(), deploymentUnit.getAttachment(org.jboss.as.ee.component.Attachments.COMPONENT_REGISTRY)), setupActions, attributes);
             ServiceBuilder<StandardContext> webappBuilder = serviceTarget.addService(webappServiceName, webappService)
                     .addDependency(WebSubsystemServices.JBOSS_WEB_HOST.append(hostName), VirtualHost.class, new WebContextInjector(webContext))
                     .addDependencies(dependentComponents).addDependency(realmServiceName, Realm.class, webappService.getRealm())

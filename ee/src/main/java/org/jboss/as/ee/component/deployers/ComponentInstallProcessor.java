@@ -69,6 +69,7 @@ import org.jboss.msc.service.ServiceTarget;
 
 import static org.jboss.as.ee.EeLogger.ROOT_LOGGER;
 import static org.jboss.as.ee.EeMessages.MESSAGES;
+import static org.jboss.as.ee.component.Attachments.COMPONENT_REGISTRY;
 import static org.jboss.as.ee.component.Attachments.EE_MODULE_CONFIGURATION;
 import static org.jboss.as.server.deployment.Attachments.MODULE;
 
@@ -85,7 +86,7 @@ public final class ComponentInstallProcessor implements DeploymentUnitProcessor 
             return;
         }
         final EEApplicationDescription applicationDescription = deploymentUnit.getAttachment(Attachments.EE_APPLICATION_DESCRIPTION);
-        ComponentRegistry componentRegistry = applicationDescription.getComponentRegistry();
+        ComponentRegistry componentRegistry = deploymentUnit.getAttachment(COMPONENT_REGISTRY);
 
         final List<ServiceName> dependencies = deploymentUnit.getAttachmentList(org.jboss.as.server.deployment.Attachments.JNDI_DEPENDENCIES);
 

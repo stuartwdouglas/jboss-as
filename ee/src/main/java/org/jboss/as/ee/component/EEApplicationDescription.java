@@ -30,9 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.jboss.msc.service.ServiceBuilder;
-import org.jboss.msc.service.ServiceRegistry;
-import org.jboss.msc.service.ServiceTarget;
 import org.jboss.vfs.VirtualFile;
 
 /**
@@ -45,12 +42,6 @@ public class EEApplicationDescription {
 
     //this must be synchronized for writing
     private final Map<String, List<MessageDestinationMapping>> messageDestinationJndiMapping = new HashMap<String, List<MessageDestinationMapping>>();
-
-    private final ComponentRegistry componentRegistry;
-
-    public EEApplicationDescription(final ServiceRegistry serviceRegistry) {
-        componentRegistry = new ComponentRegistry(serviceRegistry);
-    }
 
     /**
      * Add a component to this application.
@@ -254,10 +245,6 @@ public class EEApplicationDescription {
             }
             return all;
         }
-    }
-
-    public ComponentRegistry getComponentRegistry() {
-        return componentRegistry;
     }
 
     private static class ViewInformation {
