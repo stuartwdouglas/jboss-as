@@ -25,24 +25,40 @@ package org.jboss.as.ejb3.subsystem;
 import org.jboss.as.controller.AbstractRemoveStepHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
+import org.jboss.as.controller.PathAddress;
+import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
+import org.jboss.as.ejb3.timerservice.persistence.TimerPersistence;
 import org.jboss.dmr.ModelNode;
+import org.jboss.msc.service.ServiceName;
 
 /**
- * Handles the remove operation for the timer-service resource.
- *
- * @author Stuart Douglas
+ * Handles removing a database backed data store
  */
-public class TimerServiceRemove extends AbstractRemoveStepHandler {
+public class DatabaseDataStoreRemove extends AbstractRemoveStepHandler {
 
-    public static final TimerServiceRemove INSTANCE = new TimerServiceRemove();
+    public static final DatabaseDataStoreRemove INSTANCE = new DatabaseDataStoreRemove();
 
     @Override
     protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
-        context.reloadRequired();
+        if (context.isResourceServiceRestartAllowed()) {
+            removeRuntimeService(context, operation);
+        } else {
+            context.reloadRequired();
+        }
     }
 
     @Override
     protected void recoverServices(OperationContext context, ModelNode operation, ModelNode model) throws OperationFailedException {
-        context.revertReloadRequired();
+        if (context.isResourceServiceRestartAllowed()) {
+            DatabaseDataStoreAdd.INSTANCE.installRuntimeServices(context, operation, model, null);
+        } else {
+            context.revertReloadRequired();
+        }
+    }
+
+    void removeRuntimeService(OperationContext context, ModelNode operation) {
+        final String name = PathAddress.pathAddress(operation.get(ModelDescriptionConstants.ADDRESS)).getLastElement().getValue();
+        final ServiceName serviceName = TimerPersistence.SERVICE_NAME.append(name);
+        context.removeService(serviceName);
     }
 }

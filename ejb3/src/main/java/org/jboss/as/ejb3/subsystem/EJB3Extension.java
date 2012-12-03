@@ -60,7 +60,7 @@ public class EJB3Extension implements Extension {
     public static final String NAMESPACE_1_4 = EJB3SubsystemNamespace.EJB3_1_4.getUriString();
 
     private static final int MANAGEMENT_API_MAJOR_VERSION = 1;
-    private static final int MANAGEMENT_API_MINOR_VERSION = 1;
+    private static final int MANAGEMENT_API_MINOR_VERSION = 2;
     private static final int MANAGEMENT_API_MICRO_VERSION = 0;
 
     private static final String RESOURCE_NAME = EJB3Extension.class.getPackage().getName() + ".LocalDescriptions";
@@ -101,15 +101,22 @@ public class EJB3Extension implements Extension {
         subsystemRegistration.registerSubModel(ClusterPassivationStoreResourceDefinition.INSTANCE);
 
         // subsystem=ejb3/service=timerservice
-        final ManagementResourceRegistration timerService = subsystemRegistration.registerSubModel(TimerServiceResourceDefinition.INSTANCE);
+        final ManagementResourceRegistration timerServiceResource = subsystemRegistration.registerSubModel(TimerServiceResourceDefinition.INSTANCE);
+
+
+        // subsystem=ejb3/service=timerservice/file-data-store=*
+        ManagementResourceRegistration filePersistenceResource = timerServiceResource.registerSubModel(FileDataStoreResourceDefinition.INSTANCE);
         // Create the path resolver handler
         if (context.getProcessType().isServer()) {
             final ResolvePathHandler resolvePathHandler = ResolvePathHandler.Builder.of(context.getPathManager())
-                    .setPathAttribute(TimerServiceResourceDefinition.PATH)
-                    .setRelativeToAttribute(TimerServiceResourceDefinition.RELATIVE_TO)
+                    .setPathAttribute(FileDataStoreResourceDefinition.PATH)
+                    .setRelativeToAttribute(FileDataStoreResourceDefinition.RELATIVE_TO)
                     .build();
-            timerService.registerOperationHandler(resolvePathHandler.getOperationDefinition(), resolvePathHandler);
+            filePersistenceResource.registerOperationHandler(resolvePathHandler.getOperationDefinition(), resolvePathHandler);
         }
+
+        // subsystem=ejb3/service=timerservice/infinispan-data-store=*
+        timerServiceResource.registerSubModel(DatabaseDataStoreResourceDefinition.INSTANCE);
 
         // subsystem=ejb3/thread-pool=*
         subsystemRegistration.registerSubModel(UnboundedQueueThreadPoolResourceDefinition.create(EJB3SubsystemModel.THREAD_POOL,

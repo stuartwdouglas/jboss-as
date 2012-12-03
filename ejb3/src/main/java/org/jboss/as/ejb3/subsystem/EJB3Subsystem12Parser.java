@@ -58,6 +58,8 @@ import static org.jboss.as.ejb3.subsystem.EJB3SubsystemModel.CACHE;
 import static org.jboss.as.ejb3.subsystem.EJB3SubsystemModel.CACHE_CONTAINER;
 import static org.jboss.as.ejb3.subsystem.EJB3SubsystemModel.CLIENT_MAPPINGS_CACHE;
 import static org.jboss.as.ejb3.subsystem.EJB3SubsystemModel.CLUSTER_PASSIVATION_STORE;
+import static org.jboss.as.ejb3.subsystem.EJB3SubsystemModel.DEFAULT_DATA_STORE;
+import static org.jboss.as.ejb3.subsystem.EJB3SubsystemModel.FILE_DATA_STORE;
 import static org.jboss.as.ejb3.subsystem.EJB3SubsystemModel.FILE_PASSIVATION_STORE;
 import static org.jboss.as.ejb3.subsystem.EJB3SubsystemModel.GROUPS_PATH;
 import static org.jboss.as.ejb3.subsystem.EJB3SubsystemModel.IDLE_TIMEOUT;
@@ -692,7 +694,7 @@ public class EJB3Subsystem12Parser implements XMLElementReader<List<ModelNode>> 
     }
 
     private void parseTimerService(final XMLExtendedStreamReader reader, List<ModelNode> operations) throws XMLStreamException {
-
+        ModelNode fileDataStoreAdd = null;
         final ModelNode address = new ModelNode();
         address.add(SUBSYSTEM, EJB3Extension.SUBSYSTEM_NAME);
         address.add(SERVICE, TIMER_SERVICE);
@@ -737,13 +739,13 @@ public class EJB3Subsystem12Parser implements XMLElementReader<List<ModelNode>> 
                                 if (dataStorePath != null) {
                                     throw unexpectedAttribute(reader, i);
                                 }
-                                dataStorePath = TimerServiceResourceDefinition.PATH.parse(value, reader).asString();
+                                dataStorePath = FileDataStoreResourceDefinition.PATH.parse(value, reader).asString();
                                 break;
                             case RELATIVE_TO:
                                 if (dataStorePathRelativeTo != null) {
                                     throw unexpectedAttribute(reader, i);
                                 }
-                                dataStorePathRelativeTo = TimerServiceResourceDefinition.RELATIVE_TO.parse(value, reader).asString();
+                                dataStorePathRelativeTo = FileDataStoreResourceDefinition.RELATIVE_TO.parse(value, reader).asString();
                                 break;
                             default:
                                 throw unexpectedAttribute(reader, i);
@@ -752,9 +754,15 @@ public class EJB3Subsystem12Parser implements XMLElementReader<List<ModelNode>> 
                     if (dataStorePath == null) {
                         throw missingRequired(reader, Collections.singleton(EJB3SubsystemXMLAttribute.PATH));
                     }
-                    timerServiceAdd.get(PATH).set(dataStorePath);
+                    timerServiceAdd.get(DEFAULT_DATA_STORE).set("default-file-store");
+                    fileDataStoreAdd = new ModelNode();
+                    final ModelNode fileDataAddress = address.clone();
+                    fileDataAddress.add(FILE_DATA_STORE, "default-file-store");
+                    fileDataStoreAdd.get(OP).set(ADD);
+                    fileDataStoreAdd.get(OP_ADDR).set(fileDataAddress);
+                    fileDataStoreAdd.get(PATH).set(dataStorePath);
                     if (dataStorePathRelativeTo != null) {
-                        timerServiceAdd.get(RELATIVE_TO).set(dataStorePathRelativeTo);
+                        fileDataStoreAdd.get(RELATIVE_TO).set(dataStorePathRelativeTo);
                     }
                     requireNoContent(reader);
                     break;
@@ -765,6 +773,9 @@ public class EJB3Subsystem12Parser implements XMLElementReader<List<ModelNode>> 
             }
         }
         operations.add(timerServiceAdd);
+        if(fileDataStoreAdd != null) {
+            operations.add(fileDataStoreAdd);
+        }
     }
 
     private void parseThreadPools(final XMLExtendedStreamReader reader, final List<ModelNode> operations) throws XMLStreamException {

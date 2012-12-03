@@ -27,54 +27,43 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
-import org.jboss.as.controller.ResourceDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleResourceDefinition;
+import org.jboss.as.controller.operations.validation.ModelTypeValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.as.controller.registry.OperationEntry;
 import org.jboss.dmr.ModelType;
 
 /**
- * {@link ResourceDefinition} for the timer-service resource.
+ * {@link org.jboss.as.controller.ResourceDefinition} for the databse data store resource.
  *
- * @author Brian Stansberry (c) 2011 Red Hat Inc.
  */
-public class TimerServiceResourceDefinition extends SimpleResourceDefinition {
+public class DatabaseDataStoreResourceDefinition extends SimpleResourceDefinition {
 
-    public static final TimerServiceResourceDefinition INSTANCE = new TimerServiceResourceDefinition();
+    public static final DatabaseDataStoreResourceDefinition INSTANCE = new DatabaseDataStoreResourceDefinition();
 
-    public static final SimpleAttributeDefinition THREAD_POOL_NAME =
-            new SimpleAttributeDefinitionBuilder(EJB3SubsystemModel.THREAD_POOL_NAME, ModelType.STRING, false)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
-                    .build();
-
-    public static final SimpleAttributeDefinition DEFAULT_DATA_STORE =
-            new SimpleAttributeDefinitionBuilder(EJB3SubsystemModel.DEFAULT_DATA_STORE, ModelType.STRING, false)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+    public static final SimpleAttributeDefinition DATASOURCE_JNDI_NAME =
+            new SimpleAttributeDefinitionBuilder(EJB3SubsystemModel.DATASOURCE_JNDI_NAME, ModelType.STRING, false)
+                    .setValidator(new ModelTypeValidator(ModelType.STRING, true, false))
+                    .setFlags(AttributeAccess.Flag.RESTART_RESOURCE_SERVICES)
                     .build();
 
     public static final Map<String, AttributeDefinition> ATTRIBUTES ;
 
     static {
         Map<String, AttributeDefinition> map = new LinkedHashMap<String, AttributeDefinition>();
-        map.put(THREAD_POOL_NAME.getName(), THREAD_POOL_NAME);
-        map.put(DEFAULT_DATA_STORE.getName(), DEFAULT_DATA_STORE);
+        map.put(DATASOURCE_JNDI_NAME.getName(), DATASOURCE_JNDI_NAME);
 
         ATTRIBUTES = Collections.unmodifiableMap(map);
     }
 
-
-    private TimerServiceResourceDefinition() {
-        super(EJB3SubsystemModel.TIMER_SERVICE_PATH,
-                EJB3Extension.getResourceDescriptionResolver(EJB3SubsystemModel.TIMER_SERVICE),
-                TimerServiceAdd.INSTANCE, ReloadRequiredRemoveStepHandler.INSTANCE,
-                OperationEntry.Flag.RESTART_ALL_SERVICES, OperationEntry.Flag.RESTART_ALL_SERVICES);
+    private DatabaseDataStoreResourceDefinition() {
+        super(EJB3SubsystemModel.DATABASE_DATA_STORE_PATH,
+                EJB3Extension.getResourceDescriptionResolver(EJB3SubsystemModel.DATABASE_DATA_STORE),
+                DatabaseDataStoreAdd.INSTANCE, DatabaseDataStoreRemove.INSTANCE);
     }
-
 
     @Override
     public void registerAttributes(ManagementResourceRegistration resourceRegistration) {
