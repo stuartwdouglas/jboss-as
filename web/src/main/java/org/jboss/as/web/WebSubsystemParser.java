@@ -107,6 +107,7 @@ class WebSubsystemParser implements XMLStreamConstants, XMLElementReader<List<Mo
         WebDefinition.DEFAULT_VIRTUAL_SERVER.marshallAsAttribute(node, true, writer);
         WebDefinition.INSTANCE_ID.marshallAsAttribute(node, false, writer);
         WebDefinition.NATIVE.marshallAsAttribute(node, true, writer);
+        WebDefinition.SYMLINKING_ENABLED.marshallAsAttribute(node, false, writer);
         if (node.hasDefined(CONFIGURATION)) {
             writeContainerConfig(writer, node.get(CONFIGURATION));
         }
@@ -357,6 +358,9 @@ class WebSubsystemParser implements XMLStreamConstants, XMLElementReader<List<Mo
                     break;
                 case INSTANCE_ID:
                     WebDefinition.INSTANCE_ID.parseAndSetParameter(value, subsystem, reader);
+                    break;
+                case SYMLINKING_ENABLED:
+                    subsystem.get(attribute.getLocalName()).set(value);
                     break;
                 default:
                     throw unexpectedAttribute(reader, i);

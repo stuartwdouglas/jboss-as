@@ -67,7 +67,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 public class WarDeploymentProcessorTest {
     private static final String HOST = "default-host";
 
-    private WarDeploymentProcessor processor = new WarDeploymentProcessor(HOST);
+    private WarDeploymentProcessor processor = new WarDeploymentProcessor(HOST, false);
 
     @Mock
     private DeploymentPhaseContext phaseContext;

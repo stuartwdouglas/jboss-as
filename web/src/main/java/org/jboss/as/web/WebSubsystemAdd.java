@@ -87,6 +87,7 @@ class WebSubsystemAdd extends AbstractBoottimeAddStepHandler {
         WebDefinition.DEFAULT_VIRTUAL_SERVER.validateAndSet(operation, model);
         WebDefinition.NATIVE.validateAndSet(operation, model);
         WebDefinition.INSTANCE_ID.validateAndSet(operation, model);
+        WebDefinition.SYMLINKING_ENABLED.validateAndSet(operation, model);
     }
 
     @Override
@@ -98,6 +99,7 @@ class WebSubsystemAdd extends AbstractBoottimeAddStepHandler {
         final String defaultVirtualServer = WebDefinition.DEFAULT_VIRTUAL_SERVER.resolveModelAttribute(context, fullModel).asString();
 
         final boolean useNative = WebDefinition.NATIVE.resolveModelAttribute(context, fullModel).asBoolean();
+        final boolean symbolicEnabled = WebDefinition.SYMLINKING_ENABLED.resolveModelAttribute(context, fullModel).asBoolean();
         final ModelNode instanceIdModel = WebDefinition.INSTANCE_ID.resolveModelAttribute(context, fullModel);
         final String instanceId = instanceIdModel.isDefined() ? instanceIdModel.asString() : null;
 
@@ -127,7 +129,8 @@ class WebSubsystemAdd extends AbstractBoottimeAddStepHandler {
                 processorTarget.addDeploymentProcessor(WebExtension.SUBSYSTEM_NAME, Phase.POST_MODULE, Phase.POST_MODULE_EL_EXPRESSION_FACTORY, new ELExpressionFactoryProcessor());
 
                 processorTarget.addDeploymentProcessor(WebExtension.SUBSYSTEM_NAME, Phase.INSTALL, Phase.INSTALL_SERVLET_INIT_DEPLOYMENT, new ServletContainerInitializerDeploymentProcessor());
-                processorTarget.addDeploymentProcessor(WebExtension.SUBSYSTEM_NAME, Phase.INSTALL, Phase.INSTALL_WAR_DEPLOYMENT, new WarDeploymentProcessor(defaultVirtualServer, service));
+                processorTarget.addDeploymentProcessor(WebExtension.SUBSYSTEM_NAME, Phase.INSTALL, Phase.INSTALL_WAR_DEPLOYMENT, new WarDeploymentProcessor(defaultVirtualServer, service, symbolicEnabled));
+
             }
         }, OperationContext.Stage.RUNTIME);
 
