@@ -68,6 +68,7 @@
       <subsystem>configuration/subsystems/ee.xml</subsystem>
       <subsystem supplement="full">configuration/subsystems/ejb3.xml</subsystem>
       <subsystem>configuration/subsystems/infinispan.xml</subsystem>
+       <subsystem>configuration/subsystems/jacorb.xml</subsystem>
       <subsystem>configuration/subsystems/jaxr.xml</subsystem>
       <subsystem>configuration/subsystems/jaxrs.xml</subsystem>
       <subsystem>configuration/subsystems/jca.xml</subsystem>
@@ -85,7 +86,6 @@
       <subsystem>configuration/subsystems/resource-adapters.xml</subsystem>
       <subsystem>configuration/subsystems/sar.xml</subsystem>
       <subsystem supplement="domain">configuration/subsystems/security.xml</subsystem>
-      <subsystem>configuration/subsystems/sunorb.xml</subsystem>
       <subsystem>configuration/subsystems/threads.xml</subsystem>
       <subsystem>configuration/subsystems/transactions.xml</subsystem>
       <subsystem>configuration/subsystems/web.xml</subsystem>
@@ -101,6 +101,7 @@
       <subsystem>configuration/subsystems/ee.xml</subsystem>
       <subsystem supplement="full-ha">configuration/subsystems/ejb3.xml</subsystem>
       <subsystem supplement="ha">configuration/subsystems/infinispan.xml</subsystem>
+       <subsystem>configuration/subsystems/jacorb.xml</subsystem>
       <subsystem>configuration/subsystems/jaxr.xml</subsystem>
       <subsystem>configuration/subsystems/jaxrs.xml</subsystem>
       <subsystem>configuration/subsystems/jca.xml</subsystem>
@@ -120,7 +121,6 @@
       <subsystem>configuration/subsystems/resource-adapters.xml</subsystem>
       <subsystem>configuration/subsystems/sar.xml</subsystem>
       <subsystem supplement="domain">configuration/subsystems/security.xml</subsystem>
-      <subsystem>configuration/subsystems/sunorb.xml</subsystem>
       <subsystem>configuration/subsystems/threads.xml</subsystem>
       <subsystem>configuration/subsystems/transactions.xml</subsystem>
       <subsystem supplement="ha">configuration/subsystems/web.xml</subsystem>

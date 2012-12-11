@@ -23,7 +23,6 @@ package org.jboss.as.iiop.rmi;
  */
 
 import javax.rmi.CORBA.Tie;
-import com.sun.corba.se.impl.presentation.rmi.StubFactoryFactoryBase;
 import org.jboss.com.sun.corba.se.impl.presentation.rmi.StubFactoryFactoryBase;
 import org.jboss.com.sun.corba.se.impl.presentation.rmi.StubFactoryFactoryProxyImpl;
 import org.jboss.com.sun.corba.se.impl.presentation.rmi.StubFactoryFactoryStaticImpl;
