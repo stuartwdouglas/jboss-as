@@ -28,18 +28,6 @@
     </resources>
 
     <dependencies>
-        <system export="true">
-            <paths>
-                <path name="org/omg/PortableServer"/>
-                <path name="org/omg/PortableServer/CurrentPackage"/>
-                <path name="org/omg/PortableServer/POAManagerPackage"/>
-                <path name="org/omg/PortableServer/POAPackage"/>
-                <path name="org/omg/PortableServer/ServantLocatorPackage"/>
-                <path name="org/omg/PortableServer/portable"/>
-                <path name="org/omg/PortableServer.ServantLocatorPackage" />
-                <path name="org/omg/CosNaming" />
-            </paths>
-        </system>
         <module name="org.jboss.jts" export="false">
             <exports>
                 <include-set>

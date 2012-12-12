@@ -28,9 +28,9 @@ import java.security.PrivilegedAction;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 
-import com.sun.corba.ee.impl.orb.ORBImpl;
-import com.sun.corba.ee.impl.orb.ORBSingleton;
-import com.sun.corba.ee.spi.misc.ORBConstants;
+import com.sun.corba.se.impl.orb.ORBImpl;
+import com.sun.corba.se.impl.orb.ORBSingleton;
+import com.sun.corba.se.impl.orbutil.ORBConstants;
 import org.jboss.as.iiop.IIOPServiceNames;
 import org.jboss.as.iiop.OrbService;
 import org.jboss.as.iiop.naming.jndi.CorbaUtils;

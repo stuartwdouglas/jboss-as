@@ -83,7 +83,6 @@
         <version.com.google.guava>11.0.2</version.com.google.guava>
         <version.com.h2database>1.3.168</version.com.h2database>
         <version.com.sun.codemodel>2.6</version.com.sun.codemodel>
-        <version.com.sun.corba.glassfish-corba-orb>3.2.0-b005</version.com.sun.corba.glassfish-corba-orb>
         <version.com.sun.faces>2.1.13-jbossorg-1</version.com.sun.faces>
         <version.com.sun.istack>2.6.1</version.com.sun.istack>
         <version.com.sun.xml.txw2>20110809</version.com.sun.xml.txw2>
@@ -142,9 +141,6 @@
         <version.org.codehaus.woodstox.stax2-api>3.1.1</version.org.codehaus.woodstox.stax2-api>
         <version.org.codehaus.woodstox.woodstox-core-asl>4.1.1</version.org.codehaus.woodstox.woodstox-core-asl>
         <version.org.hibernate>4.1.6.Final</version.org.hibernate>
-        <version.org.glassfish.corba.glassfish-corba-orb>3.2.0-b006</version.org.glassfish.corba.glassfish-corba-orb>
-        <version.org.glassfish.gmbal>3.2.0-b003</version.org.glassfish.gmbal>
-        <version.org.glassfish.pfl.pfl-tf>3.2.0-b001</version.org.glassfish.pfl.pfl-tf>
         <version.org.hibernate.commons.annotations>4.0.1.Final</version.org.hibernate.commons.annotations>
         <version.org.hibernate.javax.persistence.hibernate-jpa-2.0-api>1.0.1.Final</version.org.hibernate.javax.persistence.hibernate-jpa-2.0-api>
         <version.org.hibernate.validator>4.2.0.Final</version.org.hibernate.validator>
@@ -160,6 +156,7 @@
         <version.org.jboss.as.console>1.4.0.Final</version.org.jboss.as.console>
         <version.org.jboss.as.jbossweb-native>2.0.10.Final</version.org.jboss.as.jbossweb-native>
         <version.org.jboss.byteman>2.0.1</version.org.jboss.byteman>
+        <version.org.jboss.corba>1.0.0.Alpha1-SNAPSHOT</version.org.jboss.corba>
         <version.org.jboss.classfilewriter>1.0.3.Final</version.org.jboss.classfilewriter>
         <version.org.jboss.common.jboss-common-beans>1.1.0.Final</version.org.jboss.common.jboss-common-beans>
         <version.org.jboss.jboss-common-core>2.2.17.GA</version.org.jboss.jboss-common-core>
@@ -3366,36 +3363,6 @@
             </dependency>
 
             <dependency>
-                <groupId>org.glassfish.corba</groupId>
-                <artifactId>glassfish-corba-orb</artifactId>
-                <version>${version.org.glassfish.corba.glassfish-corba-orb}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.glassfish.gmbal</groupId>
-                        <artifactId>gmbal</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-
-            <dependency>
-                <groupId>org.glassfish.gmbal</groupId>
-                <artifactId>gmbal</artifactId>
-                <version>${version.org.glassfish.gmbal}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.glassfish.external</groupId>
-                        <artifactId>management-api</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-
-            <dependency>
-                <groupId>org.glassfish.pfl</groupId>
-                <artifactId>pfl-tf</artifactId>
-                <version>${version.org.glassfish.pfl.pfl-tf}</version>
-            </dependency>
-
-            <dependency>
                 <groupId>org.hibernate</groupId>
                 <artifactId>hibernate-core</artifactId>
                 <version>${version.org.hibernate}</version>
@@ -3902,6 +3869,18 @@
                 <groupId>org.jboss.classfilewriter</groupId>
                 <artifactId>jboss-classfilewriter</artifactId>
                 <version>${version.org.jboss.classfilewriter}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jboss.corba</groupId>
+                <artifactId>jboss-corba-api</artifactId>
+                <version>${version.org.jboss.corba}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jboss.corba</groupId>
+                <artifactId>jboss-corba-openjdk-orb</artifactId>
+                <version>${version.org.jboss.corba}</version>
             </dependency>
 
             <dependency>

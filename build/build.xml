@@ -703,17 +703,6 @@
             <maven-resource group="org.codehaus.jettison" artifact="jettison" />
         </module-def>
 
-        <module-def name="org.glassfish.corba-orb">
-            <maven-resource group="org.glassfish.corba" artifact="glassfish-corba-orb" />
-            <maven-resource group="org.glassfish.corba" artifact="glassfish-corba-internal-api" />
-            <maven-resource group="org.glassfish.pfl" artifact="pfl-basic" />
-            <maven-resource group="org.glassfish.pfl" artifact="pfl-dynamic" />
-            <maven-resource group="org.glassfish.pfl" artifact="pfl-tf" />
-            <maven-resource group="org.glassfish.pfl" artifact="pfl-asm" />
-            <maven-resource group="org.glassfish.gmbal" artifact="gmbal" />
-            <maven-resource group="org.glassfish.external" artifact="management-api" />
-        </module-def>
-
         <module-def name="org.hibernate">
             <maven-resource group="org.hibernate" artifact="hibernate-core" />
             <maven-resource group="org.hibernate" artifact="hibernate-entitymanager" />
@@ -761,7 +750,7 @@
         </module-def>
 
         <module-def name="org.jacorb">
-            <maven-resource group="org.jacorb" artifact="jacorb"/>
+            <maven-resource group="org.jacorb" artifact="jacorb" exclude="org/omg/**" />
         </module-def>
 
         <module-def name="org.javassist">
@@ -1039,6 +1028,10 @@
             <maven-resource group="org.jboss.classfilewriter" artifact="jboss-classfilewriter"/>
         </module-def>
 
+        <module-def name="org.jboss.corba">
+            <maven-resource group="org.jboss.corba" artifact="jboss-corba-openjdk-orb"/>
+        </module-def>
+
         <module-def name="org.jboss.ejb-client">
             <maven-resource group="org.jboss" artifact="jboss-ejb-client"/>
         </module-def>
@@ -1298,7 +1291,7 @@
         </module-def>
 
         <module-def name="org.omg.api" >
-            <maven-resource group="org.glassfish.corba" artifact="glassfish-corba-omgapi" />
+            <maven-resource group="org.jboss.corba" artifact="jboss-corba-api" />
         </module-def>
 
         <module-def name="org.osgi.core">

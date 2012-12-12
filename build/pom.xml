@@ -674,35 +674,6 @@
                 </dependency>
 
                 <dependency>
-                    <groupId>org.glassfish.corba</groupId>
-                    <artifactId>glassfish-corba-orb</artifactId>
-                </dependency>
-
-                <dependency>
-                    <groupId>org.glassfish.gmbal</groupId>
-                    <artifactId>gmbal</artifactId>
-                    <exclusions>
-                        <exclusion>
-                            <groupId>org.glassfish.pfl</groupId>
-                            <artifactId>pfl-asm</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.glassfish.pfl</groupId>
-                            <artifactId>pfl-tf-tools</artifactId>
-                        </exclusion>
-                        <exclusion>
-                            <groupId>org.glassfish.pfl</groupId>
-                            <artifactId>pfl-basic</artifactId>
-                        </exclusion>
-                    </exclusions>
-                </dependency>
-
-                <dependency>
-                    <groupId>org.glassfish.pfl</groupId>
-                    <artifactId>pfl-tf</artifactId>
-                </dependency>
-
-                <dependency>
                     <groupId>org.hibernate</groupId>
                     <artifactId>hibernate-core</artifactId>
                 </dependency>
@@ -1164,6 +1135,16 @@
                 <dependency>
                     <groupId>org.jboss.classfilewriter</groupId>
                     <artifactId>jboss-classfilewriter</artifactId>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.jboss.corba</groupId>
+                    <artifactId>jboss-corba-api</artifactId>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.jboss.corba</groupId>
+                    <artifactId>jboss-corba-openjdk-orb</artifactId>
                 </dependency>
 
                 <dependency>
