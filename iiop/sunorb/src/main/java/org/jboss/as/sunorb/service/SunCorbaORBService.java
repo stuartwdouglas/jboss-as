@@ -103,6 +103,11 @@ public class SunCorbaORBService implements Service<ORB>, OrbService {
                 InetSocketAddress address = this.sunORBSocketBindingInjector.getValue().getSocketAddress();
                 properties.setProperty(ORBConstants.SERVER_HOST_PROPERTY, address.getAddress().getHostAddress());
                 properties.setProperty(ORBConstants.SERVER_PORT_PROPERTY, String.valueOf(address.getPort()));
+                properties.setProperty(ORBConstants.INITIAL_HOST_PROPERTY, address.getAddress().getHostAddress());
+                properties.setProperty(ORBConstants.INITIAL_PORT_PROPERTY, String.valueOf(address.getPort()));
+                properties.setProperty(ORBConstants.PERSISTENT_NAME_SERVICE_NAME, address.getAddress().getHostAddress());
+                properties.setProperty(ORBConstants.PERSISTENT_SERVER_PORT_PROPERTY, String.valueOf(address.getPort()));
+                properties.setProperty(ORBConstants.ORB_SERVER_ID_PROPERTY, "1"); //fixme
             }
             if (this.sunORBSSLSocketBindingInjector.getValue() != null) {
                 InetSocketAddress address = this.sunORBSSLSocketBindingInjector.getValue().getSocketAddress();
@@ -110,6 +115,7 @@ public class SunCorbaORBService implements Service<ORB>, OrbService {
                 //properties.setProperty(SunORBSubsystemConstants.ORB_SSL_PORT, String.valueOf(address.getPort()));
                 if (!properties.containsKey(ORBConstants.SERVER_HOST_PROPERTY)) {
                     properties.setProperty(ORBConstants.SERVER_HOST_PROPERTY, address.getAddress().getHostAddress());
+                    properties.setProperty(ORBConstants.INITIAL_HOST_PROPERTY, address.getAddress().getHostAddress());
                 }
             }
 

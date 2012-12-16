@@ -91,7 +91,7 @@ public class CorbaPOAService implements Service<POA> {
      *                    won't be performed.
      */
     public CorbaPOAService(String poaName, String bindingName) {
-        this(poaName, bindingName, null, null, null, LifespanPolicyValue.TRANSIENT, null, null, null);
+        this(poaName, bindingName, null, null, null, LifespanPolicyValue.PERSISTENT, null, null, null);
     }
 
     /**

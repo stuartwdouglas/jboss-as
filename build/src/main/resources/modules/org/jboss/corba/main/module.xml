@@ -35,6 +35,12 @@
         <module name="org.omg.api"/>
         <module name="javax.transaction.api"/>
         <module name="javax.rmi.api"/>
+
+        <system>
+            <paths>
+                <path name="sun/misc"/>
+            </paths>
+        </system>
         <!-- <module name="stax.stax-api"/> -->
     </dependencies>
 </module>

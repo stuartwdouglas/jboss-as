@@ -48,6 +48,7 @@ import javax.naming.RefAddr;
 import javax.naming.Reference;
 import javax.naming.spi.NamingManager;
 import javax.naming.spi.ResolveResult;
+import javax.rmi.PortableRemoteObject;
 
 import org.jboss.as.iiop.IIOPLogger;
 import org.jboss.as.iiop.IIOPMessages;
@@ -358,7 +359,7 @@ public class CNCtx implements javax.naming.Context {
             } else {
                 ncRef = _orb.resolve_initial_references("NameService");
             }
-            _nc = NamingContextHelper.narrow(ncRef);
+            _nc = (NamingContext)PortableRemoteObject.narrow(ncRef, NamingContext.class);
             if (_nc == null) {
                 if (ncIor != null) {
                     throw IIOPMessages.MESSAGES.errorConvertingIORToNamingCtx(ncIor);

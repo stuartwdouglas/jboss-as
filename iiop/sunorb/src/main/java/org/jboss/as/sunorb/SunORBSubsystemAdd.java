@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 
+import com.sun.corba.se.impl.javax.rmi.CORBA.Util;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
@@ -101,6 +102,7 @@ public class SunORBSubsystemAdd extends AbstractAddStepHandler {
                                   ServiceVerificationHandler verificationHandler,
                                   List<ServiceController<?>> newControllers) throws OperationFailedException {
 
+        System.setProperty("javax.rmi.CORBA.UtilClass", Util.class.getName());
         SunORBLogger.ROOT_LOGGER.activatingSubsystem();
 
         // set the ORBUseDynamicStub system property.
@@ -166,7 +168,7 @@ public class SunORBSubsystemAdd extends AbstractAddStepHandler {
 
         // create the service the initializes the interface repository POA.
         final CorbaPOAService irPOAService = new CorbaPOAService("IRPOA", "irpoa", IdAssignmentPolicyValue.USER_ID,
-                null, null, LifespanPolicyValue.TRANSIENT, null, null, null);
+                null, null, LifespanPolicyValue.PERSISTENT, null, null, null);
         newControllers.add(context.getServiceTarget().addService(IIOPServiceNames.INTERFACE_REPOSITORY_SERVICE_NAME, irPOAService).
                 addDependency(IIOPServiceNames.ROOT_SERVICE_NAME, POA.class,
                         irPOAService.getParentPOAInjector()).
@@ -175,7 +177,7 @@ public class SunORBSubsystemAdd extends AbstractAddStepHandler {
 
         // create the service that initializes the naming service POA.
         final CorbaPOAService namingPOAService = new CorbaPOAService("Naming", null, IdAssignmentPolicyValue.USER_ID,
-                null, null, LifespanPolicyValue.TRANSIENT, null, null, null);
+                null, null, LifespanPolicyValue.PERSISTENT, null, null, null);
         newControllers.add(context.getServiceTarget().addService(IIOPServiceNames.POA_SERVICE_NAME.append("namingpoa"), namingPOAService).
                 addDependency(IIOPServiceNames.ROOT_SERVICE_NAME, POA.class,
                         namingPOAService.getParentPOAInjector()).
