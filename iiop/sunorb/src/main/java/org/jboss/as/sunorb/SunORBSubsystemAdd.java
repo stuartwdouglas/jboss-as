@@ -166,7 +166,7 @@ public class SunORBSubsystemAdd extends AbstractAddStepHandler {
 
         // create the service the initializes the interface repository POA.
         final CorbaPOAService irPOAService = new CorbaPOAService("IRPOA", "irpoa", IdAssignmentPolicyValue.USER_ID,
-                null, null, LifespanPolicyValue.PERSISTENT, null, null, null);
+                null, null, LifespanPolicyValue.TRANSIENT, null, null, null);
         newControllers.add(context.getServiceTarget().addService(IIOPServiceNames.INTERFACE_REPOSITORY_SERVICE_NAME, irPOAService).
                 addDependency(IIOPServiceNames.ROOT_SERVICE_NAME, POA.class,
                         irPOAService.getParentPOAInjector()).
@@ -175,7 +175,7 @@ public class SunORBSubsystemAdd extends AbstractAddStepHandler {
 
         // create the service that initializes the naming service POA.
         final CorbaPOAService namingPOAService = new CorbaPOAService("Naming", null, IdAssignmentPolicyValue.USER_ID,
-                null, null, LifespanPolicyValue.PERSISTENT, null, null, null);
+                null, null, LifespanPolicyValue.TRANSIENT, null, null, null);
         newControllers.add(context.getServiceTarget().addService(IIOPServiceNames.POA_SERVICE_NAME.append("namingpoa"), namingPOAService).
                 addDependency(IIOPServiceNames.ROOT_SERVICE_NAME, POA.class,
                         namingPOAService.getParentPOAInjector()).

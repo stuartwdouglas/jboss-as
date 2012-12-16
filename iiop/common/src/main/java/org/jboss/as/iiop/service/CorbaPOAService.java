@@ -91,7 +91,7 @@ public class CorbaPOAService implements Service<POA> {
      *                    won't be performed.
      */
     public CorbaPOAService(String poaName, String bindingName) {
-        this(poaName, bindingName, null, null, null, null, null, null, null);
+        this(poaName, bindingName, null, null, null, LifespanPolicyValue.TRANSIENT, null, null, null);
     }
 
     /**
@@ -221,6 +221,8 @@ public class CorbaPOAService implements Service<POA> {
             policies.add(poa.create_servant_retention_policy(this.servantRetentionPolicyValue));
         if (this.threadPolicyValue != null)
             policies.add(poa.create_thread_policy(this.threadPolicyValue));
+
+
 
         return policies.toArray(new Policy[policies.size()]);
     }

@@ -29,6 +29,7 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.jacorb.naming.Name;
 import org.jboss.as.iiop.IIOPLogger;
 import org.omg.CORBA.INTERNAL;
 import org.omg.CORBA.ORB;
