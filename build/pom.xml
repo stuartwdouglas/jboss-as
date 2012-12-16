@@ -1144,6 +1144,11 @@
 
                 <dependency>
                     <groupId>org.jboss.corba</groupId>
+                    <artifactId>jboss-corba-ext-api</artifactId>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.jboss.corba</groupId>
                     <artifactId>jboss-corba-openjdk-orb</artifactId>
                 </dependency>
 

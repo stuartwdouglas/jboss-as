@@ -1292,6 +1292,7 @@
 
         <module-def name="org.omg.api" >
             <maven-resource group="org.jboss.corba" artifact="jboss-corba-api" />
+            <maven-resource group="org.jboss.corba" artifact="jboss-corba-ext-api" />
         </module-def>
 
         <module-def name="org.osgi.core">
