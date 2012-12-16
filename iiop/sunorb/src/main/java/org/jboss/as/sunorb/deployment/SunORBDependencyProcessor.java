@@ -38,7 +38,7 @@ import org.jboss.modules.ModuleLoader;
 public class SunORBDependencyProcessor implements DeploymentUnitProcessor {
     public static ModuleIdentifier CORBA_ID = ModuleIdentifier.create("org.omg.api");
     public static ModuleIdentifier JAVAX_RMI_API_ID = ModuleIdentifier.create("javax.rmi.api");
-    public static ModuleIdentifier SUN_ORB_ID = ModuleIdentifier.create("com.sun.sunorb");
+    public static ModuleIdentifier SUN_ORB_ID = ModuleIdentifier.create("org.jboss.corba");
 
 
     @Override
