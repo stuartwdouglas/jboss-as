@@ -41,12 +41,14 @@ import org.jboss.as.iiop.rmi.DelegatingStubFactoryFactory;
 import org.jboss.as.iiop.service.CorbaNamingService;
 import org.jboss.as.iiop.service.CorbaPOAService;
 import org.jboss.as.naming.InitialContext;
+import org.jboss.as.naming.service.NamingService;
 import org.jboss.as.network.SocketBinding;
 import org.jboss.as.server.AbstractDeploymentChainStep;
 import org.jboss.as.server.DeploymentProcessorTarget;
 import org.jboss.as.server.deployment.Phase;
 import org.jboss.as.sunorb.deployment.SunORBDependencyProcessor;
 import org.jboss.as.sunorb.service.SunCorbaORBService;
+import org.jboss.as.sunorb.service.SunORBNamingService;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.Property;
 import org.jboss.msc.service.ServiceBuilder;
@@ -92,9 +94,9 @@ public class SunORBSubsystemAdd extends AbstractAddStepHandler {
             attrDefinition.validateAndSet(operation, model);
         }
         // if generic properties have been specified, add them to the model as well.
-       /* String properties = JacORBSubsystemConstants.PROPERTIES;
-        if (operation.hasDefined(properties))
-            model.get(properties).set(operation.get(properties));*/
+        /* String properties = JacORBSubsystemConstants.PROPERTIES;
+    if (operation.hasDefined(properties))
+        model.get(properties).set(operation.get(properties));*/
     }
 
     @Override
@@ -185,7 +187,7 @@ public class SunORBSubsystemAdd extends AbstractAddStepHandler {
                 setInitialMode(ServiceController.Mode.ACTIVE).install());
 
         // create the CORBA naming service.
-        final CorbaNamingService namingService = new CorbaNamingService();
+        final CorbaNamingService namingService = new SunORBNamingService();
         newControllers.add(context.getServiceTarget().addService(IIOPServiceNames.NAMING_SERVICE_NAME, namingService).
                 addDependency(IIOPServiceNames.ORB_SERVICE_NAME, ORB.class, namingService.getORBInjector()).
                 addDependency(IIOPServiceNames.ROOT_SERVICE_NAME, POA.class,
@@ -205,7 +207,8 @@ public class SunORBSubsystemAdd extends AbstractAddStepHandler {
      *
      * @param model the {@code ModelNode} that contains the subsystem configuration properties.
      * @return a {@code Properties} instance containing all configured subsystem properties.
-     * @throws org.jboss.as.controller.OperationFailedException if an error occurs while resolving the properties.
+     * @throws org.jboss.as.controller.OperationFailedException
+     *          if an error occurs while resolving the properties.
      */
     private Properties getConfigurationProperties(OperationContext context, ModelNode model) throws OperationFailedException {
         Properties props = new Properties();
@@ -264,7 +267,7 @@ public class SunORBSubsystemAdd extends AbstractAddStepHandler {
         String installTransaction = (String) props.remove(SunORBSubsystemConstants.ORB_INIT_TRANSACTIONS);
         if (installTransaction.equalsIgnoreCase("on")) {
             orbInitializers.addAll(Arrays.asList(ORBInitializer.TRANSACTIONS.getInitializerClasses()));
-        } else if(installTransaction.equalsIgnoreCase("spec")) {
+        } else if (installTransaction.equalsIgnoreCase("spec")) {
             orbInitializers.addAll(Arrays.asList(ORBInitializer.SPEC_TRANSACTIONS.getInitializerClasses()));
         }
 
@@ -281,8 +284,9 @@ public class SunORBSubsystemAdd extends AbstractAddStepHandler {
      * </p>
      *
      * @param props the subsystem configuration properties.
-     * @throws org.jboss.as.controller.OperationFailedException if the SSL setup has not been done correctly (SSL support has been turned on
-     * but no security domain has been specified).
+     * @throws org.jboss.as.controller.OperationFailedException
+     *          if the SSL setup has not been done correctly (SSL support has been turned on
+     *          but no security domain has been specified).
      */
     private void setupSSLFactories(final Properties props) throws OperationFailedException {
         String supportSSLKey = PropertiesMap.SUN_ORB_PROPS_MAP.get(SunORBSubsystemConstants.SECURITY_SUPPORT_SSL);

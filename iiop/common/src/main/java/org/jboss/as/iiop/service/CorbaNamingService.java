@@ -45,13 +45,13 @@ import org.omg.PortableServer.POA;
  */
 public class CorbaNamingService implements Service<NamingContextExt> {
 
-    private final InjectedValue<POA> rootPOAInjector = new InjectedValue<POA>();
+    protected final InjectedValue<POA> rootPOAInjector = new InjectedValue<POA>();
 
-    private final InjectedValue<POA> namingPOAInjector = new InjectedValue<POA>();
+    protected final InjectedValue<POA> namingPOAInjector = new InjectedValue<POA>();
 
-    private final InjectedValue<ORB> orbInjector = new InjectedValue<ORB>();
+    protected final InjectedValue<ORB> orbInjector = new InjectedValue<ORB>();
 
-    private volatile NamingContextExt namingService;
+    protected volatile NamingContextExt namingService;
 
     @Override
     public void start(StartContext context) throws StartException {
