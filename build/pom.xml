@@ -992,6 +992,11 @@
 
                 <dependency>
                     <groupId>org.jboss.as</groupId>
+                    <artifactId>jboss-as-iiop-common</artifactId>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.jboss.as</groupId>
                     <artifactId>jboss-as-jacorb</artifactId>
                 </dependency>
 
@@ -1117,6 +1122,11 @@
 
                 <dependency>
                     <groupId>org.jboss.as</groupId>
+                    <artifactId>jboss-as-jdkorb</artifactId>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.jboss.as</groupId>
                     <artifactId>jboss-as-threads</artifactId>
                 </dependency>
 
@@ -1163,6 +1173,26 @@
                 <dependency>
                     <groupId>org.jboss.classfilewriter</groupId>
                     <artifactId>jboss-classfilewriter</artifactId>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.jboss.corba</groupId>
+                    <artifactId>jboss-corba-api</artifactId>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.jboss.corba</groupId>
+                    <artifactId>jboss-corba-ext-api</artifactId>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.jboss.corba</groupId>
+                    <artifactId>jboss-corba-openjdk-orb</artifactId>
+                </dependency>
+
+                <dependency>
+                    <groupId>org.jboss.corba</groupId>
+                    <artifactId>jboss-rmi-api</artifactId>
                 </dependency>
 
                 <dependency>
@@ -1575,11 +1605,6 @@
                 </dependency>
 
                 <dependency>
-                    <groupId>org.jboss.spec.javax.rmi</groupId>
-                    <artifactId>jboss-rmi-api_1.0_spec</artifactId>
-                </dependency>
-
-                <dependency>
                     <groupId>org.jboss.spec.javax.security.auth.message</groupId>
                     <artifactId>jboss-jaspi-api_1.0_spec</artifactId>
                 </dependency>
@@ -1927,7 +1952,7 @@
                                 </configuration>
                             </execution>
                         </executions>
-                        
+
                     </plugin>
                 </plugins>
             </build>
@@ -2020,6 +2045,12 @@
                                         <include>org.jboss.resteasy:resteasy-jsapi</include>
                                         <include>org.jboss.resteasy:resteasy-multipart-provider</include>
                                         <include>org.jboss.sasl:jboss-sasl</include>
+
+                                        <include>org.jboss.corba:jboss-corba-api</include>
+                                        <include>org.jboss.corba:jboss-corba-ext-api</include>
+                                        <include>org.jboss.corba:jboss-corba-openjdk-orb</include>
+                                        <include>org.jboss.corba:jboss-rmi-api</include>
+
                                         <include>org.jboss.spec.javax.annotation:jboss-annotations-api_1.2_spec</include>
                                         <include>org.jboss.spec.javax.ejb:jboss-ejb-api_3.2_spec</include>
                                         <include>org.jboss.spec.javax.el:jboss-el-api_2.2_spec</include>
@@ -2028,7 +2059,6 @@
                                         <include>org.jboss.spec.javax.jms:jboss-jms-api_1.1_spec</include>
                                         <include>org.jboss.spec.javax.management.j2ee:jboss-j2eemgmt-api_1.1_spec</include>
                                         <include>org.jboss.spec.javax.resource:jboss-connector-api_1.6_spec</include>
-                                        <include>org.jboss.spec.javax.rmi:jboss-rmi-api_1.0_spec</include>
                                         <include>org.jboss.spec.javax.security.auth.message:jboss-jaspi-api_1.0_spec</include>
                                         <include>org.jboss.spec.javax.security.jacc:jboss-jacc-api_1.4_spec</include>
                                         <include>org.jboss.spec.javax.servlet:jboss-servlet-api_3.0_spec</include>
@@ -2298,7 +2328,7 @@
                                         <exclude>org.picketbox:picketbox-commons</exclude>
                                         <exclude>xalan:serializer</exclude>
                                     </dependencySourceExcludes>
-                                    
+
                                     <groups>
                                         <group>
                                             <title>Module io.undertow</title>
@@ -2878,7 +2908,7 @@
                                         </group>
                                         <group>
                                             <title>Module org.jboss.as.jacorb</title>
-                                            <packages>org.jboss.as.jacorb:org.jboss.as.jacorb.csiv2:org.jboss.as.jacorb.csiv2.idl:org.jboss.as.jacorb.deployment:org.jboss.as.jacorb.naming:org.jboss.as.jacorb.naming.jndi:org.jboss.as.jacorb.rmi:org.jboss.as.jacorb.rmi.ir:org.jboss.as.jacorb.rmi.marshal:org.jboss.as.jacorb.rmi.marshal.strategy:org.jboss.as.jacorb.security:org.jboss.as.jacorb.service:org.jboss.as.jacorb.tm</packages>
+                                            <packages>org.jboss.as.jacorb:org.jboss.as.jacorb.csiv2:org.jboss.as.iiop.csiv2.idl:org.jboss.as.jacorb.deployment:org.jboss.as.jacorb.naming:org.jboss.as.jacorb.naming.jndi:org.jboss.as.jacorb.rmi:org.jboss.as.iiop.rmi.ir:org.jboss.as.iiop.rmi.marshal:org.jboss.as.iiop.rmi.marshal.strategy:org.jboss.as.jacorb.security:org.jboss.as.jacorb.service:org.jboss.as.iiop.tm</packages>
                                         </group>
                                         <group>
                                             <title>Module org.jboss.as.jaxrs</title>

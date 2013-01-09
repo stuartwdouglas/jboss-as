@@ -158,6 +158,7 @@
         <version.org.jboss.as.console>1.5.2.Final</version.org.jboss.as.console>
         <version.org.jboss.as.jbossweb-native>2.0.10.Final</version.org.jboss.as.jbossweb-native>
         <version.org.jboss.byteman>2.0.1</version.org.jboss.byteman>
+        <version.org.jboss.corba>1.0.0.Alpha1-SNAPSHOT</version.org.jboss.corba>
         <version.org.jboss.classfilewriter>1.0.4.Final</version.org.jboss.classfilewriter>
         <version.org.jboss.common.jboss-common-beans>1.1.0.Final</version.org.jboss.common.jboss-common-beans>
         <version.org.jboss.jboss-common-core>2.2.17.GA</version.org.jboss.jboss-common-core>
@@ -185,6 +186,7 @@
         <version.org.jboss.mod_cluster>1.2.3.Final</version.org.jboss.mod_cluster>
         <version.org.jboss.modules.jboss-modules>1.2.0.CR2</version.org.jboss.modules.jboss-modules>
         <version.org.jboss.msc.jboss-msc>1.1.1.Final</version.org.jboss.msc.jboss-msc>
+        <version.org.jboss.openjdk-orb>7.4.0</version.org.jboss.openjdk-orb>
         <version.org.jboss.osgi.deployment>2.0.0.CR2</version.org.jboss.osgi.deployment>
         <version.org.jboss.osgi.framework>3.0.0.CR9</version.org.jboss.osgi.framework>
         <version.org.jboss.osgi.logging>1.0.0.Final</version.org.jboss.osgi.logging>
@@ -1055,6 +1057,12 @@
 
             <dependency>
                 <groupId>org.jboss.as</groupId>
+                <artifactId>jboss-as-iiop-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jboss.as</groupId>
                 <artifactId>jboss-as-jacorb</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1291,6 +1299,12 @@
 
             <dependency>
                 <groupId>org.jboss.as</groupId>
+                <artifactId>jboss-as-jdkorb</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jboss.as</groupId>
                 <artifactId>jboss-as-threads</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1472,6 +1486,12 @@
                         <artifactId>ant</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jboss.openjdk-orb</groupId>
+                <artifactId>openjdk-orb</artifactId>
+                <version>${version.org.jboss.openjdk-orb}</version>
             </dependency>
 
             <dependency>
@@ -3960,6 +3980,30 @@
             </dependency>
 
             <dependency>
+                <groupId>org.jboss.corba</groupId>
+                <artifactId>jboss-corba-api</artifactId>
+                <version>${version.org.jboss.corba}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jboss.corba</groupId>
+                <artifactId>jboss-corba-ext-api</artifactId>
+                <version>${version.org.jboss.corba}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jboss.corba</groupId>
+                <artifactId>jboss-corba-openjdk-orb</artifactId>
+                <version>${version.org.jboss.corba}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.jboss.corba</groupId>
+                <artifactId>jboss-rmi-api</artifactId>
+                <version>${version.org.jboss.corba}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>org.jboss.com.sun.httpserver</groupId>
                 <artifactId>httpserver</artifactId>
                 <version>${version.org.jboss.com.sun.httpserver}</version>
@@ -4958,6 +5002,7 @@
                 <groupId>org.jboss.spec.javax.rmi</groupId>
                 <artifactId>jboss-rmi-api_1.0_spec</artifactId>
                 <version>${version.org.jboss.spec.javax.rmi.jboss-rmi-api_1.0_spec}</version>
+                <scope>test</scope>
             </dependency>
 
             <dependency>
@@ -6056,7 +6101,9 @@
                 <module>ee</module>
                 <module>ejb3</module>
                 <module>host-controller</module>
-                <module>jacorb</module>
+                <module>iiop/common</module>
+                <module>iiop/jacorb</module>
+                <module>iiop/jdkorb</module>
                 <module>jaxrs</module>
                 <module>jdr</module>
                 <module>jpa</module>

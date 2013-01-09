@@ -26,7 +26,7 @@ import javax.rmi.CORBA.Util;
 import java.security.PrivilegedAction;
 import org.jboss.as.ejb3.EjbLogger;
 import org.jboss.as.ejb3.iiop.LocalIIOPInvoker;
-import org.jboss.as.jacorb.rmi.marshal.strategy.StubStrategy;
+import org.jboss.as.iiop.rmi.marshal.strategy.StubStrategy;
 import org.jboss.ejb.iiop.HandleImplIIOP;
 import org.jboss.ejb.iiop.HomeHandleImplIIOP;
 import org.omg.CORBA.BAD_OPERATION;
@@ -96,8 +96,9 @@ public abstract class DynamicIIOPStub
                 handle = new HomeHandleImplIIOP(this);
             }
             return handle;
-        } else if (!_is_local()) {
+        } else if (!_is_local() || true) {
             // remote call path
+            //TODO: at the moment we can only handle the remote call path correctly
 
             // To check whether this is a local stub or not we must call
             // org.omg.CORBA.portable.ObjectImpl._is_local(), and _not_

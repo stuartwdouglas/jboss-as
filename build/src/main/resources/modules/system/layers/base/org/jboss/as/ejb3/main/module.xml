@@ -42,7 +42,6 @@
         <module name="javax.resource.api"/>
         <module name="javax.rmi.api"/>
         <module name="org.hibernate"/>
-        <module name="org.jacorb"/>
         <module name="org.jboss.as.clustering.api"/>
         <module name="org.jboss.as.clustering.ejb3.infinispan" services="import" optional="true"/>
         <module name="org.jboss.as.clustering.infinispan"/>
@@ -55,7 +54,7 @@
          in EJB client context-->
         <module name="org.jboss.as.domain-management"/>
         <module name="org.jboss.as.ee"/>
-        <module name="org.jboss.as.jacorb"/>
+        <module name="org.jboss.as.iiop.common"/>
         <module name="org.jboss.as.naming"/>
         <module name="org.jboss.as.network"/>
         <module name="org.jboss.as.remoting"/>
@@ -67,6 +66,7 @@
         <module name="org.jboss.classfilewriter"/>
         <module name="org.jboss.threads"/>
         <module name="org.jboss.jboss-transaction-spi"/>
+        <module name="org.jboss.corba"/>
         <module name="org.jboss.common-core"/>
         <module name="org.jboss.ejb-client"/>
         <module name="org.jboss.ejb3"/>
