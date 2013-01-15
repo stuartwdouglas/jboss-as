@@ -71,12 +71,12 @@ public class WebDefinition extends SimpleResourceDefinition {
                     .build();
 
     protected static final SimpleAttributeDefinition SYMLINKING_ENABLED =
-                new SimpleAttributeDefinitionBuilder(Constants.SYMLINKING_ENABLED, ModelType.BOOLEAN, true)
-                            .setAllowExpression(true)
-                            .setXmlName(Constants.SYMLINKING_ENABLED)
-                            .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
-                            .setDefaultValue(new ModelNode(true))
-                            .build();
+            new SimpleAttributeDefinitionBuilder(Constants.SYMLINKING_ENABLED, ModelType.BOOLEAN, true)
+                    .setAllowExpression(false)
+                    .setXmlName(Constants.SYMLINKING_ENABLED)
+                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setDefaultValue(new ModelNode(true))
+                    .build();
 
     private WebDefinition() {
         super(PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM, WebExtension.SUBSYSTEM_NAME),
