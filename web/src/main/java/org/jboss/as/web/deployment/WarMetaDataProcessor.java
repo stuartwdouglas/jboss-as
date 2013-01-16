@@ -22,8 +22,6 @@
 
 package org.jboss.as.web.deployment;
 
-import static org.jboss.as.web.WebMessages.MESSAGES;
-
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,6 +64,8 @@ import org.jboss.metadata.web.spec.WebFragmentMetaData;
 import org.jboss.metadata.web.spec.WebMetaData;
 import org.jboss.vfs.VirtualFile;
 
+import static org.jboss.as.web.WebMessages.MESSAGES;
+
 /**
  * Merge all metadata into a main JBossWebMetaData.
  *
@@ -73,6 +73,8 @@ import org.jboss.vfs.VirtualFile;
  * @author Thomas.Diesler@jboss.com
  */
 public class WarMetaDataProcessor implements DeploymentUnitProcessor {
+
+    private volatile boolean symbolicEnabled;
 
     @Override
     public void deploy(DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
@@ -363,6 +365,10 @@ public class WarMetaDataProcessor implements DeploymentUnitProcessor {
                     SecurityRolesMetaDataMerger.merge(mergedMetaData.getSecurityRoles(), mergedMetaData.getSecurityRoles(), earSecurityRolesMetaData);
                 }
             }
+        }
+
+        if(symbolicEnabled) {
+            mergedMetaData.setSymbolicLinking(true);
         }
     }
 
@@ -714,4 +720,11 @@ public class WarMetaDataProcessor implements DeploymentUnitProcessor {
 
     }
 
+    public boolean isSymbolicEnabled() {
+        return symbolicEnabled;
+    }
+
+    public void setSymbolicEnabled(final boolean symbolicEnabled) {
+        this.symbolicEnabled = symbolicEnabled;
+    }
 }

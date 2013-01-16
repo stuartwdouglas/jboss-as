@@ -22,9 +22,6 @@
 
 package org.jboss.as.web;
 
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.REMOVE;
-
 import java.util.EnumSet;
 
 import org.jboss.as.controller.PathElement;
@@ -41,8 +38,12 @@ import org.jboss.as.controller.descriptions.ResourceDescriptionResolver;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.OperationEntry;
+import org.jboss.as.web.deployment.WarMetaDataProcessor;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
+
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.REMOVE;
 
 /**
  * @author Tomaz Cerar
@@ -74,9 +75,11 @@ public class WebDefinition extends SimpleResourceDefinition {
             new SimpleAttributeDefinitionBuilder(Constants.SYMLINKING_ENABLED, ModelType.BOOLEAN, true)
                     .setAllowExpression(false)
                     .setXmlName(Constants.SYMLINKING_ENABLED)
-                    .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+                    .setFlags(AttributeAccess.Flag.RESTART_NONE)
                     .setDefaultValue(new ModelNode(true))
                     .build();
+
+    private final WarMetaDataProcessor warMetaDataProcessor = new WarMetaDataProcessor();
 
     private WebDefinition() {
         super(PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM, WebExtension.SUBSYSTEM_NAME),
@@ -88,7 +91,7 @@ public class WebDefinition extends SimpleResourceDefinition {
         final ResourceDescriptionResolver rootResolver = getResourceDescriptionResolver();
         // Ops to add and remove the root resource
         final DescriptionProvider subsystemAddDescription = new DefaultResourceAddDescriptionProvider(rootResourceRegistration, rootResolver);
-        rootResourceRegistration.registerOperationHandler(ADD, WebSubsystemAdd.INSTANCE, subsystemAddDescription, EnumSet.of(OperationEntry.Flag.RESTART_ALL_SERVICES));
+        rootResourceRegistration.registerOperationHandler(ADD, new  WebSubsystemAdd(warMetaDataProcessor), subsystemAddDescription, EnumSet.of(OperationEntry.Flag.RESTART_ALL_SERVICES));
         final DescriptionProvider subsystemRemoveDescription = new DefaultResourceRemoveDescriptionProvider(rootResolver);
         rootResourceRegistration.registerOperationHandler(REMOVE, ReloadRequiredRemoveStepHandler.INSTANCE, subsystemRemoveDescription, EnumSet.of(OperationEntry.Flag.RESTART_ALL_SERVICES));
     }
@@ -98,6 +101,6 @@ public class WebDefinition extends SimpleResourceDefinition {
         registration.registerReadWriteAttribute(DEFAULT_VIRTUAL_SERVER, null, new ReloadRequiredWriteAttributeHandler(DEFAULT_VIRTUAL_SERVER));
         registration.registerReadWriteAttribute(NATIVE, null, new ReloadRequiredWriteAttributeHandler(NATIVE));
         registration.registerReadWriteAttribute(INSTANCE_ID, null, new ReloadRequiredWriteAttributeHandler(INSTANCE_ID));
-        registration.registerReadWriteAttribute(SYMLINKING_ENABLED, null, new ReloadRequiredWriteAttributeHandler(SYMLINKING_ENABLED));
+        registration.registerReadWriteAttribute(SYMLINKING_ENABLED, null, new SymlinkEnabledWriteAttributeHandler(warMetaDataProcessor));
     }
 }

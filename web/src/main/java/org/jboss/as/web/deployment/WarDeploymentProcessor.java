@@ -99,26 +99,24 @@ public class WarDeploymentProcessor implements DeploymentUnitProcessor {
 
     private final String defaultHost;
     private final WebServerService service;
-    private final boolean symbolicEnabled;
 
 
-    public WarDeploymentProcessor(String defaultHost, WebServerService service, boolean symbolicEnabled) {
+    public WarDeploymentProcessor(String defaultHost, WebServerService service) {
         if (defaultHost == null) {
             throw MESSAGES.nullDefaultHost();
         }
         this.defaultHost = defaultHost;
         this.service = service;
-        this.symbolicEnabled = symbolicEnabled;
     }
 
-    public WarDeploymentProcessor(String defaultHost, boolean symbolicEnabled) {
+    public WarDeploymentProcessor(String defaultHost) {
         if (defaultHost == null) {
             throw MESSAGES.nullDefaultHost();
         }
         this.defaultHost = defaultHost;
         this.service = null;
-        this.symbolicEnabled = symbolicEnabled;
     }
+
     @Override
     public void deploy(final DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
         final DeploymentUnit deploymentUnit = phaseContext.getDeploymentUnit();
@@ -215,7 +213,7 @@ public class WarDeploymentProcessor implements DeploymentUnitProcessor {
 
         // AS7-3414:
         // Pass the boolean on whether or not symbolic linking is enabled to the StandardContext.
-        if (symbolicEnabled || metaData.getSymbolicLinking()) {
+        if (metaData.getSymbolicLinking()) {
             webContext.setAllowLinking(true);
         }
 

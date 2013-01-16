@@ -22,6 +22,10 @@
 
 package org.jboss.as.web;
 
+import java.util.List;
+
+import javax.management.MBeanServer;
+
 import org.jboss.as.clustering.web.DistributedCacheManagerFactory;
 import org.jboss.as.clustering.web.DistributedCacheManagerFactoryService;
 import org.jboss.as.controller.AbstractBoottimeAddStepHandler;
@@ -62,9 +66,6 @@ import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.service.ServiceTarget;
 import org.jboss.msc.value.InjectedValue;
 
-import javax.management.MBeanServer;
-import java.util.List;
-
 /**
  * Adds the web subsystem.
  *
@@ -74,11 +75,12 @@ import java.util.List;
  */
 class WebSubsystemAdd extends AbstractBoottimeAddStepHandler {
 
-    static final WebSubsystemAdd INSTANCE = new WebSubsystemAdd();
     private static final String TEMP_DIR = "jboss.server.temp.dir";
 
-    private WebSubsystemAdd() {
-        //
+    private final WarMetaDataProcessor warMetadataProcessor;
+
+    WebSubsystemAdd(final WarMetaDataProcessor warMetadataProcessor) {
+        this.warMetadataProcessor = warMetadataProcessor;
     }
 
 
@@ -99,9 +101,12 @@ class WebSubsystemAdd extends AbstractBoottimeAddStepHandler {
         final String defaultVirtualServer = WebDefinition.DEFAULT_VIRTUAL_SERVER.resolveModelAttribute(context, fullModel).asString();
 
         final boolean useNative = WebDefinition.NATIVE.resolveModelAttribute(context, fullModel).asBoolean();
-        final boolean symbolicEnabled = WebDefinition.SYMLINKING_ENABLED.resolveModelAttribute(context, fullModel).asBoolean();
         final ModelNode instanceIdModel = WebDefinition.INSTANCE_ID.resolveModelAttribute(context, fullModel);
         final String instanceId = instanceIdModel.isDefined() ? instanceIdModel.asString() : null;
+
+
+        final boolean symbolicEnabled = WebDefinition.SYMLINKING_ENABLED.resolveModelAttribute(context, fullModel).asBoolean();
+        warMetadataProcessor.setSymbolicEnabled(symbolicEnabled);
 
         final WebServerService service = new WebServerService(defaultVirtualServer, useNative, instanceId, TEMP_DIR);
 
@@ -122,14 +127,14 @@ class WebSubsystemAdd extends AbstractBoottimeAddStepHandler {
                 processorTarget.addDeploymentProcessor(WebExtension.SUBSYSTEM_NAME, Phase.PARSE, Phase.PARSE_ANNOTATION_WAR, new WarAnnotationDeploymentProcessor());
                 processorTarget.addDeploymentProcessor(WebExtension.SUBSYSTEM_NAME, Phase.PARSE, Phase.PARSE_WEB_COMPONENTS, new WebComponentProcessor());
                 processorTarget.addDeploymentProcessor(WebExtension.SUBSYSTEM_NAME, Phase.PARSE, Phase.PARSE_EAR_CONTEXT_ROOT, new EarContextRootProcessor());
-                processorTarget.addDeploymentProcessor(WebExtension.SUBSYSTEM_NAME, Phase.PARSE, Phase.PARSE_WEB_MERGE_METADATA, new WarMetaDataProcessor());
+                processorTarget.addDeploymentProcessor(WebExtension.SUBSYSTEM_NAME, Phase.PARSE, Phase.PARSE_WEB_MERGE_METADATA, warMetadataProcessor);
 
                 processorTarget.addDeploymentProcessor(WebExtension.SUBSYSTEM_NAME, Phase.DEPENDENCIES, Phase.DEPENDENCIES_WAR_MODULE, new WarClassloadingDependencyProcessor());
 
                 processorTarget.addDeploymentProcessor(WebExtension.SUBSYSTEM_NAME, Phase.POST_MODULE, Phase.POST_MODULE_EL_EXPRESSION_FACTORY, new ELExpressionFactoryProcessor());
 
                 processorTarget.addDeploymentProcessor(WebExtension.SUBSYSTEM_NAME, Phase.INSTALL, Phase.INSTALL_SERVLET_INIT_DEPLOYMENT, new ServletContainerInitializerDeploymentProcessor());
-                processorTarget.addDeploymentProcessor(WebExtension.SUBSYSTEM_NAME, Phase.INSTALL, Phase.INSTALL_WAR_DEPLOYMENT, new WarDeploymentProcessor(defaultVirtualServer, service, symbolicEnabled));
+                processorTarget.addDeploymentProcessor(WebExtension.SUBSYSTEM_NAME, Phase.INSTALL, Phase.INSTALL_WAR_DEPLOYMENT, new WarDeploymentProcessor(defaultVirtualServer, service));
 
             }
         }, OperationContext.Stage.RUNTIME);
