@@ -6101,9 +6101,7 @@
                 <module>ee</module>
                 <module>ejb3</module>
                 <module>host-controller</module>
-                <module>iiop/common</module>
-                <module>iiop/jacorb</module>
-                <module>iiop/jdkorb</module>
+                <module>iiop</module>
                 <module>jaxrs</module>
                 <module>jdr</module>
                 <module>jpa</module>
