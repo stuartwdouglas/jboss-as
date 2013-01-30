@@ -1,7 +1,8 @@
 <xsl:stylesheet version="2.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 xmlns:t="urn:jboss:domain:transactions:1.3"
-                xmlns:j="urn:jboss:domain:jacorb:1.3">
+                xmlns:j="urn:jboss:domain:jacorb:1.3"
+                xmlns:jdk="urn:jboss:domain:jdkorb:1.0">
 
     <!--
         An XSLT style sheet which will enable JTS,
@@ -20,6 +21,14 @@
             <xsl:attribute name="socket-binding"><xsl:value-of select="@socket-binding"/></xsl:attribute>
             <xsl:attribute name="ssl-socket-binding"><xsl:value-of select="@ssl-socket-binding"/></xsl:attribute>
             <j:initializers transactions="on" security="client"/>
+        </xsl:copy>
+    </xsl:template>
+
+    <xsl:template match="//jdk:subsystem/jdk:orb">
+        <xsl:copy>
+            <xsl:attribute name="socket-binding"><xsl:value-of select="@socket-binding"/></xsl:attribute>
+            <xsl:attribute name="ssl-socket-binding"><xsl:value-of select="@ssl-socket-binding"/></xsl:attribute>
+            <jdk:initializers transactions="on" security="client"/>
         </xsl:copy>
     </xsl:template>
 

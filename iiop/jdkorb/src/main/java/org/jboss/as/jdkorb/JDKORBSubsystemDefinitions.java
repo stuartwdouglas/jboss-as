@@ -180,7 +180,7 @@ class JDKORBSubsystemDefinitions {
     public static final SimpleAttributeDefinition ORB_INIT_SECURITY = new SimpleAttributeDefinitionBuilder(
             JDKORBSubsystemConstants.ORB_INIT_SECURITY, ModelType.STRING, true)
             .setDefaultValue(DEFAULT_DISABLED_PROPERTY)
-            .setValidator(ON_OFF_VALIDATOR)
+            .setValidator(new EnumValidator<SecurityAllowedValues>(SecurityAllowedValues.class, true, false))
             .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
             .build();
 
