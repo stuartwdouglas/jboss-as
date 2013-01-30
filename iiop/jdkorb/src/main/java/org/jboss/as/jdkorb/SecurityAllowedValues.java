@@ -24,7 +24,7 @@ package org.jboss.as.jdkorb;
 
 /**
  * <p>
- * Enumeration of the allowed jacorb subsystem configuration values.
+ * Enumeration of the allowed jdkorb subsystem configuration values.
  * </p>
  *
  * @author <a href="mailto:sguilhen@redhat.com">Stefan Guilhen</a>
@@ -32,8 +32,6 @@ package org.jboss.as.jdkorb;
 enum SecurityAllowedValues {
 
     IDENTITY("identity"),
-    //legacy alias for 'identity'
-    ON("on"),
     OFF("off"),
     CLIENT("client");
 

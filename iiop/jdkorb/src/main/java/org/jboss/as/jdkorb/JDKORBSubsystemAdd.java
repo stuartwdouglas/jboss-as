@@ -259,9 +259,12 @@ public class JDKORBSubsystemAdd extends AbstractAddStepHandler {
         List<String> orbInitializers = new ArrayList<String>();
 
         // check which groups of initializers are to be installed.
-        String installSecurity = (String) props.remove(JDKORBSubsystemConstants.ORB_INIT_SECURITY);
-        if (installSecurity.equalsIgnoreCase("on"))
-            orbInitializers.addAll(Arrays.asList(ORBInitializer.SECURITY.getInitializerClasses()));
+                String installSecurity = (String) props.remove(JDKORBSubsystemConstants.ORB_INIT_SECURITY);
+                if (installSecurity.equalsIgnoreCase(JDKORBSubsystemConstants.CLIENT)) {
+                    orbInitializers.addAll(Arrays.asList(ORBInitializer.SECURITY_CLIENT.getInitializerClasses()));
+                } else if (installSecurity.equalsIgnoreCase(JDKORBSubsystemConstants.IDENTITY)) {
+                    orbInitializers.addAll(Arrays.asList(ORBInitializer.SECURITY_IDENTITY.getInitializerClasses()));
+                }
 
         String installTransaction = (String) props.remove(JDKORBSubsystemConstants.ORB_INIT_TRANSACTIONS);
         if (installTransaction.equalsIgnoreCase("on")) {

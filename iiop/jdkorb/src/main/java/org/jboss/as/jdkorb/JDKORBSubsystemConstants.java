@@ -106,4 +106,8 @@ public final class JDKORBSubsystemConstants {
 
     public static final String ORB_SSL_PORT = "org.jboss.as.jdkorb.ORB_SSL_PORT";
 
+    public static final String CLIENT = "client";
+    public static final String IDENTITY = "identity";
+
+
 }
