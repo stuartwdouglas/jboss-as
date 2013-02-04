@@ -31,7 +31,7 @@
     <dependencies>
         <module name="javax.transaction.api"/>
         <module name="javax.resource.api"/>
-        <module name="org.jboss.jts"/>
+        <module name="org.jboss.jts.integration"/>
         <module name="org.jboss.ws.api" services="export"/>
         <module name="org.jboss.ws.jaxws-client" services="export"/>
         <module name="org.jboss.ws.cxf.jbossws-cxf-client" services="export"/>

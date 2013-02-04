@@ -49,7 +49,7 @@
         <module name="org.jboss.modules"/>
         <module name="org.jboss.msc"/>
         <module name="org.jboss.staxmapper"/>
-        <module name="org.jboss.jts" />
+        <module name="org.jboss.jts.jacorb" />
         <module name="org.jboss.jts.integration"/>
         <module name="org.picketbox"/>
         <module name="org.jboss.corba"/>

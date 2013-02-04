@@ -28,13 +28,5 @@
     </resources>
 
     <dependencies>
-        <module name="org.jboss.jts" export="false">
-            <exports>
-                <include-set>
-                    <path name="org/omg/CosTransactions"/>
-                    <path name="org/omg/XA"/>
-                </include-set>
-            </exports>
-        </module>
     </dependencies>
 </module>
