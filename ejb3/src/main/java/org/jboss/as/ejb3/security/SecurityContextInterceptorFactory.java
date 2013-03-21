@@ -40,6 +40,12 @@ import org.jboss.metadata.javaee.spec.SecurityRolesMetaData;
  */
 public class SecurityContextInterceptorFactory extends ComponentInterceptorFactory {
 
+    public static final SecurityContextInterceptorFactory INSTANCE = new SecurityContextInterceptorFactory();
+
+    private SecurityContextInterceptorFactory() {
+
+    }
+
     @Override
     protected Interceptor create(final Component component, final InterceptorFactoryContext context) {
         if (component instanceof EJBComponent == false) {

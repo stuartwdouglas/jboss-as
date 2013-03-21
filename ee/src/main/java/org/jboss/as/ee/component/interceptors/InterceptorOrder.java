@@ -72,6 +72,7 @@ public class InterceptorOrder {
 
         public static final int PRIVILEGED_INTERCEPTOR = 0;
         public static final int TCCL_INTERCEPTOR = 0x100;
+        public static final int SECURITY_CONTEXT = 0x150;
         public static final int EJB_SESSION_CONTEXT_INTERCEPTOR = 0x200;
         public static final int TRANSACTION_INTERCEPTOR = 0x300;
         public static final int JPA_SFSB_PRE_CREATE = 0x400;
@@ -96,6 +97,7 @@ public class InterceptorOrder {
 
         public static final int PRIVILEGED_INTERCEPTOR = 0;
         public static final int TCCL_INTERCEPTOR = 0x100;
+        public static final int SECURITY_CONTEXT = 0x150;
         public static final int EJB_SESSION_CONTEXT_INTERCEPTOR = 0x200;
         public static final int TRANSACTION_INTERCEPTOR = 0x300;
         public static final int JNDI_NAMESPACE_INTERCEPTOR = 0x400;
