@@ -35,7 +35,7 @@
 
     <groupId>org.jboss.as</groupId>
     <artifactId>jboss-as-iiop-common</artifactId>
-    <version>7.2.0.Alpha1-SNAPSHOT</version>
+    <version>8.0.0.Alpha1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>JBoss Application Server: IIOP Common</name>
@@ -106,12 +106,6 @@
         <dependency>
             <groupId>org.jboss.corba</groupId>
             <artifactId>jboss-rmi-api</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.jbossts.jts</groupId>
-            <artifactId>jbossjts-idlj</artifactId>
-            <!--artifactId>jbossjts-jacorb</artifactId-->
         </dependency>
 
         <dependency>
