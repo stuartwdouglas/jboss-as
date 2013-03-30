@@ -348,8 +348,7 @@ class JDKORBSubsystemDefinitions {
             .build();
 
     public static final PropertiesAttributeDefinition PROPERTIES =
-            new PropertiesAttributeDefinition(JDKORBSubsystemConstants.PROPERTIES,
-                    JDKORBSubsystemConstants.PROPERTIES, true);
+            new PropertiesAttributeDefinition.Builder(JDKORBSubsystemConstants.PROPERTIES, true).build();
 
 
     // list that contains the orb attribute definitions.

@@ -5002,7 +5002,6 @@
                 <groupId>org.jboss.spec.javax.rmi</groupId>
                 <artifactId>jboss-rmi-api_1.0_spec</artifactId>
                 <version>${version.org.jboss.spec.javax.rmi.jboss-rmi-api_1.0_spec}</version>
-                <scope>test</scope>
             </dependency>
 
             <dependency>

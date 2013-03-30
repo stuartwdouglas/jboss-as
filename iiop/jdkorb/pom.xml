@@ -87,6 +87,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.jboss.corba</groupId>
+            <artifactId>jboss-corba-ext-api</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.jboss.as</groupId>
             <artifactId>jboss-as-server</artifactId>
         </dependency>

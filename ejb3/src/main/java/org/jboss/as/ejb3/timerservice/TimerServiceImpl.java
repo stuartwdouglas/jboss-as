@@ -617,6 +617,7 @@ public class TimerServiceImpl implements TimerService, Service<TimerService> {
                 registerSynchronization(new TimerRemoveSynchronization(timer));
                 release = false;
             } else {
+                //remove the timer
                 // cancel any scheduled Future for this timer
                 this.cancelTimeout(timer);
             }

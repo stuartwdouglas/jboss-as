@@ -24,22 +24,15 @@ package org.jboss.as.jacorb;
 
 import java.io.IOException;
 
-import javax.naming.ConfigurationException;
-import javax.naming.InvalidNameException;
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamException;
 
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.jacorb.rmi.RMIIIOPViolationException;
-import org.jboss.as.jacorb.rmi.ir.IRConstructionException;
 import org.jboss.logging.Messages;
-import org.jboss.logging.annotations.Message;
-import org.jboss.logging.annotations.MessageBundle;
 import org.jboss.logging.annotations.Message;
 import org.jboss.logging.annotations.MessageBundle;
 import org.jboss.as.iiop.rmi.RMIIIOPViolationException;
 import org.jboss.as.iiop.rmi.ir.IRConstructionException;
-import org.jboss.logging.Messages;
 import org.jboss.logging.annotations.Param;
 import org.jboss.msc.service.StartException;
 import org.omg.CORBA.BAD_INV_ORDER;
@@ -214,8 +207,8 @@ public interface JacORBMessages {
     StartException errorActivatingPOA(@Param Throwable cause);
 
     @Message(id = 16494, value = "Cannot use the value 'client' for 'security'. Instead set 'security' to be 'off' and set both the " +
-                "'org.omg.PortableInterceptor.ORBInitializerClass.org.jboss.as.jacorb.csiv2.CSIv2Initializer' " +
-                "and 'org.omg.PortableInterceptor.ORBInitializerClass.org.jboss.as.jacorb.csiv2.SASClientInitializer' properties to be \"\"")
+            "'org.omg.PortableInterceptor.ORBInitializerClass.org.jboss.as.jacorb.csiv2.CSIv2Initializer' " +
+            "and 'org.omg.PortableInterceptor.ORBInitializerClass.org.jboss.as.jacorb.csiv2.SASClientInitializer' properties to be \"\"")
     String cannotUseSecurityClient();
 
 }

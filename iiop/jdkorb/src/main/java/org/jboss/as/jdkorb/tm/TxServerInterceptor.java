@@ -19,16 +19,15 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.iiop.tm;
+package org.jboss.as.jdkorb.tm;
 
-import javax.transaction.Transaction;
 
 import org.jboss.as.iiop.IIOPLogger;
 import org.jboss.as.iiop.IIOPMessages;
+import org.jboss.as.iiop.tm.CurrentIncomingTransaction;
 import org.omg.CORBA.Any;
 import org.omg.CORBA.BAD_PARAM;
 import org.omg.CORBA.LocalObject;
-import org.omg.CORBA.TCKind;
 import org.omg.CosTransactions.PropagationContextHelper;
 import org.omg.IOP.Codec;
 import org.omg.IOP.CodecPackage.FormatMismatch;
@@ -71,30 +70,10 @@ public class TxServerInterceptor extends LocalObject implements ServerRequestInt
         TxServerInterceptor.slotId = slotId;
         TxServerInterceptor.codec = codec;
         TxServerInterceptor.piCurrent = piCurrent;
+        CurrentIncomingTransaction.setPiCurrent(piCurrent);
+        CurrentIncomingTransaction.setSlotId(slotId);
     }
 
-    /**
-     * Returns the transaction associated with the transaction propagation
-     * context that arrived in the current IIOP request.
-     */
-    public static Transaction getCurrentTransaction() {
-        Transaction tx = null;
-        if (piCurrent != null) {
-            // A non-null piCurrent means that a TxServerInterceptor was
-            // installed: check if there is a transaction propagation context
-            try {
-                Any any = piCurrent.get_slot(slotId);
-                if (any.type().kind().value() != TCKind._tk_null) {
-                    // Yes, there is a TPC: add the foreign transaction marker
-                    tx = ForeignTransaction.INSTANCE;
-                }
-            } catch (InvalidSlot e) {
-                throw IIOPMessages.MESSAGES.errorGettingSlotInTxInterceptor(e);
-            }
-
-        }
-        return tx;
-    }
 
     public String name() {
         return "TxServerInterceptor";

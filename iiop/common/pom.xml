@@ -92,20 +92,9 @@
             <artifactId>jboss-as-naming</artifactId>
         </dependency>
 
-        <!-- Currently some of the OMG api's are provided by the jacorb jar. We need to move these into their own jar -->
-        <dependency>
-            <groupId>org.jacorb</groupId>
-            <artifactId>jacorb</artifactId>
-        </dependency>
-
         <dependency>
             <groupId>org.jboss.as</groupId>
             <artifactId>jboss-as-network</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jboss.corba</groupId>
-            <artifactId>jboss-rmi-api</artifactId>
         </dependency>
 
         <dependency>
@@ -116,6 +105,11 @@
         <dependency>
             <groupId>org.jboss.metadata</groupId>
             <artifactId>jboss-metadata-ejb</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.spec.javax.rmi</groupId>
+            <artifactId>jboss-rmi-api_1.0_spec</artifactId>
         </dependency>
 
         <dependency>

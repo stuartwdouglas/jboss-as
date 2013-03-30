@@ -19,7 +19,7 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.iiop.tm;
+package org.jboss.as.jacorb.tm;
 
 import org.jboss.as.iiop.IIOPMessages;
 import org.omg.CORBA.LocalObject;
@@ -30,17 +30,24 @@ import org.omg.PortableInterceptor.ORBInitInfo;
 import org.omg.PortableInterceptor.ORBInitializer;
 
 /**
- * This is an <code>org.omg.PortableInterceptor.ORBInitializer</code> that
- * installs a <code>TxServerInterceptor</code>.
+ * Implements an <code>org.omg.PortableInterceptor.ORBinitializer</code> that
+ * installs the <code>TxIORInterceptor</code>
  *
- * @author <a href="mailto:reverbel@ime.usp.br">Francisco Reverbel</a>
+ * @author <a href="mailto:adrian@jboss.com">Adrian Brock</a>
  */
 @SuppressWarnings("unused")
-public class TxServerInterceptorInitializer extends LocalObject implements ORBInitializer {
-    static final long serialVersionUID = -547674655727747575L;
+public class TxIORInterceptorInitializer extends LocalObject implements ORBInitializer {
+    /**
+     * @since 4.0.1
+     */
+    static final long serialVersionUID = 963051265993070280L;
 
+    public TxIORInterceptorInitializer() {
+        // do nothing
+    }
 
     public void pre_init(ORBInitInfo info) {
+        // do nothing
     }
 
     public void post_init(ORBInitInfo info) {
@@ -50,23 +57,9 @@ public class TxServerInterceptorInitializer extends LocalObject implements ORBIn
                     (byte) 1, /* GIOP version */
                     (byte) 0  /* GIOP revision*/);
             Codec codec = info.codec_factory().create_codec(encoding);
-
-            // Get a reference to the PICurrent
-            org.omg.CORBA.Object obj =
-                    info.resolve_initial_references("PICurrent");
-            org.omg.PortableInterceptor.Current piCurrent =
-                    org.omg.PortableInterceptor.CurrentHelper.narrow(obj);
-
-            // Initialize the fields slot id, codec, and piCurrent
-            // in the interceptor class
-            TxServerInterceptor.init(info.allocate_slot_id(), codec, piCurrent);
-
-            // Create and register interceptor
-            TxServerInterceptor interceptor = new TxServerInterceptor();
-            info.add_server_request_interceptor(interceptor);
+            info.add_ior_interceptor(new TxIORInterceptor(codec));
         } catch (Exception e) {
             throw IIOPMessages.MESSAGES.unexpectedException(e);
         }
     }
-
 }

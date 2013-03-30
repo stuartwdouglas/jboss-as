@@ -23,9 +23,9 @@
 <project name="module-repository-lib" xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 
     <property name="src.dir" value="src"/>
-    <property name="module.repo.src.dir" value="${src.dir}/main/resources/modules/system/layers/base"/>
+    <property name="module.repo.src.dir" value="${src.dir}/main/resources/modules/"/>
     <property name="output.dir" value="target/jboss-as-${jboss.as.release.version}"/>
-    <property name="module.repo.output.dir" value="${output.dir}/modules/system/layers/base"/>
+    <property name="module.repo.base.dir" value="${output.dir}/modules"/>
     <property name="module.xml" value="module.xml"/>
 
     <property name="bundle.repo.output.dir" value="${output.dir}/bundles/system/layers/base"/>
@@ -36,12 +36,13 @@
     <macrodef name="module-def">
         <attribute name="name"/>
         <attribute name="slot" default="main"/>
+        <attribute name="base" default="system/layers/base"/>
         <element name="resources" implicit="yes" optional="yes"/>
 
         <sequential>
             <echo message="Initializing module -> @{name}"/>
             <!-- Figure out the correct module path -->
-            <define-module-dir name="@{name}" slot="@{slot}"/>
+            <define-module-dir name="@{name}" slot="@{slot}" base="@{base}"/>
 
             <!-- Make the module output director -->
             <mkdir dir="${module.repo.output.dir}/${current.module.path}"/>
@@ -103,10 +104,12 @@
     <scriptdef name="define-module-dir" language="javascript">
         <attribute name="name"/>
         <attribute name="slot"/>
+        <attribute name="base"/>
         <![CDATA[
             name = attributes.get("name");
             name = name.replace(".", "/");
             project.setProperty("current.module.path", name + "/" + attributes.get("slot"));
+            project.setProperty(project.getProperty('repo.output.dir') + attributes.get("base"));
         ]]>
     </scriptdef>
 

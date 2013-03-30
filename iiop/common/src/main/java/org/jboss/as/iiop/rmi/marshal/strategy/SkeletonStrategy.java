@@ -26,7 +26,7 @@ import java.lang.reflect.Method;
 import java.rmi.RemoteException;
 
 import org.jboss.as.iiop.IIOPMessages;
-import com.sun.corba.se.impl.javax.rmi.RemoteObjectSubstitutionManager;
+import org.jboss.com.sun.corba.se.impl.javax.rmi.RemoteObjectSubstitutionManager;
 import org.omg.CORBA.UserException;
 import org.omg.CORBA.portable.IDLEntity;
 import org.omg.CORBA.portable.UnknownException;

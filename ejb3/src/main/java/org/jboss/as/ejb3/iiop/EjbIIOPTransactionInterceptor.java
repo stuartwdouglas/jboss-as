@@ -30,8 +30,8 @@ import org.jboss.as.ee.component.ComponentView;
 import org.jboss.as.ejb3.EjbMessages;
 import org.jboss.as.ejb3.component.EJBComponent;
 import org.jboss.as.ejb3.component.MethodIntf;
+import org.jboss.as.iiop.tm.CurrentIncomingTransaction;
 import org.jboss.as.iiop.tm.ForeignTransaction;
-import org.jboss.as.iiop.tm.TxServerInterceptor;
 import org.jboss.invocation.ImmediateInterceptorFactory;
 import org.jboss.invocation.Interceptor;
 import org.jboss.invocation.InterceptorContext;
@@ -47,7 +47,7 @@ public class EjbIIOPTransactionInterceptor implements Interceptor {
     @Override
     public Object processInvocation(final InterceptorContext invocation) throws Exception {
         // Do we have a foreign transaction context?
-        Transaction tx = TxServerInterceptor.getCurrentTransaction();
+        Transaction tx = CurrentIncomingTransaction.getCurrentTransaction();
         if (tx instanceof ForeignTransaction) {
             final EJBComponent component = (EJBComponent) invocation.getPrivateData(Component.class);
 
