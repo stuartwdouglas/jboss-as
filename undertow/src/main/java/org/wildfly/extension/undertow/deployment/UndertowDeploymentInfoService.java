@@ -42,6 +42,7 @@ import javax.servlet.Servlet;
 import javax.servlet.ServletContainerInitializer;
 import javax.servlet.http.HttpServletRequest;
 
+import io.undertow.Undertow;
 import io.undertow.jsp.JspFileWrapper;
 import io.undertow.jsp.JspServletBuilder;
 import io.undertow.server.HandlerWrapper;
@@ -288,7 +289,7 @@ public class UndertowDeploymentInfoService implements Service<DeploymentInfo> {
             d.setDeploymentName(deploymentName);
             try {
                 //TODO: make the caching limits configurable
-                d.setResourceManager(new CachingResourceManager(100, 10 * 1024 * 1024, bufferCacheInjectedValue.getOptionalValue(), new FileResourceManager(Paths.get(deploymentRoot.getPhysicalFile().getAbsolutePath()))));
+                d.setResourceManager(new CachingResourceManager(100, 10 * 1024 * 1024, bufferCacheInjectedValue.getOptionalValue(), new FileResourceManager(Paths.get(deploymentRoot.getPhysicalFile().getAbsolutePath())), -1));
             } catch (IOException e) {
                 throw new StartException(e);
             }
@@ -559,8 +560,9 @@ public class UndertowDeploymentInfoService implements Service<DeploymentInfo> {
 
             d.addSecurityRoles(mergedMetaData.getSecurityRoleNames());
 
+
             d.addOuterHandlerChainWrapper(SecurityContextCreationHandler.wrapper(securityDomain));
-            d.addDispatchedHandlerChainWrapper(SecurityContextAssociationHandler.wrapper(mergedMetaData.getPrincipalVersusRolesMap(), mergedMetaData.getRunAsIdentity(), securityContextId));
+            d.addInnerHandlerChainWrapper(SecurityContextAssociationHandler.wrapper(mergedMetaData.getPrincipalVersusRolesMap(), mergedMetaData.getRunAsIdentity(), securityContextId));
 
             // Setup an deployer configured ServletContext attributes
             for (ServletContextAttribute attribute : attributes) {
