@@ -91,14 +91,16 @@ public class SystemPropertyAddHandler implements OperationStepHandler{
         final boolean reload = !applyToRuntime && context.getProcessType().isServer();
 
         if (applyToRuntime) {
-            final String setValue = value != null ? VALUE.resolveModelAttribute(context, model).asString() : null;
-            if (setValue != null) {
-                WildFlySecurityManager.setPropertyPrivileged(name, setValue);
-            } else {
-                WildFlySecurityManager.clearPropertyPrivileged(name);
-            }
-            if (systemPropertyUpdater != null) {
-                systemPropertyUpdater.systemPropertyUpdated(name, setValue);
+            try {
+                applyToRuntime(context, model, name, value);
+            } catch (OperationFailedException e) {
+                //WFLY-1904 if this is being read from a vault the vault will not be ready yet
+                context.addStep(new OperationStepHandler() {
+                    @Override
+                    public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
+                        applyToRuntime(context, model, name, value);
+                    }
+                }, OperationContext.Stage.RUNTIME);
             }
         } else if (reload) {
             context.reloadRequired();
@@ -118,5 +120,17 @@ public class SystemPropertyAddHandler implements OperationStepHandler{
                 }
             }
         });
+    }
+
+    private void applyToRuntime(OperationContext context, ModelNode model, String name, String value) throws OperationFailedException {
+        final String setValue = value != null ? VALUE.resolveModelAttribute(context, model).asString() : null;
+        if (setValue != null) {
+            WildFlySecurityManager.setPropertyPrivileged(name, setValue);
+        } else {
+            WildFlySecurityManager.clearPropertyPrivileged(name);
+        }
+        if (systemPropertyUpdater != null) {
+            systemPropertyUpdater.systemPropertyUpdated(name, setValue);
+        }
     }
 }
