@@ -88,33 +88,6 @@ public class InitialContext extends NamingContext {
 
     public Object lookup(final Name name, boolean dereference) throws NamingException {
         final ParsedName parsedName = parse(name);
-        if (parsedName.namespace() == null) {
-            //TODO: this is a bit of a hack, there should be a better way to handle this
-            if (!parsedName.remaining().isEmpty()) {
-                final String firstPart = parsedName.remaining().get(0);
-                int index = firstPart.indexOf(':');
-                if (index != -1) {
-                    final String scheme = firstPart.substring(0, index);
-                    ObjectFactory factory = urlContextFactories.get(scheme);
-                    if (factory != null) {
-                        try {
-                            return ((Context) factory.getObjectInstance(null, name, this, getEnvironment())).lookup(name);
-                        }catch(NamingException e) {
-                            throw e;
-                        } catch (Exception e) {
-                            NamingException n = new NamingException(e.getMessage());
-                            n.initCause(e);
-                            throw n;
-                        }
-                    }else{
-                        Context ctx = NamingManager.getURLContext(scheme, getEnvironment());
-                        if(ctx!=null){
-                            return ctx.lookup(name);
-                        }
-                    }
-                }
-            }
-        }
         final Context namespaceContext = findContext(name, parsedName);
         if (namespaceContext == null)
             return super.lookup(parsedName.remaining(),dereference);
@@ -186,6 +159,33 @@ public class InitialContext extends NamingContext {
     }
 
     private Context findContext(final Name name, final ParsedName parsedName) throws NamingException {
+        if (parsedName.namespace() == null) {
+            //TODO: this is a bit of a hack, there should be a better way to handle this
+            if (!parsedName.remaining().isEmpty()) {
+                final String firstPart = parsedName.remaining().get(0);
+                int index = firstPart.indexOf(':');
+                if (index != -1) {
+                    final String scheme = firstPart.substring(0, index);
+                    ObjectFactory factory = urlContextFactories.get(scheme);
+                    if (factory != null) {
+                        try {
+                            return ((Context) factory.getObjectInstance(null, name, this, getEnvironment()));
+                        } catch (NamingException e) {
+                            throw e;
+                        } catch (Exception e) {
+                            NamingException n = new NamingException(e.getMessage());
+                            n.initCause(e);
+                            throw n;
+                        }
+                    }else{
+                        Context ctx = NamingManager.getURLContext(scheme, getEnvironment());
+                        if (ctx != null) {
+                            return (Context) ctx;
+                        }
+                    }
+                }
+            }
+        }
         if (parsedName.namespace() == null || parsedName.namespace().equals("")) {
             return null;
         }
