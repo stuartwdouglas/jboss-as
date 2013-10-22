@@ -162,7 +162,10 @@ public class JaxrsIntegrationProcessor implements DeploymentUnitProcessor {
             }
             String providers = buf.toString();
             JAXRS_LOGGER.debugf("Adding JAX-RS jndi component resource classes: %s", providers);
-            setContextParameter(webdata, ResteasyContextParameters.RESTEASY_SCANNED_JNDI_RESOURCES, providers);
+            if(resteasy.isScanResources()) {
+                setContextParameter(webdata, ResteasyContextParameters.RESTEASY_SCANNED_JNDI_RESOURCES, providers);
+            }
+            setContextParameter(webdata, ResteasyContextParameters.RESTEASY_JNDI_COMPONENT_RESOURCES, providers);
         }
 
         if (!resteasy.isUnwrappedExceptionsParameterSet()) {

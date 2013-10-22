@@ -61,8 +61,6 @@ public class JaxrsComponentDeployer implements DeploymentUnitProcessor {
         if (resteasy == null) {
             return;
         }
-        // right now I only support resources
-        if (!resteasy.isScanResources()) return;
 
         final EEModuleDescription moduleDescription = deploymentUnit.getAttachment(Attachments.EE_MODULE_DESCRIPTION);
         if (moduleDescription == null) {

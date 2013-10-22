@@ -1,4 +1,4 @@
-package org.jboss.as.test.integration.jaxrs.integration.ejb;
+package org.jboss.as.test.integration.jaxrs.integration.ejb.noscanning;
 
 import javax.transaction.SystemException;
 
