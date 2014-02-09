@@ -23,9 +23,12 @@
 package org.wildfly.extension.undertow.filters;
 
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
+import static org.wildfly.extension.undertow.filters.Filter.PREDICATE;
 
 import java.util.List;
 
+import io.undertow.predicate.Predicate;
+import io.undertow.predicate.PredicateParser;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
@@ -54,10 +57,15 @@ class FilterAdd extends AbstractAddStepHandler {
     protected void performRuntime(OperationContext context, ModelNode operation, ModelNode model, ServiceVerificationHandler verificationHandler, List<ServiceController<?>> newControllers) throws OperationFailedException {
         final PathAddress address = PathAddress.pathAddress(operation.get(OP_ADDR));
         final String name = address.getLastElement().getValue();
+        Predicate predicate = null;
+        if (model.hasDefined(PREDICATE.getName())) {
+            String predicateString = model.get(PREDICATE.getName()).asString();
+            predicate = PredicateParser.parse(predicateString, getClass().getClassLoader());
+        }
 
-        final FilterService service = new FilterService(handler, getResolvedModel(context, model));
+        final FilterService service = new FilterService(handler, getResolvedModel(context, model), predicate);
         final ServiceTarget target = context.getServiceTarget();
-        ServiceController<?> sc = target.addService(UndertowService.FILTER.append(name), service)
+        ServiceController<?> sc = target.addService(UndertowService.getFilterServiceName(address, name), service)
                 .setInitialMode(ServiceController.Mode.ON_DEMAND)
                 .install();
         if (newControllers != null) {

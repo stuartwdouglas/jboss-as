@@ -20,7 +20,8 @@
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
   -->
 
-<subsystem xmlns="urn:jboss:domain:undertow:1.0" default-virtual-host="default-virtual-host" default-servlet-container="myContainer"
+<subsystem xmlns="urn:jboss:domain:undertow:1.0" default-virtual-host="default-virtual-host"
+           default-servlet-container="myContainer"
            default-server="some-server" instance-id="some-id">
 
     <buffer-caches>
@@ -28,32 +29,48 @@
     </buffer-caches>
 
     <server name="default-server" default-host="localhost" servlet-container="myContainer">
-        <ajp-listener name="ajp-connector" socket-binding="ajp" redirect-socket="ajps" />
-        <http-listener name="default" socket-binding="http" certificate-forwarding="true" always-set-keep-alive="${prop.smth:false}" redirect-socket="ajp" proxy-address-forwarding="${prop.smth:false}"/>
-        <http-listener name="second" socket-binding="http-2" max-cookies="100" max-parameters="30" url-charset="windows-1250" max-post-size="100000" max-headers="30" redirect-socket="https-non-default"/>
-        <https-listener name="https" socket-binding="https-non-default" security-realm="UndertowRealm" verify-client="REQUESTED" record-request-start-time="true" max-buffered-request-size="50000"/>
-        <https-listener name="https-2" socket-binding="https-2" security-realm="UndertowRealm" enabled-cipher-suites="ALL:!MD5:!DHA"/>
+        <ajp-listener name="ajp-connector" socket-binding="ajp" redirect-socket="ajps"/>
+        <http-listener name="default" socket-binding="http" certificate-forwarding="true"
+                       always-set-keep-alive="${prop.smth:false}" redirect-socket="ajp"
+                       proxy-address-forwarding="${prop.smth:false}"/>
+        <http-listener name="second" socket-binding="http-2" max-cookies="100" max-parameters="30"
+                       url-charset="windows-1250" max-post-size="100000" max-headers="30"
+                       redirect-socket="https-non-default"/>
+        <https-listener name="https" socket-binding="https-non-default" security-realm="UndertowRealm"
+                        verify-client="REQUESTED" record-request-start-time="true" max-buffered-request-size="50000"/>
+        <https-listener name="https-2" socket-binding="https-2" security-realm="UndertowRealm"
+                        enabled-cipher-suites="ALL:!MD5:!DHA"/>
 
         <host name="default-host" alias="localhost, some.host" default-web-module="something.war">
             <location name="/" handler="welcome-content">
-                <!--<filter-ref name="security-other"/>-->
-                <filter-ref name="limit-connections"/>
+                <filters>
+                    <connection-limit name="test" max-concurrent-requests="100"/>
+                </filters>
             </location>
             <access-log pattern="REQ %{i,test-header}" directory="${jboss.server.server.dir}" prefix="access"/>
             <!--<sso reauthenticate="${prop.reauthenticate:true}" domain="${prop.domain:myDomain}" cache-name="myCache" cache-container="cache-container"/>-->
         </host>
         <host name="other-host" alias="www.mysite.com" default-web-module="something.war">
+            <filters>
+                <connection-limit name="limit-connections" max-concurrent-requests="15000" queue-size="100"/>
+                <response-header name="headers" header-name="MY_HEADER" header-value="someValue"/>
+                <gzip name="static-gzip"
+                      predicate="path-suffix['.js'] or path-suffix ['.css'] or path-prefix['/resources']"/>
+            </filters>
             <location name="/" handler="welcome-content">
-                <filter-ref name="limit-connections"/>
-                <filter-ref name="headers"/>
-                <filter-ref name="static-gzip" predicate="path-suffix['.js'] or path-suffix ['.css'] or path-prefix['/resources']" />
+                <filters>
+                    <connection-limit name="limit-connections" max-concurrent-requests="15000" queue-size="100"/>
+                    <response-header name="headers" header-name="MY_HEADER" header-value="someValue"/>
+                    <gzip name="static-gzip"
+                          predicate="path-suffix['.js'] or path-suffix ['.css'] or path-prefix['/resources']"/>
+                </filters>
             </location>
-            <filter-ref name="headers"/>
         </host>
     </server>
 
 
-    <servlet-container name="myContainer" default-buffer-cache="default" use-listener-encoding="${prop.foo:false}" default-encoding="utf-8" ignore-flush="true">
+    <servlet-container name="myContainer" default-buffer-cache="default" use-listener-encoding="${prop.foo:false}"
+                       default-encoding="utf-8" ignore-flush="true">
         <jsp-config
                 disabled="${prop.disabled:false}"
                 keep-generated="${prop.keep-generated:true}"
@@ -92,11 +109,5 @@
             <host name="ajp://localhost:8080" instance-id="myRoute"/>
         </reverse-proxy>
     </handlers>
-    <filters>
-        <!--<basic-auth name="security-other" security-domain="other"/>-->
-        <connection-limit name="limit-connections" max-concurrent-requests="15000" queue-size="100"/>
-        <response-header name="headers" header-name="MY_HEADER" header-value="someValue"/>
-        <gzip name="static-gzip" />
-    </filters>
 
 </subsystem>

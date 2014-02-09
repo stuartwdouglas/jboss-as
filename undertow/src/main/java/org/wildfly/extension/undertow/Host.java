@@ -40,7 +40,7 @@ import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
-import org.wildfly.extension.undertow.filters.FilterRef;
+import org.wildfly.extension.undertow.filters.FilterService;
 
 /**
  * @author <a href="mailto:tomaz.cerar@redhat.com">Tomaz Cerar</a> (c) 2013 Red Hat Inc.
@@ -55,7 +55,7 @@ public class Host implements Service<Host> {
     private final InjectedValue<Server> server = new InjectedValue<>();
     private final InjectedValue<UndertowService> undertowService = new InjectedValue<>();
     private final InjectedValue<AccessLogService> accessLogService = new InjectedValue<>();
-    private final List<InjectedValue<FilterRef>> filters = new CopyOnWriteArrayList<>();
+    private final List<InjectedValue<FilterService>> filters = new CopyOnWriteArrayList<>();
     private final Set<Deployment> deployments = new CopyOnWriteArraySet<>();
 
     protected Host(String name, List<String> aliases, String defaultWebModule) {
@@ -83,8 +83,8 @@ public class Host implements Service<Host> {
         if (logService != null) {
             rootHandler = logService.configureAccessLogHandler(pathHandler);
         }
-        ArrayList<FilterRef> filters = new ArrayList<>(this.filters.size());
-        for (InjectedValue<FilterRef> injectedFilter : this.filters) {
+        ArrayList<FilterService> filters = new ArrayList<>(this.filters.size());
+        for (InjectedValue<FilterService> injectedFilter : this.filters) {
             filters.add(injectedFilter.getValue());
         }
 
@@ -94,7 +94,7 @@ public class Host implements Service<Host> {
         rootHandler = Handlers.date(rootHandler);
         Collections.reverse(filters);
         HttpHandler handler = rootHandler;
-        for (FilterRef filter : filters) {
+        for (FilterService filter : filters) {
             handler = filter.createHttpHandler(handler);
         }
         return handler;
@@ -187,7 +187,7 @@ public class Host implements Service<Host> {
         return Collections.unmodifiableSet(deployments);
     }
 
-    List<InjectedValue<FilterRef>> getFilters() {
+    List<InjectedValue<FilterService>> getFilters() {
         return filters;
     }
 

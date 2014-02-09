@@ -60,7 +60,7 @@ public class ConnectionLimitHandler extends Filter {
 
     @Override
     public Collection<AttributeDefinition> getAttributes() {
-        return Arrays.asList(MAX_CONCURRENT_REQUESTS, QUEUE_SIZE);
+        return Arrays.asList(MAX_CONCURRENT_REQUESTS, QUEUE_SIZE, PREDICATE);
     }
 
 

@@ -29,16 +29,16 @@
         <ajp-listener name="ajp-connector" socket-binding="ajp"/>
 
         <!-- each host is a sub-resource -->
-        <host name="localhost" aliases="www.localhost localhost.localdomain">
+        <host name="localhost" alias="www.localhost localhost.localdomain">
             <!-- each location is a sub-resource -->
             <location name="/app/myData" handler="opt-file-handler">
-                <filter name="security-other"/>
-                <filter name="headers"/>
+                <error-page code="404" path="/opt/data/custom/404.html"/>
+                <response-header name="headers" header-name="MY_HEADER" header-value="someValue"/>
             </location>
         </host>
         <host name="www.mysite.com">
             <location name="/" handler="redirect-1">
-                <filter name="security-other"/>
+                <basic-auth name="security-other" security-domain="other"/>
             </location>
         </host>
         <host name="disallowed-site.com">
@@ -55,11 +55,6 @@
         <servlet-container name="default">
             <jsp-config>.....</jsp-config>
         </servlet-container>
-
-        <filters>
-            <basic-auth name="security-other" security-domain="other"/>
-            <response-header name="headers" header-name="MY_HEADER" header-value="someValue"/>
-        </filters>
 
         <handlers>
             <file name="opt-file-handler" path="/opt/data" cache-buffer-size="1024" cache-buffers="1024"/>

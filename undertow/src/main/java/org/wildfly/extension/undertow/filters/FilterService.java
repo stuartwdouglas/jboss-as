@@ -37,10 +37,12 @@ import org.wildfly.extension.undertow.Handler;
 public class FilterService implements Service<FilterService> {
     private final Handler handler;
     private final ModelNode model;
+    private final Predicate predicate;
 
-    FilterService(Handler handler, ModelNode model) {
+    FilterService(Handler handler, ModelNode model, Predicate predicate) {
         this.handler = handler;
         this.model = model;
+        this.predicate = predicate;
     }
 
     @Override
@@ -53,7 +55,7 @@ public class FilterService implements Service<FilterService> {
 
     }
 
-    public HttpHandler createHttpHandler(final Predicate predicate, HttpHandler next) {
+    public HttpHandler createHttpHandler(HttpHandler next) {
         return handler.createHttpHandler(predicate, model, next);
     }
 

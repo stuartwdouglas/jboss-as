@@ -94,39 +94,29 @@ public class UndertowService implements Service<UndertowService> {
         return virtualHostName(server, virtualHost).append("console", "redirect");
     }
 
-    public static ServiceName filterRefName(final String server, final String virtualHost, final String locationName, final String filterName) {
+    public static ServiceName getFilterServiceName(final String server, final String virtualHost, final String locationName, final String filterName) {
         return virtualHostName(server, virtualHost).append(Constants.LOCATION, locationName).append("filter-ref").append(filterName);
     }
 
-    public static ServiceName filterRefName(final String server, final String virtualHost, final String filterName) {
+    public static ServiceName getFilterServiceName(final String server, final String virtualHost, final String filterName) {
         return SERVER.append(server).append(virtualHost).append("filter-ref").append(filterName);
     }
 
-    public static ServiceName getFilterRefServiceName(final PathAddress address, String name) {
+    public static ServiceName getFilterServiceName(final PathAddress address, String name) {
         final PathAddress oneUp = address.subAddress(0, address.size() - 1);
         final PathAddress twoUp = oneUp.subAddress(0, oneUp.size() - 1);
         final PathAddress threeUp = twoUp.subAddress(0, twoUp.size() - 1);
+        final PathAddress fourUp = threeUp.subAddress(0, threeUp.size() - 1);
         ServiceName serviceName;
-        if (address.getLastElement().getKey().equals(Constants.FILTER_REF)) {
-            if (oneUp.getLastElement().getKey().equals(Constants.HOST)) { //adding reference
-                String host = oneUp.getLastElement().getValue();
-                String server = twoUp.getLastElement().getValue();
-                serviceName = UndertowService.filterRefName(server, host, name);
-            } else {
-                String location = oneUp.getLastElement().getValue();
-                String host = twoUp.getLastElement().getValue();
-                String server = threeUp.getLastElement().getValue();
-                serviceName = UndertowService.filterRefName(server, host, location, name);
-            }
-        } else if (address.getLastElement().getKey().equals(Constants.HOST)) {
-            String host = address.getLastElement().getValue();
-            String server = oneUp.getLastElement().getValue();
-            serviceName = UndertowService.filterRefName(server, host, name);
-        } else {
-            String location = address.getLastElement().getValue();
-            String host = oneUp.getLastElement().getValue();
-            String server = twoUp.getLastElement().getValue();
-            serviceName = UndertowService.filterRefName(server, host, location, name);
+        if (twoUp.getLastElement().getKey().equals(Constants.LOCATION)) {
+            String location = twoUp.getLastElement().getValue();
+            String host = threeUp.getLastElement().getValue();
+            String server = fourUp.getLastElement().getValue();
+            serviceName = UndertowService.getFilterServiceName(server, host, location, name);
+        } else { //adding reference
+            String host = twoUp.getLastElement().getValue();
+            String server = threeUp.getLastElement().getValue();
+            serviceName = UndertowService.getFilterServiceName(server, host, name);
         }
         return serviceName;
     }

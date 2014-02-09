@@ -36,11 +36,11 @@ import org.jboss.dmr.ModelType;
  */
 public class ResponseHeaderFilter extends Filter {
 
-    private static final AttributeDefinition NAME = new SimpleAttributeDefinitionBuilder("header-name", ModelType.STRING)
+    public static final AttributeDefinition NAME = new SimpleAttributeDefinitionBuilder("header-name", ModelType.STRING)
             .setAllowNull(false)
             .setAllowExpression(true)
             .build();
-    private static final AttributeDefinition VALUE = new SimpleAttributeDefinitionBuilder("header-value", ModelType.STRING)
+    public static final AttributeDefinition VALUE = new SimpleAttributeDefinitionBuilder("header-value", ModelType.STRING)
             .setAllowNull(false)
             .setAllowExpression(true)
             .build();
@@ -53,7 +53,7 @@ public class ResponseHeaderFilter extends Filter {
 
     @Override
     public Collection<AttributeDefinition> getAttributes() {
-        return Arrays.asList(NAME, VALUE);
+        return Arrays.asList(NAME, VALUE, PREDICATE);
     }
 
     @Override

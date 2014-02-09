@@ -46,7 +46,7 @@ import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceController.Mode;
 import org.jboss.msc.service.ServiceName;
-import org.wildfly.extension.undertow.filters.FilterRef;
+import org.wildfly.extension.undertow.filters.FilterService;
 
 /**
  * @author <a href="mailto:tomaz.cerar@redhat.com">Tomaz Cerar</a> (c) 2013 Red Hat Inc.
@@ -90,7 +90,7 @@ class HostAdd extends AbstractAddStepHandler {
         builder.addListener(verificationHandler);
         builder.setInitialMode(Mode.ON_DEMAND);
 
-        configureFilterRef(fullModel, builder, service,address);
+        configureFilterRef(fullModel, builder, service, serverName);
 
         ServiceController<WebHost> commonController = null;
         if (installCommonHost) {
@@ -148,11 +148,16 @@ class HostAdd extends AbstractAddStepHandler {
         return builder.install();
     }
 
-    private static void configureFilterRef(final ModelNode model, ServiceBuilder<Host> builder, Host service, PathAddress address) {
-        if (model.hasDefined(Constants.FILTER_REF)) {
-            for (Property property : model.get(Constants.FILTER_REF).asPropertyList()) {
-                String name = property.getName();
-                LocationAdd.addDep(builder, UndertowService.getFilterRefServiceName(address, name), FilterRef.class, service.getFilters());
+    private static void configureFilterRef(final ModelNode model, ServiceBuilder<Host> builder, Host service, String serverName) {
+        ModelNode filters = model.get(Constants.CONFIGURATION, Constants.FILTER);
+        if(filters.isDefined()) {
+            for (Property property : filters.asPropertyList()) {
+                if(property.getValue().isDefined()) {
+                    for(Property filter : property.getValue().asPropertyList()) {
+                        String name = filter.getName();
+                        LocationAdd.addDep(builder, UndertowService.getFilterServiceName(serverName, service.getName(), name), FilterService.class, service.getFilters());
+                    }
+                }
             }
         }
     }

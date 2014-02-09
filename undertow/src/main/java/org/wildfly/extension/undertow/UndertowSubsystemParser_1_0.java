@@ -43,7 +43,6 @@ import org.wildfly.extension.undertow.errorhandler.ErrorPageDefinition;
 import org.wildfly.extension.undertow.filters.BasicAuthHandler;
 import org.wildfly.extension.undertow.filters.ConnectionLimitHandler;
 import org.wildfly.extension.undertow.filters.FilterDefinitions;
-import org.wildfly.extension.undertow.filters.FilterRefDefinition;
 import org.wildfly.extension.undertow.filters.GzipFilter;
 import org.wildfly.extension.undertow.filters.ResponseHeaderFilter;
 import org.wildfly.extension.undertow.handlers.FileHandler;
@@ -81,26 +80,34 @@ public class UndertowSubsystemParser_1_0 implements XMLStreamConstants, XMLEleme
                                         .addAttributes(ListenerResourceDefinition.OPTIONS)
                         ).addChild(
                                 builder(HttpsListenerResourceDefinition.INSTANCE)
-                                        .addAttributes(HttpsListenerResourceDefinition.INSTANCE.getAttributes())
+                                        .addAttributes(HttpsListenerResourceDefinition.SOCKET_BINDING, HttpsListenerResourceDefinition.WORKER, HttpsListenerResourceDefinition.BUFFER_POOL, HttpsListenerResourceDefinition.ENABLED, HttpsListenerResourceDefinition.SECURITY_REALM, HttpsListenerResourceDefinition.VERIFY_CLIENT, HttpsListenerResourceDefinition.ENABLED_CIPHER_SUITES)
+                                        .addAttributes(ListenerResourceDefinition.OPTIONS)
                         ).addChild(
                                 builder(HostDefinition.INSTANCE)
+                                        .setAdditionalOperationsGenerator(new PersistentResourceXMLDescription.AdditionalOperationsGenerator() {
+                                            @Override
+                                            public void additionalOperations(PathAddress address, ModelNode addOperation, List<ModelNode> operations) {
+                                                operations.add(Util.createAddOperation(address.append(UndertowExtension.PATH_FILTERS)));
+                                            }
+                                        })
                                         .addAttributes(HostDefinition.ALIAS, HostDefinition.DEFAULT_WEB_MODULE)
+                                        .addChild(createFilterParser())
                                         .addChild(
                                                 builder(LocationDefinition.INSTANCE)
+                                                        .setAdditionalOperationsGenerator(new PersistentResourceXMLDescription.AdditionalOperationsGenerator() {
+                                                            @Override
+                                                            public void additionalOperations(PathAddress address, ModelNode addOperation, List<ModelNode> operations) {
+                                                                operations.add(Util.createAddOperation(address.append(UndertowExtension.PATH_FILTERS)));
+                                                            }
+                                                        })
                                                         .addAttributes(LocationDefinition.HANDLER)
-                                                        .addChild(
-                                                                builder(FilterRefDefinition.INSTANCE)
-                                                                        .addAttributes(FilterRefDefinition.INSTANCE.getAttributes())
-                                                        )
+                                                        .addChild(createFilterParser())
                                         ).addChild(
                                         builder(AccessLogDefinition.INSTANCE)
                                                 .addAttributes(AccessLogDefinition.PATTERN, AccessLogDefinition.DIRECTORY, AccessLogDefinition.PREFIX, AccessLogDefinition.WORKER, AccessLogDefinition.ROTATE)
-                                        ).addChild(
-                                        builder(FilterRefDefinition.INSTANCE)
-                                            .addAttributes(FilterRefDefinition.INSTANCE.getAttributes())
+                                        )
                                 )
 
-                        )
                 )
                 .addChild(
                         builder(ServletContainerDefinition.INSTANCE)
@@ -183,35 +190,34 @@ public class UndertowSubsystemParser_1_0 implements XMLStreamConstants, XMLEleme
 
 
                 )
-                .addChild(
-                        builder(FilterDefinitions.INSTANCE)
-                                .setXmlElementName(Constants.FILTERS)
-                                .setNoAddOperation(true)
-                                .addChild(
-                                        builder(BasicAuthHandler.INSTANCE)
-                                                .addAttributes(BasicAuthHandler.SECURITY_DOMAIN)
-                                )
-                                .addChild(
-                                        builder(ConnectionLimitHandler.INSTANCE)
-                                                .addAttributes(ConnectionLimitHandler.MAX_CONCURRENT_REQUESTS, ConnectionLimitHandler.QUEUE_SIZE)
-                                ).addChild(
-                                        builder(ResponseHeaderFilter.INSTANCE)
-                                                .addAttributes(ResponseHeaderFilter.INSTANCE.getAttributes())
-                                ).addChild(
-                                        builder(GzipFilter.INSTANCE)
-                                                .addAttributes(GzipFilter.INSTANCE.getAttributes())
-                                )
-
-                )
                 //todo why do we really need this?
                 .setAdditionalOperationsGenerator(new PersistentResourceXMLDescription.AdditionalOperationsGenerator() {
                     @Override
                     public void additionalOperations(final PathAddress address, final ModelNode addOperation, final List<ModelNode> operations) {
-                        operations.add(Util.createAddOperation(address.append(UndertowExtension.PATH_FILTERS)));
                         operations.add(Util.createAddOperation(address.append(UndertowExtension.PATH_HANDLERS)));
                     }
                 })
                 .build();
+    }
+
+    private static PersistentResourceXMLDescription.PersistentResourceXMLBuilder createFilterParser() {
+        return builder(FilterDefinitions.INSTANCE)
+                .setXmlElementName(Constants.FILTERS)
+                .setNoAddOperation(true)
+                .addChild(
+                        builder(BasicAuthHandler.INSTANCE)
+                                .addAttributes(BasicAuthHandler.SECURITY_DOMAIN, BasicAuthHandler.PREDICATE)
+                )
+                .addChild(
+                        builder(ConnectionLimitHandler.INSTANCE)
+                                .addAttributes(ConnectionLimitHandler.MAX_CONCURRENT_REQUESTS, ConnectionLimitHandler.QUEUE_SIZE, ConnectionLimitHandler.PREDICATE)
+                ).addChild(
+                        builder(ResponseHeaderFilter.INSTANCE)
+                                .addAttributes(ResponseHeaderFilter.NAME, ResponseHeaderFilter.VALUE, ResponseHeaderFilter.PREDICATE)
+                ).addChild(
+                        builder(GzipFilter.INSTANCE)
+                                .addAttributes(GzipFilter.PREDICATE)
+                );
     }
 
     private UndertowSubsystemParser_1_0() {

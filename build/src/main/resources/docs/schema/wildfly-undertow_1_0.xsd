@@ -46,7 +46,6 @@
             <xs:element name="servlet-container" type="servletContainerType" minOccurs="0" maxOccurs="1"/>
             <xs:element name="error-pages" type="errorPagesType" minOccurs="0" maxOccurs="1"/>
             <xs:element name="handlers" type="handlerType" minOccurs="0" maxOccurs="1"/>
-            <xs:element name="filters" type="filterType" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
         <xs:attribute name="default-server" type="xs:string" default="default-server"/>
         <xs:attribute name="default-virtual-host" type="xs:string" default="default-host"/>
@@ -165,9 +164,9 @@
     </xs:complexType>
     <xs:complexType name="hostType">
         <xs:sequence>
+            <xs:element name="filters" type="filtersType" minOccurs="0" maxOccurs="1"/>
             <xs:element name="location" type="locationType" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="access-log" type="accessLogType" maxOccurs="1" minOccurs="0"/>
-            <xs:element name="filter-ref" type="filter-refType" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
         <xs:attribute name="name" use="required" type="xs:string"/>
         <xs:attribute name="alias" use="optional" type="xs:string"/>
@@ -226,13 +225,13 @@
     </xs:complexType>
 
 
-    <xs:complexType name="filterType">
-        <xs:sequence>
+    <xs:complexType name="filtersType">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
             <xs:element name="basic-auth" type="basic-authType" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="connection-limit" type="connection-limitType" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="response-header" type="response-headerType" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="gzip" type="gzipType" minOccurs="0" maxOccurs="unbounded"/>
-        </xs:sequence>
+        </xs:choice>
     </xs:complexType>
 
     <xs:complexType name="errorPagesType">
@@ -243,7 +242,7 @@
 
     <xs:complexType name="locationType">
         <xs:sequence>
-            <xs:element name="filter-ref" type="filter-refType" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="filters" type="filtersType" minOccurs="0" maxOccurs="1"/>
         </xs:sequence>
         <xs:attribute name="name" use="required" type="xs:string"/>
         <xs:attribute name="handler" use="required" type="xs:string"/>
@@ -284,7 +283,7 @@
         <xs:attribute name="instance-id" use="optional" type="xs:string"/>
     </xs:complexType>
 
-    <xs:complexType name="filter-refType">
+    <xs:complexType name="filter-Type">
         <xs:attribute name="name" use="required" type="xs:string"/>
         <xs:attribute name="predicate" use="optional" type="xs:string">
             <xs:annotation>
@@ -331,22 +330,33 @@
     </xs:complexType>
 
     <xs:complexType name="basic-authType">
-        <xs:attribute name="name" use="required" type="xs:string"/>
-        <xs:attribute name="security-domain" use="required" type="xs:string"/>
-
+        <xs:complexContent>
+            <xs:extension base="filter-Type">
+                <xs:attribute name="security-domain" use="required" type="xs:string"/>
+            </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
     <xs:complexType name="connection-limitType">
-        <xs:attribute name="name" use="required" type="xs:string"/>
-        <xs:attribute name="max-concurrent-requests" use="required" type="xs:integer"/>
-        <xs:attribute name="queue-size" use="optional" type="xs:integer"/>
+        <xs:complexContent>
+            <xs:extension base="filter-Type">
+                <xs:attribute name="max-concurrent-requests" use="required" type="xs:integer"/>
+                <xs:attribute name="queue-size" use="optional" type="xs:integer"/>
+            </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
     <xs:complexType name="response-headerType">
-        <xs:attribute name="name" use="required" type="xs:string"/>
-        <xs:attribute name="header-name" use="required" type="xs:string"/>
-        <xs:attribute name="header-value" use="required" type="xs:string"/>
+        <xs:complexContent>
+            <xs:extension base="filter-Type">
+                <xs:attribute name="header-name" use="required" type="xs:string"/>
+                <xs:attribute name="header-value" use="required" type="xs:string"/>
+            </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
 
     <xs:complexType name="gzipType">
-        <xs:attribute name="name" use="required" type="xs:string"/>
+        <xs:complexContent>
+            <xs:extension base="filter-Type">
+            </xs:extension>
+        </xs:complexContent>
     </xs:complexType>
 </xs:schema>

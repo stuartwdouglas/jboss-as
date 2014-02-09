@@ -30,7 +30,11 @@ import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.encoding.ContentEncodingRepository;
 import io.undertow.server.handlers.encoding.EncodingHandler;
 import io.undertow.server.handlers.encoding.GzipEncodingProvider;
+import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.dmr.ModelNode;
+
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Tomaz Cerar (c) 2014 Red Hat Inc.
@@ -55,5 +59,10 @@ public class GzipFilter extends Filter {
                 .addEncodingHandler("gzip", new GzipEncodingProvider(), 50, predicate!=null?predicate : Predicates.truePredicate()));
         encodingHandler.setNext(next);
         return encodingHandler;
+    }
+
+    @Override
+    public Collection<AttributeDefinition> getAttributes() {
+        return Collections.singleton(PREDICATE);
     }
 }

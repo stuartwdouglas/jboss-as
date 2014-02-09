@@ -30,7 +30,7 @@ import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.operations.validation.StringLengthValidator;
 import org.jboss.dmr.ModelType;
 import org.jboss.msc.service.ServiceName;
-import org.wildfly.extension.undertow.filters.FilterRefDefinition;
+import org.wildfly.extension.undertow.filters.FilterDefinitions;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,7 +45,7 @@ class LocationDefinition extends PersistentResourceDefinition {
             .setAllowNull(false)
             .setValidator(new StringLengthValidator(1))
             .build();
-    private static final List<? extends PersistentResourceDefinition> CHILDREN = Collections.unmodifiableList(Arrays.asList(FilterRefDefinition.INSTANCE));
+    private static final List<? extends PersistentResourceDefinition> CHILDREN = Collections.unmodifiableList(Arrays.asList(FilterDefinitions.INSTANCE));
     static final LocationDefinition INSTANCE = new LocationDefinition();
 
 

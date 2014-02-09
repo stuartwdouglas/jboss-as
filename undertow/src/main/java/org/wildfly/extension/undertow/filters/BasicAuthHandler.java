@@ -22,8 +22,8 @@
 
 package org.wildfly.extension.undertow.filters;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 import io.undertow.security.handlers.AuthenticationCallHandler;
 import io.undertow.server.HttpHandler;
@@ -48,7 +48,7 @@ public class BasicAuthHandler extends Filter {
 
     @Override
     public Collection<AttributeDefinition> getAttributes() {
-        return Collections.singleton(SECURITY_DOMAIN);
+        return Arrays.asList(SECURITY_DOMAIN, PREDICATE);
     }
 
     @Override

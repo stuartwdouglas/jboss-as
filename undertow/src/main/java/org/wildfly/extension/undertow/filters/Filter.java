@@ -31,9 +31,11 @@ import io.undertow.predicate.Predicate;
 import io.undertow.server.HttpHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
+import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.OperationEntry;
 import org.jboss.dmr.ModelNode;
+import org.jboss.dmr.ModelType;
 import org.wildfly.extension.undertow.AbstractHandlerDefinition;
 import org.wildfly.extension.undertow.Constants;
 import org.wildfly.extension.undertow.UndertowMessages;
@@ -42,6 +44,14 @@ import org.wildfly.extension.undertow.UndertowMessages;
  * @author Tomaz Cerar (c) 2013 Red Hat Inc.
  */
 abstract class Filter extends AbstractHandlerDefinition {
+
+
+    public static final AttributeDefinition PREDICATE = new SimpleAttributeDefinitionBuilder("predicate", ModelType.STRING)
+            .setAllowNull(true)
+            .setAllowExpression(true)
+            .build();
+
+
     private String name;
 
     protected Filter(String name) {
@@ -66,7 +76,7 @@ abstract class Filter extends AbstractHandlerDefinition {
     public HttpHandler createHttpHandler(final Predicate predicate, final ModelNode model, HttpHandler next) {
         Class<? extends HttpHandler> handlerClass = getHandlerClass();
         List<AttributeDefinition> attributes = new ArrayList<>(getAttributes());
-        int numOfParams = attributes.size() + 1;
+        int numOfParams = attributes.size();
         try {
             for (Constructor<?> c : handlerClass.getDeclaredConstructors()) {
                 if (c.getParameterTypes().length == numOfParams) {

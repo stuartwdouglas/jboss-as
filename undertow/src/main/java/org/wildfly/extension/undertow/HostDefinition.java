@@ -39,7 +39,7 @@ import org.jboss.as.controller.operations.validation.StringLengthValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
-import org.wildfly.extension.undertow.filters.FilterRefDefinition;
+import org.wildfly.extension.undertow.filters.FilterDefinitions;
 
 /**
  * @author <a href="mailto:tomaz.cerar@redhat.com">Tomaz Cerar</a> (c) 2013 Red Hat Inc.
@@ -79,8 +79,7 @@ class HostDefinition extends PersistentResourceDefinition {
     private static final List<? extends PersistentResourceDefinition> CHILDREN = Collections.unmodifiableList(Arrays.asList(
             LocationDefinition.INSTANCE,
             AccessLogDefinition.INSTANCE,
-            FilterRefDefinition.INSTANCE
-
+            FilterDefinitions.INSTANCE
     ));
 
     private HostDefinition() {

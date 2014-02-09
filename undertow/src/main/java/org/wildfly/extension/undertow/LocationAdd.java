@@ -39,7 +39,7 @@ import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.value.InjectedValue;
-import org.wildfly.extension.undertow.filters.FilterRef;
+import org.wildfly.extension.undertow.filters.FilterService;
 
 /**
  * @author <a href="mailto:tomaz.cerar@redhat.com">Tomaz Cerar</a> (c) 2013 Red Hat Inc.
@@ -87,10 +87,10 @@ class LocationAdd extends AbstractAddStepHandler {
     }
 
     private static void configureFilterRef(final ModelNode model, ServiceBuilder<LocationService> builder, LocationService service,PathAddress address) {
-        if (model.hasDefined(Constants.FILTER_REF)) {
-            for (Property property : model.get(Constants.FILTER_REF).asPropertyList()) {
+        if (model.hasDefined(Constants.FILTERS)) {
+            for (Property property : model.get(Constants.FILTERS).asPropertyList()) {
                 String name = property.getName();
-                addDep(builder, UndertowService.getFilterRefServiceName(address,name), FilterRef.class, service.getFilters());
+                addDep(builder, UndertowService.getFilterServiceName(address, name), FilterService.class, service.getFilters());
             }
         }
     }

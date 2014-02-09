@@ -107,7 +107,6 @@ public interface Constants {
     String DIRECTORY_LISTING = "directory-listing";
     String FILTER = "filter";
     String FILTERS = "filters";
-    String FILTER_REF = "filter-ref";
 
     //session cookie config
     String SESSION_COOKIE = "session-cookie";

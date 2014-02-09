@@ -33,7 +33,7 @@ import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
-import org.wildfly.extension.undertow.filters.FilterRef;
+import org.wildfly.extension.undertow.filters.FilterService;
 
 /**
  * @author <a href="mailto:tomaz.cerar@redhat.com">Tomaz Cerar</a> (c) 2013 Red Hat Inc.
@@ -43,7 +43,7 @@ public class LocationService implements Service<LocationService> {
     private final String locationPath;
     private final InjectedValue<HttpHandler> httpHandler = new InjectedValue<>();
     private final InjectedValue<Host> host = new InjectedValue<>();
-    private final CopyOnWriteArrayList<InjectedValue<FilterRef>> filters = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<InjectedValue<FilterService>> filters = new CopyOnWriteArrayList<>();
 
     public LocationService(String locationPath) {
         this.locationPath = locationPath;
@@ -73,18 +73,18 @@ public class LocationService implements Service<LocationService> {
         return httpHandler;
     }
 
-    List<InjectedValue<FilterRef>> getFilters() {
+    List<InjectedValue<FilterService>> getFilters() {
         return filters;
     }
 
     private HttpHandler configureHandler() {
-        ArrayList<FilterRef> filters = new ArrayList<>(this.filters.size());
-        for (InjectedValue<FilterRef> injectedFilter : this.filters) {
+        ArrayList<FilterService> filters = new ArrayList<>(this.filters.size());
+        for (InjectedValue<FilterService> injectedFilter : this.filters) {
             filters.add(injectedFilter.getValue());
         }
         Collections.reverse(filters);
         HttpHandler handler = getHttpHandler().getValue();
-        for (FilterRef filter : filters) {
+        for (FilterService filter : filters) {
             handler = filter.createHttpHandler(handler);
         }
 
