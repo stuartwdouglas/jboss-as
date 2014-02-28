@@ -58,8 +58,7 @@
             <!-- Some final cleanup -->
             <replace file="${module.repo.output.dir}/${current.module.path}/${module.xml}">
                 <replacetoken>
-                    <![CDATA[
-        <!-- Insert resources here -->]]></replacetoken>
+                    <![CDATA[<!-- Insert resources here -->]]></replacetoken>
                 <replacevalue>
                 </replacevalue>
             </replace>
@@ -140,11 +139,11 @@
             classifier = attributes.get("classifier");
             name = attributes.get("group") + ":" + artifact + ":";
             clength = classifier != "" ? classifier.length() + 1 : 0;
-            name = name + path.substring(path.lastIndexOf(artifact) + artifact.length() + 1, path.length() - 4 - clength);
+            //name = name + path.substring(path.lastIndexOf(artifact) + artifact.length() + 1, path.length() - 4 - clength);
             if(classifier != "") {
                 name = name + ":" + classifier;
             }
-            root = "<artifact name=\"" + name + "\"/>";
+            root = "<artifact name=\"${" + name + "}\"/>";
             if(path.indexOf('${') != -1) {
                 throw "Module resource root not found, make sure it is listed in build/pom.xml" + path;
             }
