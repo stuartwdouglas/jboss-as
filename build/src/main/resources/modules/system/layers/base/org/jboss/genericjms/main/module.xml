@@ -23,7 +23,7 @@
 <module xmlns="urn:jboss:module:1.1" name="org.jboss.genericjms">
     <resources>
        <resource-root path="."/>
-        <!-- Insert resources here -->
+        <artifact name="${org.jboss.genericjms:generic-jms-ra-jar:}"/>
     </resources>
     <dependencies>
         <module name="org.jboss.common-core" slot="main"/>

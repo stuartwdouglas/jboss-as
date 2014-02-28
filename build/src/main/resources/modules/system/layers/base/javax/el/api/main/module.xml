@@ -24,6 +24,6 @@
 
 <module xmlns="urn:jboss:module:1.1" name="javax.el.api">
     <resources>
-        <!-- Insert resources here -->
+        <artifact name="${org.jboss.spec.javax.el:jboss-el-api_3.0_spec:}"/>
     </resources>
 </module>

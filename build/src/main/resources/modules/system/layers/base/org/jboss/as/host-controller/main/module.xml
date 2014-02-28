@@ -30,7 +30,7 @@
     <main-class name="org.jboss.as.host.controller.Main"/>
 
     <resources>
-        <!-- Insert resources here -->
+        <artifact name="${org.wildfly:wildfly-host-controller:}"/>
     </resources>
 
     <dependencies>

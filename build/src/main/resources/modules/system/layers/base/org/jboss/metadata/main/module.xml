@@ -28,7 +28,11 @@
     </properties>
 
     <resources>
-        <!-- Insert resources here -->
+        <artifact name="${org.jboss.metadata:jboss-metadata-common:}"/>
+        <artifact name="${org.jboss.metadata:jboss-metadata-appclient:}"/>
+        <artifact name="${org.jboss.metadata:jboss-metadata-ejb:}"/>
+        <artifact name="${org.jboss.metadata:jboss-metadata-web:}"/>
+        <artifact name="${org.jboss.metadata:jboss-metadata-ear:}"/>
     </resources>
 
     <dependencies>

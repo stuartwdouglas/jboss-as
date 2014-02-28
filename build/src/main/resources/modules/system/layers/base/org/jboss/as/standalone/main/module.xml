@@ -30,7 +30,6 @@
     <main-class name="org.jboss.as.server.Main"/>
 
     <resources>
-        <!-- Insert resources here -->
     </resources>
 
     <dependencies>

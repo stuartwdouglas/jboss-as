@@ -24,7 +24,7 @@
 
 <module xmlns="urn:jboss:module:1.1" name="org.jboss.logmanager">
     <resources>
-        <!-- Insert resources here -->
+        <artifact name="${org.jboss.logmanager:jboss-logmanager:}"/>
     </resources>
 
     <dependencies>

@@ -29,7 +29,7 @@
     </exports>
 
     <resources>
-        <!-- Insert resources here -->
+        <artifact name="${org.wildfly:wildfly-controller-client:}"/>
     </resources>
 
     <dependencies>

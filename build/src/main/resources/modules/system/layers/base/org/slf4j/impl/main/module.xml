@@ -29,7 +29,7 @@
     </properties>
 
     <resources>
-        <!-- Insert resources here -->
+        <artifact name="${org.jboss.slf4j:slf4j-jboss-logmanager:}"/>
     </resources>
 
     <dependencies>

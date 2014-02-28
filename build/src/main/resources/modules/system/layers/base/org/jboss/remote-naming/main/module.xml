@@ -23,7 +23,7 @@
 <module xmlns="urn:jboss:module:1.1" name="org.jboss.remote-naming">
 
     <resources>
-        <!-- Insert resources here -->
+        <artifact name="${org.jboss:jboss-remote-naming:}"/>
     </resources>
 
     <dependencies>

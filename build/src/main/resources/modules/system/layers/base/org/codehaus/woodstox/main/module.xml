@@ -27,7 +27,8 @@
     </properties>
 
     <resources>
-        <!-- Insert resources here -->
+        <artifact name="${org.codehaus.woodstox:woodstox-core-asl:}"/>
+        <artifact name="${org.codehaus.woodstox:stax2-api:}"/>
     </resources>
 
     <dependencies>

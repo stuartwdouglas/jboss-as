@@ -23,7 +23,7 @@
 <module xmlns="urn:jboss:module:1.1" name="org.jboss.ejb3">
 
     <resources>
-        <!-- Insert resources here -->
+        <artifact name="${org.jboss.ejb3:jboss-ejb3-ext-api:}"/>
     </resources>
 
     <dependencies>

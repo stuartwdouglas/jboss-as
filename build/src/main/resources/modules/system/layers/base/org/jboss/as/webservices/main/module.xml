@@ -28,7 +28,8 @@
     </properties>
 
     <resources>
-        <!-- Insert resources here -->
+        <artifact name="${org.wildfly:wildfly-webservices-server-integration:}"/>
+        <artifact name="${org.jboss.ws.cxf:jbossws-cxf-resources::wildfly800}"/>
     </resources>
 
     <dependencies>

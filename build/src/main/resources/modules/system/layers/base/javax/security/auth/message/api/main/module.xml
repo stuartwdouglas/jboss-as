@@ -30,6 +30,6 @@
      </dependencies>
 
     <resources>
-        <!-- Insert resources here -->
+        <artifact name="${org.jboss.spec.javax.security.auth.message:jboss-jaspi-api_1.1_spec:}"/>
     </resources>
 </module>

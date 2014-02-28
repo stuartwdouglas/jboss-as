@@ -25,7 +25,8 @@
 <module xmlns="urn:jboss:module:1.1" name="org.apache.xalan">
 
     <resources>
-        <!-- Insert resources here -->
+        <artifact name="${xalan:serializer:}"/>
+        <artifact name="${xalan:xalan:}"/>
     </resources>
 
     <dependencies>

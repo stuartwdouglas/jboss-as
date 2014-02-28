@@ -30,7 +30,7 @@
     <main-class name="org.jboss.as.jdr.CommandLineMain"/>
 
     <resources>
-        <!-- Insert resources here -->
+        <artifact name="${org.wildfly:wildfly-jdr:}"/>
         <resource-root path="resources"/>
     </resources>
 
