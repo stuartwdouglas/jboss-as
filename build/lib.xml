@@ -84,19 +84,14 @@
         <attribute name="jandex" default="false" />
 
         <sequential>
-            <!-- Copy the jar to the module dir -->
-            <copy todir="${module.repo.output.dir}/${current.module.path}" failonerror="true">
-                <fileset file="${@{group}:@{artifact}:jar}"/>
-                <mapper type="flatten" />
-            </copy>
 
             <basename file="${@{group}:@{artifact}:jar}" property="resourcename.@{group}.@{artifact}"/>
             <!-- Generate the Jandex Index -->
-            <jandex run="@{jandex}" newJar="true" >
+            <jandex run="@{jandex}" newJar="true"  >
                 <fileset dir="${module.repo.output.dir}/${current.module.path}" />
             </jandex>
             <!-- Update the resource entry in module.xml -->
-            <define-resource-root path="${resourcename.@{group}.@{artifact}}" jandex="@{jandex}"/>
+            <define-resource-root path="${resourcename.@{group}.@{artifact}}" jandex="@{jandex}" artifact="@{artifact}" group="@{group}" classifier=""/>
             <replace file="${module.repo.output.dir}/${current.module.path}/${module.xml}">
                 <replacefilter token="&lt;!-- Insert resources here --&gt;" value="${current.resource.root}&#10;        &lt;!-- Insert resources here --&gt;"/>
             </replace>
@@ -110,17 +105,11 @@
         <attribute name="jandex" default="false" />
 
         <sequential>
-            <!-- Copy the jar to the module dir -->
-            <copy todir="${module.repo.output.dir}/${current.module.path}" failonerror="true">
-                <fileset file="${@{group}:@{artifact}:jar:@{classifier}}"/>
-                <!-- http://jira.codehaus.org/browse/MANTRUN-159 -->
-                <mapper type="flatten" />
-            </copy>
 
             <basename file="${@{group}:@{artifact}:jar:@{classifier}}" property="resourcename.@{group}.@{artifact}.@{classifier}"/>
 
             <!-- Update the resource entry in module.xml -->
-            <define-resource-root path="${resourcename.@{group}.@{artifact}.@{classifier}}"/>
+            <define-resource-root path="${resourcename.@{group}.@{artifact}.@{classifier}}" group="@{group}" artifact="@{artifact}" classifier="@{classifier}"/>
             <replace file="${module.repo.output.dir}/${current.module.path}/${module.xml}">
                 <replacefilter token="&lt;!-- Insert resources here --&gt;" value="${current.resource.root}&#10;        &lt;!-- Insert resources here --&gt;"/>
             </replace>
@@ -141,15 +130,26 @@
 
     <scriptdef name="define-resource-root" language="javascript">
         <attribute name="path"/>
+        <attribute name="group"/>
+        <attribute name="artifact"/>
+        <attribute name="classifier"/>
         <attribute name="jandex"/>
         <![CDATA[
             path = attributes.get("path");
-            root = "<resource-root path=\"" + path + "\"/>";
+            artifact = attributes.get("artifact");
+            classifier = attributes.get("classifier");
+            name = attributes.get("group") + ":" + artifact + ":";
+            clength = classifier != "" ? classifier.length() + 1 : 0;
+            name = name + path.substring(path.lastIndexOf(artifact) + artifact.length() + 1, path.length() - 4 - clength);
+            if(classifier != "") {
+                name = name + ":" + classifier;
+            }
+            root = "<artifact name=\"" + name + "\"/>";
             if(path.indexOf('${') != -1) {
                 throw "Module resource root not found, make sure it is listed in build/pom.xml" + path;
             }
             if(attributes.get("jandex") == "true" ) {
-                root = root + "\n\t<resource-root path=\"" + path.replace(".jar","-jandex.jar") + "\"/>";
+                //root = root + "\n\t<resource-root path=\"" + path.replace(".jar","-jandex.jar") + "\"/>";
             }
             project.setProperty("current.resource.root", root);
         ]]>
