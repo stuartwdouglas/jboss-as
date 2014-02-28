@@ -323,6 +323,7 @@
         <module>protocol</module>
         <module>remoting</module>
         <module>server</module>
+        <module>server-build-plugin</module>
         <module>subsystem-test</module>
         <module>threads</module>
         <module>version</module>
