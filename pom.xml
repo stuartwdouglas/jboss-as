@@ -305,7 +305,9 @@
     <modules>
         <module>build</module>
         <module>build-config</module>
+        <module>build-core</module>
         <module>build-modular</module>
+        <module>build-plugin</module>
         <module>controller</module>
         <module>controller-client</module>
         <module>core-security</module>
@@ -323,7 +325,6 @@
         <module>protocol</module>
         <module>remoting</module>
         <module>server</module>
-        <module>server-build-plugin</module>
         <module>subsystem-test</module>
         <module>threads</module>
         <module>version</module>
@@ -886,6 +887,12 @@
             <dependency>
                 <groupId>org.wildfly</groupId>
                 <artifactId>wildfly-build-config</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly</groupId>
+                <artifactId>wildfly-build-plugin</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

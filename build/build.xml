@@ -278,10 +278,6 @@
             <maven-resource group="org.wildfly" artifact="wildfly-threads"/>
         </module-def>
 
-        <module-def name="org.jboss.com.sun.httpserver">
-            <maven-resource group="org.jboss.com.sun.httpserver" artifact="httpserver"/>
-        </module-def>
-
         <module-def name="org.jboss.common-beans">
             <maven-resource group="org.jboss.common" artifact="jboss-common-beans"/>
         </module-def>
@@ -1547,5 +1543,5 @@
             <copy file="${org.wildfly:wildfly-version:jar}" tofile="${module.repo.output.dir}/org/jboss/as/version/main/jboss-as-version-${project.version}.jar"/>
     </target>
 
-    <target name="all" depends="base, copy-standalone, modules, create-ext-content, copy-client, copy-version"/>
+    <target name="all" depends="base, copy-standalone, create-ext-content, copy-client, copy-version"/>
 </project>
