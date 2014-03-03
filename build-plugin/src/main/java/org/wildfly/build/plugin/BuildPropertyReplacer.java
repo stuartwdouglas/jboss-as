@@ -9,7 +9,7 @@ import java.util.Properties;
 
 /**
  * Replace properties of the form:
- * <code>${<i>&lt;[env.]name&gt;[</i>,<i>&lt;[env.]name2&gt;[</i>,<i>&lt;[env.]name3&gt;...]][</i>:<i>&lt;default&gt;]</i>}</code>
+ * <code>${<i>&lt;[env.]name&gt;[</i>,<i>&lt;[env.]name2&gt;[</i>,<i>&lt;[env.]name3&gt;...]][</i>]</i>}</code>
  *
  * @author Jaikiran Pai (copied from JBoss DMR project)
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
@@ -77,16 +77,11 @@ public class BuildPropertyReplacer {
                 }
                 case GOT_OPEN_BRACE: {
                     switch (ch) {
-                        case ':':
                         case '}':
                         case ',': {
                             final String name = value.substring(nameStart, i).trim();
                             if ("/".equals(name)) {
                                 builder.append(File.separator);
-                                state = ch == '}' ? INITIAL : RESOLVED;
-                                continue;
-                            } else if (":".equals(name)) {
-                                builder.append(File.pathSeparator);
                                 state = ch == '}' ? INITIAL : RESOLVED;
                                 continue;
                             }
@@ -99,10 +94,6 @@ public class BuildPropertyReplacer {
                                 continue;
                             } else if (ch == ',') {
                                 nameStart = i + 1;
-                                continue;
-                            } else if (ch == ':') {
-                                start = i + 1;
-                                state = DEFAULT;
                                 continue;
                             } else {
                                 throw new IllegalStateException("Failed to resolve expression: " + value.substring(start - 2, i + 1));

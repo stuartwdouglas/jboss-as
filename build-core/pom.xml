@@ -57,8 +57,23 @@
         </dependency>
 
         <dependency>
+            <groupId>javax.activation</groupId>
+            <artifactId>activation</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.woodstox</groupId>
+            <artifactId>woodstox-core-asl</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.woodstox</groupId>
+            <artifactId>stax2-api</artifactId>
         </dependency>
 
         <!-- TODO: why do we need jandex in minimal? -->
@@ -75,6 +90,16 @@
         <dependency>
             <groupId>org.jboss</groupId>
             <artifactId>staxmapper</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.classfilewriter</groupId>
+            <artifactId>jboss-classfilewriter</artifactId>
+        </dependency>
+        
+        <dependency>
+            <groupId>org.jboss.common</groupId>
+            <artifactId>jboss-common-beans</artifactId>
         </dependency>
 
         <dependency>
@@ -153,6 +178,11 @@
         </dependency>
 
         <dependency>
+            <groupId>org.jboss.slf4j</groupId>
+            <artifactId> slf4j-jboss-logmanager</artifactId>
+        </dependency>
+
+        <dependency>
             <groupId>org.jboss.stdio</groupId>
             <artifactId>jboss-stdio</artifactId>
         </dependency>
@@ -221,6 +251,11 @@
 
         <dependency>
             <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-embedded</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.wildfly</groupId>
             <artifactId>wildfly-host-controller</artifactId>
         </dependency>
 
@@ -247,6 +282,11 @@
         <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-io</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-logging</artifactId>
         </dependency>
 
         <dependency>
@@ -297,6 +337,11 @@
 
         <dependency>
             <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-remoting</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.wildfly</groupId>
             <artifactId>wildfly-security-manager</artifactId>
         </dependency>
 
@@ -312,7 +357,12 @@
 
         <dependency>
             <groupId>org.wildfly</groupId>
-            <artifactId>wildfly-remoting</artifactId>
+            <artifactId>wildfly-system-jmx</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-threads</artifactId>
         </dependency>
 
         <dependency>
@@ -320,6 +370,15 @@
             <artifactId>wildfly-version</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>xerces</groupId>
+            <artifactId>xercesImpl</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>xml-resolver</groupId>
+            <artifactId>xml-resolver</artifactId>
+        </dependency>
 
     </dependencies>
 

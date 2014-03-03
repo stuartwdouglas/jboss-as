@@ -180,9 +180,9 @@ public class BuildMojo extends AbstractMojo {
                 }
             }
         }
-        if(!notFound.isEmpty()) {
+        if (!notFound.isEmpty()) {
             StringBuilder sb = new StringBuilder();
-            for(String problem : notFound) {
+            for (String problem : notFound) {
                 sb.append(problem);
                 sb.append('\n');
             }
@@ -190,23 +190,24 @@ public class BuildMojo extends AbstractMojo {
         }
 
         Properties artifactPropertyMap = new Properties();
-        for(Map.Entry<String, Artifact> entry : artifactMap.entrySet()) {
+        for (Map.Entry<String, Artifact> entry : artifactMap.entrySet()) {
             StringBuilder sb = new StringBuilder();
             sb.append(entry.getValue().getGroupId());
             sb.append(":");
             sb.append(entry.getValue().getArtifactId());
             sb.append(":");
             sb.append(entry.getValue().getVersion());
-            if(entry.getValue().getClassifier() != null) {
+            if (entry.getValue().getClassifier() != null) {
                 sb.append(':');
                 sb.append(entry.getValue().getClassifier());
             }
             artifactPropertyMap.put(entry.getKey(), sb.toString());
         }
 
+        final Set<String> errors = new HashSet<>();
         final BuildPropertyReplacer moduleReplacer = new BuildPropertyReplacer(artifactPropertyMap);
         File baseDir = new File(buildName, serverName);
-        Path modulesDir = Paths.get(baseDir.getAbsolutePath()).resolve("modules");
+        Path modulesDir = Paths.get(baseDir.getAbsolutePath());
         //ok, now we have a resolved module set
         //now lets copy it to where it needs to go
         for (Map.Entry<ModuleIdentifier, ModuleParseResult> entry : finalModuleSet.entrySet()) {
@@ -235,24 +236,29 @@ public class BuildMojo extends AbstractMojo {
 
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    String relative = moduleParent.relativize(file).toString();
-                    Path targetFile = moduleParent.resolve(relative);
-                    if (relative.equals("module.xml")) {
-                        //we do property replacement on module.xml
-                        //TODO: this is a bit yuck atm
-                        String data = readFile(file.toFile());
-                        data = moduleReplacer.replaceProperties(data);
-                        copyFile(new ByteArrayInputStream(data.getBytes("UTF-8")), targetFile.toFile());
-                    } else {
-                        copyFile(file.toFile(), targetFile.toFile());
-                        Files.setPosixFilePermissions(targetFile, Files.getPosixFilePermissions(file));
+                    try {
+                        String relative = moduleParent.relativize(file).toString();
+                        Path targetFile = targetDir.resolve(relative);
+                        if (relative.equals("module.xml")) {
+                            //we do property replacement on module.xml
+                            //TODO: this is a bit yuck atm
+                            String data = readFile(file.toFile());
+                            data = moduleReplacer.replaceProperties(data);
+                            copyFile(new ByteArrayInputStream(data.getBytes("UTF-8")), targetFile.toFile());
+                        } else {
+                            copyFile(file.toFile(), targetFile.toFile());
+                            Files.setPosixFilePermissions(targetFile, Files.getPosixFilePermissions(file));
+                        }
+                        return FileVisitResult.CONTINUE;
+                    } catch (Exception e) {
+                        errors.add(e.getMessage());
+                        return FileVisitResult.CONTINUE;
                     }
-                    return FileVisitResult.CONTINUE;
                 }
 
                 @Override
                 public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
-                    return FileVisitResult.TERMINATE;
+                    return FileVisitResult.CONTINUE;
                 }
 
                 @Override
@@ -261,6 +267,15 @@ public class BuildMojo extends AbstractMojo {
                 }
             });
 
+        }
+
+        if (!errors.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (String problem : errors) {
+                sb.append(problem);
+                sb.append('\n');
+            }
+            throw new RuntimeException(sb.toString());
         }
 
 
