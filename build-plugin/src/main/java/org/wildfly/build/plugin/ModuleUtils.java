@@ -46,17 +46,19 @@ public class ModuleUtils {
     }
 
     public static Map<ModuleIdentifier, ModuleParseResult> enumerateModuleDirectory(Log log, final Path moduleDirectory) throws IOException {
-        ModuleVisitor visitor = new ModuleVisitor(log);
+        ModuleVisitor visitor = new ModuleVisitor(moduleDirectory, log);
         Files.walkFileTree(moduleDirectory, visitor);
         return visitor.getParseResults();
     }
 
     private static final class ModuleVisitor implements FileVisitor<Path> {
 
+        private final Path moduleRoot;
         final Log log;
         private final Map<ModuleIdentifier, ModuleParseResult> parseResults = new HashMap<>();
 
-        private ModuleVisitor(Log log) {
+        private ModuleVisitor(Path moduleRoot, Log log) {
+            this.moduleRoot = moduleRoot;
             this.log = log;
         }
 
@@ -71,7 +73,7 @@ public class ModuleUtils {
                 return FileVisitResult.CONTINUE;
             }
             try {
-                ModuleParseResult result = ModuleParser.parse(file.toFile());
+                ModuleParseResult result = ModuleParser.parse(moduleRoot, file);
                 parseResults.put(result.getIdentifier(), result);
             } catch (XMLStreamException e) {
                 throw new RuntimeException(e);

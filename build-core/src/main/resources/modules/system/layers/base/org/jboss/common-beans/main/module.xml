@@ -22,14 +22,12 @@
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
   -->
 
-<module xmlns="urn:jboss:module:1.3" name="org.slf4j.ext">
-    <resources>
-        <artifact name="${org.slf4j:slf4j-ext:}"/>
-    </resources>
+<module xmlns="urn:jboss:module:1.3" name="org.jboss.common-beans">
+    <properties>
+        <property name="jboss.api" value="private"/>
+    </properties>
 
-    <dependencies>
-        <module name="ch.qos.cal10n" />
-        <module name="org.slf4j"/>
-        <module name="org.jboss.logmanager"/>
-    </dependencies>
+    <resources>
+        <artifact name="${org.jboss.common:jboss-common-beans:}"/>
+    </resources>
 </module>

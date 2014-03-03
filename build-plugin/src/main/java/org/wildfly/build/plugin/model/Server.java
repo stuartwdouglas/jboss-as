@@ -35,6 +35,19 @@ public class Server {
         return true; //default include
     }
 
+    public ModuleIncludeType includeModule(final String path) {
+        for(ModuleFilter filter : modules) {
+            if(filter.matches(path)) {
+                if(filter.isInclude() ){
+                    return filter.isTransitive() ? ModuleIncludeType.TRANSITIVE : ModuleIncludeType.MODULE_ONLY;
+                } else {
+                    return ModuleIncludeType.NONE;
+                }
+            }
+        }
+        return ModuleIncludeType.TRANSITIVE; //default include
+    }
+
     public String getPath() {
         return path;
     }
@@ -49,5 +62,11 @@ public class Server {
 
     public void setArtifact(String artifact) {
         this.artifact = artifact;
+    }
+
+    public static enum ModuleIncludeType {
+        NONE,
+        MODULE_ONLY,
+        TRANSITIVE,
     }
 }

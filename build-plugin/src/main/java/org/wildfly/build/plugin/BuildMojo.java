@@ -40,6 +40,7 @@ import org.wildfly.build.plugin.model.Server;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
@@ -53,12 +54,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -125,10 +129,141 @@ public class BuildMojo extends AbstractMojo {
 
     private void copyModules(Build build) throws IOException {
         final List<Map<ModuleIdentifier, ModuleParseResult>> allModules = new ArrayList<>();
-        for(Server server : build.getServers()) {
+        for (Server server : build.getServers()) {
             allModules.add(ModuleUtils.enumerateModuleDirectory(getLog(), Paths.get(server.getPath())));
         }
-        
+
+        Deque<ModuleParseResult> transitiveIncludes = new ArrayDeque<>();
+        final Map<ModuleIdentifier, ModuleParseResult> finalModuleSet = new HashMap<>();
+
+        //go through and get all directly included modules
+        for (int i = 0; i < allModules.size(); ++i) {
+            Server server = build.getServers().get(i);
+            Map<ModuleIdentifier, ModuleParseResult> modules = allModules.get(i);
+            for (Map.Entry<ModuleIdentifier, ModuleParseResult> entry : modules.entrySet()) {
+                Server.ModuleIncludeType includeType = server.includeModule(entry.getKey().toString());
+                if (includeType == Server.ModuleIncludeType.MODULE_ONLY || includeType == Server.ModuleIncludeType.TRANSITIVE) {
+                    if (finalModuleSet.containsKey(entry.getKey())) {
+                        throw new RuntimeException("Same module is present in two servers, one of them must be excluded " + finalModuleSet.get(entry.getKey()).moduleXmlFile + " and " + entry.getValue().moduleXmlFile);
+                    }
+                    finalModuleSet.put(entry.getKey(), entry.getValue());
+                    if (includeType == Server.ModuleIncludeType.TRANSITIVE) {
+                        transitiveIncludes.add(entry.getValue());
+                    }
+                }
+            }
+        }
+        final Set<String> notFound = new HashSet<>();
+        //now resolve all transitive dependencies
+        while (!transitiveIncludes.isEmpty()) {
+            ModuleParseResult transitive = transitiveIncludes.pop();
+            for (ModuleParseResult.ModuleDependency dep : transitive.getDependencies()) {
+                if (!finalModuleSet.containsKey(dep.getModuleId())) {
+                    ModuleParseResult found = null;
+                    for (Map<ModuleIdentifier, ModuleParseResult> moduleMap : allModules) {
+                        if (moduleMap.containsKey(dep.getModuleId())) {
+                            if (found == null) {
+                                found = moduleMap.get(dep.getModuleId());
+                            } else {
+                                throw new RuntimeException("Same module is present in two servers, one of them must be excluded " + moduleMap.get(dep.getModuleId()) + " and " + found.moduleXmlFile);
+                            }
+                        }
+                    }
+                    if (found == null && !dep.isOptional()) {
+                        notFound.add("Could not find module " + dep.getModuleId() + " referenced from module " + transitive.getIdentifier() + " at " + transitive.getModuleXmlFile());
+                    } else if (found != null) {
+                        finalModuleSet.put(found.getIdentifier(), found);
+                        transitiveIncludes.add(found);
+                    } else {
+                        getLog().warn("Could not find optional dependency " + dep.getModuleId());
+                    }
+                }
+            }
+        }
+        if(!notFound.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for(String problem : notFound) {
+                sb.append(problem);
+                sb.append('\n');
+            }
+            throw new RuntimeException(sb.toString());
+        }
+
+        Properties artifactPropertyMap = new Properties();
+        for(Map.Entry<String, Artifact> entry : artifactMap.entrySet()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(entry.getValue().getGroupId());
+            sb.append(":");
+            sb.append(entry.getValue().getArtifactId());
+            sb.append(":");
+            sb.append(entry.getValue().getVersion());
+            if(entry.getValue().getClassifier() != null) {
+                sb.append(':');
+                sb.append(entry.getValue().getClassifier());
+            }
+            artifactPropertyMap.put(entry.getKey(), sb.toString());
+        }
+
+        final BuildPropertyReplacer moduleReplacer = new BuildPropertyReplacer(artifactPropertyMap);
+        File baseDir = new File(buildName, serverName);
+        Path modulesDir = Paths.get(baseDir.getAbsolutePath()).resolve("modules");
+        //ok, now we have a resolved module set
+        //now lets copy it to where it needs to go
+        for (Map.Entry<ModuleIdentifier, ModuleParseResult> entry : finalModuleSet.entrySet()) {
+            Path moduleRoot = entry.getValue().getModuleRoot();
+            Path module = entry.getValue().getModuleXmlFile();
+            final Path moduleParent = module.getParent();
+            final Path relativeParent = moduleRoot.relativize(moduleParent);
+            final Path targetDir = modulesDir.resolve(relativeParent);
+            if (!Files.isDirectory(targetDir)) {
+                targetDir.toFile().mkdirs();
+            }
+
+            Files.walkFileTree(moduleParent, new FileVisitor<Path>() {
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    String relative = moduleParent.relativize(dir).toString();
+                    Path rel = targetDir.resolve(relative);
+                    if (!Files.isDirectory(rel)) {
+                        if (!rel.toFile().mkdirs()) {
+                            throw new IOException("Could not create directory " + rel.toString());
+                        }
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    String relative = moduleParent.relativize(file).toString();
+                    Path targetFile = moduleParent.resolve(relative);
+                    if (relative.equals("module.xml")) {
+                        //we do property replacement on module.xml
+                        //TODO: this is a bit yuck atm
+                        String data = readFile(file.toFile());
+                        data = moduleReplacer.replaceProperties(data);
+                        copyFile(new ByteArrayInputStream(data.getBytes("UTF-8")), targetFile.toFile());
+                    } else {
+                        copyFile(file.toFile(), targetFile.toFile());
+                        Files.setPosixFilePermissions(targetFile, Files.getPosixFilePermissions(file));
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                    return FileVisitResult.TERMINATE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+
+        }
+
+
     }
 
     private void buildArtifactMap() {
@@ -313,6 +448,39 @@ public class BuildMojo extends AbstractMojo {
             }
         } finally {
             safeClose(out);
+        }
+    }
+
+
+    public static String readFile(final File file) {
+        try {
+            return readFile(new FileInputStream(file));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String readFile(InputStream file) {
+        BufferedInputStream stream = null;
+        try {
+            stream = new BufferedInputStream(file);
+            byte[] buff = new byte[1024];
+            StringBuilder builder = new StringBuilder();
+            int read = -1;
+            while ((read = stream.read(buff)) != -1) {
+                builder.append(new String(buff, 0, read));
+            }
+            return builder.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException e) {
+                    //ignore
+                }
+            }
         }
     }
 }

@@ -27,10 +27,10 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 
 import static javax.xml.stream.XMLStreamConstants.END_DOCUMENT;
 import static javax.xml.stream.XMLStreamConstants.END_ELEMENT;
@@ -46,9 +46,9 @@ import static javax.xml.stream.XMLStreamConstants.START_ELEMENT;
 class ModuleParser {
 
 
-    static ModuleParseResult parse(File inputFile) throws IOException, XMLStreamException {
-        ModuleParseResult result = new ModuleParseResult(inputFile);
-        InputStream in = new BufferedInputStream(new FileInputStream(inputFile));
+    static ModuleParseResult parse(final Path moduleRoot, Path inputFile) throws IOException, XMLStreamException {
+        ModuleParseResult result = new ModuleParseResult(moduleRoot, inputFile);
+        InputStream in = new BufferedInputStream(new FileInputStream(inputFile.toFile()));
         try {
             XMLStreamReader reader = XMLInputFactory.newInstance().createXMLStreamReader(in);
             reader.require(START_DOCUMENT, null, null);
@@ -70,7 +70,8 @@ class ModuleParser {
                         return result;
                 }
             }
-
+        } catch (Exception e) {
+            throw new RuntimeException("Error parsing " + inputFile, e);
         } finally {
             try {
                 in.close();
@@ -85,9 +86,9 @@ class ModuleParser {
         String name = null;
         String slot = "main";
         for (int i = 0; i < count; i++) {
-            if("name".equals(reader.getAttributeName(i))) {
+            if("name".equals(reader.getAttributeName(i).getLocalPart())) {
                name = reader.getAttributeValue(i);
-            } else if("slot".equals(reader.getAttributeName(i))) {
+            } else if("slot".equals(reader.getAttributeName(i).getLocalPart())) {
                 slot = reader.getAttributeValue(i);
             }
         }
@@ -109,18 +110,25 @@ class ModuleParser {
     }
 
     private static void parseModuleAlias(XMLStreamReader reader, ModuleParseResult result) throws XMLStreamException {
-        String name = "";
-        String slot = "main";
+        String targetName = "";
+        String targetSlot = "main";
+        String name = null;
+        String slot = null;
         boolean optional = false;
         for (int i = 0 ; i < reader.getAttributeCount() ; i++) {
             String localName = reader.getAttributeLocalName(i);
             if (localName.equals("target-name")) {
-                name = reader.getAttributeValue(i);
+                targetName = reader.getAttributeValue(i);
             } else if (localName.equals("target-slot")) {
+                targetSlot = reader.getAttributeValue(i);
+            } else if (localName.equals("name")) {
+                name = reader.getAttributeValue(i);
+            } else if (localName.equals("slot")) {
                 slot = reader.getAttributeValue(i);
             }
         }
-        ModuleIdentifier moduleId = ModuleIdentifier.create(name, slot);
+        ModuleIdentifier moduleId = ModuleIdentifier.create(targetName, targetSlot);
+        result.identifier = ModuleIdentifier.create(name, slot);
         result.dependencies.add(new ModuleParseResult.ModuleDependency(moduleId, optional));
     }
 

@@ -2,7 +2,7 @@ package org.wildfly.build.plugin;
 
 import org.jboss.modules.ModuleIdentifier;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,16 +10,22 @@ import java.util.List;
  * @author Stuart Douglas
  */
 public class ModuleParseResult {
-    final File moduleXmlFile;
+    final Path moduleRoot;
+    final Path moduleXmlFile;
     final List<ModuleDependency> dependencies = new ArrayList<ModuleDependency>();
     ModuleIdentifier identifier;
 
-    public ModuleParseResult(File moduleXmlFile) {
+    public ModuleParseResult(Path moduleRoot, Path moduleXmlFile) {
+        this.moduleRoot = moduleRoot;
         this.moduleXmlFile = moduleXmlFile;
     }
 
-    public File getModuleXmlFile() {
+    public Path getModuleXmlFile() {
         return moduleXmlFile;
+    }
+
+    public Path getModuleRoot() {
+        return moduleRoot;
     }
 
     public List<ModuleDependency> getDependencies() {
