@@ -204,7 +204,10 @@ public class BuildMojo extends AbstractMojo {
                     String relative = base.relativize(dir).toString();
                     boolean include = server.includeFile(relative);
                     if(include) {
-                        path.resolve(relative).toFile().mkdirs();
+                        Path rel = path.resolve(relative);
+                        if(!rel.toFile().mkdirs() ){
+                            throw new IOException("Could not create directory " + rel.toString());
+                        }
                         return FileVisitResult.CONTINUE;
                     }
                     return FileVisitResult.SKIP_SUBTREE;
@@ -216,7 +219,9 @@ public class BuildMojo extends AbstractMojo {
                     if(!server.includeFile(relative)) {
                         return FileVisitResult.CONTINUE;
                     }
-                    copyFile(file.toFile(), path.resolve(relative).toFile());
+                    Path targetFile = path.resolve(relative);
+                    copyFile(file.toFile(), targetFile.toFile());
+                    Files.setPosixFilePermissions(targetFile, Files.getPosixFilePermissions(file));
                     return FileVisitResult.CONTINUE;
                 }
 
