@@ -38,6 +38,7 @@ import org.wildfly.build.plugin.model.BuildModelParser;
 import org.wildfly.build.plugin.model.CopyArtifact;
 import org.wildfly.build.plugin.model.Server;
 
+import javax.xml.stream.XMLStreamException;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -53,6 +54,7 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -66,6 +68,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 /**
  * @author Stuart Douglas
@@ -113,6 +117,9 @@ public class BuildMojo extends AbstractMojo {
             copyServers(build);
             copyModules(build);
             copyArtifacts(build);
+            if (build.isExtractSchema()) {
+                extractSchema();
+            }
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -127,7 +134,63 @@ public class BuildMojo extends AbstractMojo {
         }
     }
 
-    private void copyModules(Build build) throws IOException {
+    private void extractSchema() throws IOException {
+        final File baseDir = new File(buildName, serverName);
+        final File schemaTarget = new File(baseDir, "docs" + File.separator + "schema");
+        if(!schemaTarget.mkdirs()) {
+           throw new RuntimeException("Could not create schema directory");
+        }
+        final Path modulesDir = Paths.get(new File(baseDir, "modules").getAbsolutePath());
+        Map<String, Artifact> gavMap = new HashMap<>();
+        Files.walkFileTree(modulesDir, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                if (!file.getFileName().toString().equals("module.xml")) {
+                    return FileVisitResult.CONTINUE;
+                }
+                try {
+                    ModuleParseResult result = ModuleParser.parse(modulesDir, file);
+
+                    for (String artifactName : result.getArtifacts()) {
+                        Artifact artifact = artifactMap.get(artifactName);
+                        if(artifact == null) {
+                            getLog().warn("Could not extract schema from artifact " + artifactName);
+                            continue;
+                        }
+                        ZipFile zip = new ZipFile(artifact.getFile());
+                        try {
+                            if(zip.getEntry("schema") == null) {
+                                continue;
+                            }
+                            Enumeration<? extends ZipEntry> entries = zip.entries();
+                            while (entries.hasMoreElements()) {
+                                ZipEntry entry = entries.nextElement();
+                                if(entry.getName().startsWith("schema/") && !entry.isDirectory()) {
+                                    InputStream in = null;
+                                    try {
+                                        in = zip.getInputStream(entry);
+                                        copyFile(in, new File(schemaTarget, entry.getName().substring("schema/".length())));
+                                    } finally {
+                                        safeClose(in);
+                                    }
+                                }
+                            }
+                        } finally {
+                            safeClose(zip);
+                        }
+                    }
+
+                } catch (XMLStreamException e) {
+                    throw new RuntimeException(e);
+                }
+
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+    }
+
+    private void copyModules(final Build build) throws IOException {
         final List<Map<ModuleIdentifier, ModuleParseResult>> allModules = new ArrayList<>();
         for (Server server : build.getServers()) {
             allModules.add(ModuleUtils.enumerateModuleDirectory(getLog(), Paths.get(server.getPath())));
@@ -288,12 +351,14 @@ public class BuildMojo extends AbstractMojo {
             sb.append(':');
             sb.append(artifact.getArtifactId());
             if (artifact.getClassifier() != null && !artifact.getClassifier().isEmpty()) {
-                sb.append(":");
-                sb.append(artifact.getClassifier());
+                artifactMap.put(sb.toString() + "::" + artifact.getClassifier(), artifact);
+                artifactMap.put(sb.toString() + ":" + artifact.getVersion() + ":" + artifact.getClassifier(), artifact);
+            } else {
+                artifactMap.put(sb.toString(), artifact);
+                sb.append(':');
+                sb.append(artifact.getVersion());
+                artifactMap.put(sb.toString(), artifact);
             }
-            artifactMap.put(sb.toString(), artifact);
-            sb.append(":");
-            artifactMap.put(sb.toString(), artifact);
         }
 
     }

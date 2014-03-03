@@ -13,6 +13,8 @@ public class ModuleParseResult {
     final Path moduleRoot;
     final Path moduleXmlFile;
     final List<ModuleDependency> dependencies = new ArrayList<ModuleDependency>();
+    final List<String> resourceRoots = new ArrayList<>();
+    final List<String> artifacts = new ArrayList<>();
     ModuleIdentifier identifier;
 
     public ModuleParseResult(Path moduleRoot, Path moduleXmlFile) {
@@ -30,6 +32,14 @@ public class ModuleParseResult {
 
     public List<ModuleDependency> getDependencies() {
         return dependencies;
+    }
+
+    public List<String> getResourceRoots() {
+        return resourceRoots;
+    }
+
+    public List<String> getArtifacts() {
+        return artifacts;
     }
 
     public ModuleIdentifier getIdentifier() {

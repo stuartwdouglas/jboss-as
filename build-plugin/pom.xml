@@ -86,6 +86,10 @@
             <version>${version.org.apache.maven.maven-core}</version>
         </dependency>
         <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId> jboss-logging</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.jboss.modules</groupId>
             <artifactId>jboss-modules</artifactId>
         </dependency>

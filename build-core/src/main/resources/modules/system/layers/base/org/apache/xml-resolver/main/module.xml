@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${xml-resolver:xml-resolver:}"/>
+        <artifact name="${xml-resolver:xml-resolver}"/>
     </resources>
     <dependencies>
         <module name="javax.api" />

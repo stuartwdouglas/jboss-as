@@ -27,7 +27,7 @@
     <main-class name="org.jboss.msc.Version"/>
 
     <resources>
-        <artifact name="${org.jboss.msc:jboss-msc:}"/>
+        <artifact name="${org.jboss.msc:jboss-msc}"/>
     </resources>
 
     <dependencies>

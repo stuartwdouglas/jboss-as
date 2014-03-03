@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.wildfly:wildfly-embedded:}"/>
+        <artifact name="${org.wildfly:wildfly-embedded}"/>
     </resources>
 
     <dependencies>

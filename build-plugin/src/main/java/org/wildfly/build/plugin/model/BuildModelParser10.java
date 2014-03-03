@@ -93,7 +93,7 @@ class BuildModelParser10 implements XMLElementReader<Build> {
     }
 
     enum Attribute {
-        NAME, PATTERN, INCLUDE, TRANSITIVE, ARTIFACT, TO_LOCATION,
+        NAME, PATTERN, INCLUDE, TRANSITIVE, ARTIFACT, TO_LOCATION, EXTRACT_SCHEMA,
 
         // default unknown attribute
         UNKNOWN;
@@ -108,6 +108,7 @@ class BuildModelParser10 implements XMLElementReader<Build> {
             attributesMap.put(new QName("transitive"), TRANSITIVE);
             attributesMap.put(new QName("artifact"), ARTIFACT);
             attributesMap.put(new QName("to-location"), TO_LOCATION);
+            attributesMap.put(new QName("extract-schema"), EXTRACT_SCHEMA);
             attributes = attributesMap;
         }
 
@@ -123,10 +124,24 @@ class BuildModelParser10 implements XMLElementReader<Build> {
 
     @Override
     public void readElement(final XMLExtendedStreamReader reader, final Build result) throws XMLStreamException {
+        boolean extractSchema = true;
+        final Set<Attribute> required = EnumSet.noneOf(Attribute.class);
         final int count = reader.getAttributeCount();
-        if (count != 0) {
-            throw unexpectedContent(reader);
+        for (int i = 0; i < count; i++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            required.remove(attribute);
+            switch (attribute) {
+                case EXTRACT_SCHEMA:
+                    extractSchema = Boolean.parseBoolean(propertyReplacer.replaceProperties(reader.getAttributeValue(i)));
+                    break;
+                default:
+                    throw unexpectedContent(reader);
+            }
         }
+        if (!required.isEmpty()) {
+            throw missingAttributes(reader.getLocation(), required);
+        }
+        result.setExtractSchema(extractSchema);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {

@@ -34,6 +34,6 @@
     </dependencies>
 
     <resources>
-        <artifact name="${javax.activation:activation:}"/>
+        <artifact name="${javax.activation:activation}"/>
     </resources>
 </module>

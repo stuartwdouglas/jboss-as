@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.jboss.marshalling:jboss-marshalling-river:}"/>
+        <artifact name="${org.jboss.marshalling:jboss-marshalling-river}"/>
     </resources>
 
     <dependencies>

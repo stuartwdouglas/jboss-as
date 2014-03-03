@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.wildfly:wildfly-remoting:}"/>
+        <artifact name="${org.wildfly:wildfly-remoting}"/>
     </resources>
 
     <dependencies>

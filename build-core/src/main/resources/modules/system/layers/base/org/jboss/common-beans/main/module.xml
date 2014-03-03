@@ -28,6 +28,6 @@
     </properties>
 
     <resources>
-        <artifact name="${org.jboss.common:jboss-common-beans:}"/>
+        <artifact name="${org.jboss.common:jboss-common-beans}"/>
     </resources>
 </module>

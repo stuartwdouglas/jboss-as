@@ -176,7 +176,7 @@
       <sequential>
          <echo>Merging standalone @{paramTemplateFile} and @{paramSubsystemsFile} into @{paramOutputFile}, using @{className}</echo>
          
-         <java classname="org.jboss.as.config.assembly.@{className}">
+         <java classname="org.wildfly.build.plugin.configassembly.@{className}">
              <classpath>
                     <path refid="maven.compile.classpath"/>
              </classpath>

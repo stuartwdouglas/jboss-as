@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.fusesource.jansi:jansi:}"/>
+        <artifact name="${org.fusesource.jansi:jansi}"/>
     </resources>
 
     <dependencies>

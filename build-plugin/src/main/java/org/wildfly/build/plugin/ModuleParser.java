@@ -100,6 +100,9 @@ class ModuleParser {
                     if (reader.getLocalName().equals("dependencies")) {
                         parseDependencies(reader, result);
                     }
+                    if (reader.getLocalName().equals("resources")) {
+                        parseResources(reader, result);
+                    }
                     break;
                 case END_ELEMENT:
                     if (reader.getLocalName().equals("module")) {
@@ -163,4 +166,36 @@ class ModuleParser {
         }
     }
 
+    private static void parseResources(XMLStreamReader reader, ModuleParseResult result) throws XMLStreamException {
+        while (reader.hasNext()) {
+            int type = reader.next();
+            switch (type) {
+                case START_ELEMENT:
+                    if (reader.getLocalName().equals("resource-root")) {
+                        String path = "";
+                        for (int i = 0 ; i < reader.getAttributeCount() ; i++) {
+                            String localName = reader.getAttributeLocalName(i);
+                            if (localName.equals("path")) {
+                                path = reader.getAttributeValue(i);
+                            }
+                        }
+                        result.resourceRoots.add(path);
+                    } else if (reader.getLocalName().equals("artifact")) {
+                        String name = "";
+                        for (int i = 0 ; i < reader.getAttributeCount() ; i++) {
+                            String localName = reader.getAttributeLocalName(i);
+                            if (localName.equals("name")) {
+                                name = reader.getAttributeValue(i);
+                            }
+                        }
+                        result.artifacts.add(name);
+                    }
+                    break;
+                case END_ELEMENT:
+                    if (reader.getLocalName().equals("resources")) {
+                        return;
+                    }
+            }
+        }
+    }
 }

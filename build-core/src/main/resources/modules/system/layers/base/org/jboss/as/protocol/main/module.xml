@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.wildfly:wildfly-protocol:}"/>
+        <artifact name="${org.wildfly:wildfly-protocol}"/>
     </resources>
 
     <dependencies>
