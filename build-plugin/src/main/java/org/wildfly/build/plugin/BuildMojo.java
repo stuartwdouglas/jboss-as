@@ -22,6 +22,7 @@
 
 package org.wildfly.build.plugin;
 
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -33,13 +34,30 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.wildfly.build.plugin.model.Build;
 import org.wildfly.build.plugin.model.BuildModelParser;
+import org.wildfly.build.plugin.model.Server;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.FileVisitResult;
+import java.nio.file.FileVisitor;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  * @author Stuart Douglas
@@ -48,6 +66,8 @@ import java.nio.file.Paths;
 @Mojo(name = "build", requiresDependencyResolution = ResolutionScope.RUNTIME)
 @Execute(phase = LifecyclePhase.PACKAGE)
 public class BuildMojo extends AbstractMojo {
+
+    int folderCount = 0;
 
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     protected MavenProject project;
@@ -61,13 +81,28 @@ public class BuildMojo extends AbstractMojo {
     @Parameter(defaultValue = "${basedir}", alias = "config-dir")
     private File configDir;
 
+    @Parameter(defaultValue = "${project.build.finalName}", alias = "server-name")
+    private String serverName;
+
+    @Parameter(defaultValue = "${project.build.directory}")
+    private String buildName;
+
+    private final List<Runnable> cleanupTasks = new ArrayList<>();
+
+    private final Map<String, Artifact> artifactMap = new HashMap<>();
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+        buildArtifactMap();
+
         FileInputStream configStream = null;
         try {
             configStream = new FileInputStream(new File(configDir, configFile));
             final Build build = new BuildModelParser(project.getProperties()).parse(configStream);
-
+            for (Server server : build.getServers()) {
+                extractServer(server);
+            }
+            copyServers(build);
 
             Path moduleDirectory = Paths.get("/Users/stuart/workspace/wildfly/build/src/main/resources/modules/system/layers/base");
             getLog().info("RUNNING FOR " + moduleDirectory);
@@ -76,18 +111,173 @@ public class BuildMojo extends AbstractMojo {
             throw new RuntimeException(e);
         } finally {
             safeClose(configStream);
+            for (Runnable task : cleanupTasks) {
+                try {
+                    task.run();
+                } catch (Exception e) {
+                    getLog().error("Failed to cleanup", e);
+                }
+            }
         }
     }
 
-    private void safeClose(final Closeable ... closeable) {
-        for(Closeable c : closeable) {
-            if(c != null) {
+    private void buildArtifactMap() {
+        for (Artifact artifact : project.getArtifacts()) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(artifact.getGroupId());
+            sb.append(':');
+            sb.append(artifact.getArtifactId());
+            sb.append(":");
+            if (artifact.getClassifier() != null && !artifact.getClassifier().isEmpty()) {
+                sb.append(artifact.getClassifier());
+            }
+        }
+
+    }
+
+    private void extractServer(Server server) {
+        if (server.getPath() != null) {
+            return;
+        }
+        String tempDir = System.getProperty("java.io.tmpdir");
+        String name = "wf-server-build" + (folderCount++);
+        final File destDir = new File(tempDir, name);
+        deleteRecursive(destDir);
+        cleanupTasks.add(new Runnable() {
+            @Override
+            public void run() {
+                deleteRecursive(destDir);
+            }
+        });
+        destDir.mkdirs();
+        server.setPath(destDir.getAbsolutePath());
+        Artifact artifact = artifactMap.get(server.getArtifact());
+        if (artifact == null) {
+            throw new RuntimeException("Could not find server artifact " + server.getArtifact() + " make sure it is present as a dependency of the project");
+        }
+
+        artifact.getFile();
+        JarFile jar = null;
+        try {
+            jar = new JarFile(artifact.getFile());
+            Enumeration<JarEntry> entries = jar.entries();
+            byte[] data = new byte[1024];
+            while (entries.hasMoreElements()) {
+                JarEntry jarFile = entries.nextElement();
+                java.io.File f = new java.io.File(destDir + java.io.File.separator + jarFile.getName());
+                if (destDir.isDirectory()) { // if its a directory, create it
+                    f.mkdir();
+                    continue;
+                }
+                InputStream is = jar.getInputStream(jarFile); // get the input stream
+                FileOutputStream fos = new java.io.FileOutputStream(f);
+                try {
+                    int read;
+                    while ((read = is.read(data)) > 0) {  // write contents of 'is' to 'fos'
+                        fos.write(data, 0, read);
+                    }
+                } finally {
+                    safeClose(is, fos);
+                }
+                Path p = Paths.get(f.getAbsolutePath());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            safeClose(jar);
+        }
+    }
+
+
+    public void copyServers(Build build) throws IOException {
+        File baseDir = new File(buildName, serverName);
+        getLog().error(baseDir.getAbsoluteFile().toString());
+        deleteRecursive(baseDir);
+
+        final Path path = Paths.get(baseDir.getAbsolutePath());
+        for(final Server server : build.getServers()) {
+            final Path base = Paths.get(server.getPath());
+            Files.walkFileTree(base, new FileVisitor<Path>() {
+
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    String relative = base.relativize(dir).toString();
+                    boolean include = server.includeFile(relative);
+                    if(include) {
+                        path.resolve(relative).toFile().mkdirs();
+                        return FileVisitResult.CONTINUE;
+                    }
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    String relative = base.relativize(file).toString();
+                    if(!server.includeFile(relative)) {
+                        return FileVisitResult.CONTINUE;
+                    }
+                    copyFile(file.toFile(), path.resolve(relative).toFile());
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                    return FileVisitResult.TERMINATE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        }
+
+
+    }
+
+    private void safeClose(final Closeable... closeable) {
+        for (Closeable c : closeable) {
+            if (c != null) {
                 try {
                     c.close();
                 } catch (IOException e) {
                     getLog().error("Failed to close resource", e);
                 }
             }
+        }
+    }
+
+
+    public void deleteRecursive(final File file) {
+        File[] files = file.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                deleteRecursive(f);
+            }
+        }
+        file.delete();
+    }
+
+    public void copyFile(final File src, final File dest) throws IOException {
+        final InputStream in = new BufferedInputStream(new FileInputStream(src));
+        try {
+            copyFile(in, dest);
+        } finally {
+            safeClose(in);
+        }
+    }
+
+    public void copyFile(final InputStream in, final File dest) throws IOException {
+        dest.getParentFile().mkdirs();
+        byte[] data = new byte[10000];
+        final OutputStream out = new BufferedOutputStream(new FileOutputStream(dest));
+        try {
+            int read;
+            while ((read = in.read(data)) >0) {
+                out.write(data, 0, read);
+            }
+        } finally {
+            safeClose(out);
         }
     }
 }

@@ -23,6 +23,9 @@ public class Server {
     }
 
     public boolean includeFile(final String path) {
+        if(path.startsWith("modules/")) {
+            return false; //TODO: should we be hard coding this?
+        }
         for(FileFilter filter : filters) {
             if(filter.matches(path)) {
                 return filter.isInclude();
