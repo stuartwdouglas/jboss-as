@@ -25,6 +25,7 @@ package org.wildfly.build.plugin;
 import org.apache.maven.plugin.logging.Log;
 import org.jboss.modules.ModuleIdentifier;
 
+import javax.xml.stream.XMLStreamException;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
@@ -44,17 +45,17 @@ public class ModuleUtils {
 
     }
 
-    public static Set<ModuleIdentifier> enumerateModuleDirectory(Log log, final Path moduleDirectory) throws IOException {
+    public static Set<ModuleParseResult> enumerateModuleDirectory(Log log, final Path moduleDirectory) throws IOException {
         ModuleVisitor visitor = new ModuleVisitor(moduleDirectory, log);
         Files.walkFileTree(moduleDirectory, visitor);
-        return visitor.getModuleIdentifiers();
+        return visitor.getParseResults();
     }
 
     private static final class ModuleVisitor implements FileVisitor<Path> {
 
         private final Path moduleRoot;
         final Log log;
-        private final Set<ModuleIdentifier> moduleIdentifiers = new HashSet<ModuleIdentifier>();
+        private final Set<ModuleParseResult> parseResults = new HashSet<>();
 
         private ModuleVisitor(Path moduleRoot, Log log) {
             this.moduleRoot = moduleRoot;
@@ -71,17 +72,12 @@ public class ModuleUtils {
             if(!file.getName(file.getNameCount() - 1).toString().equals("module.xml")) {
                 return FileVisitResult.CONTINUE;
             }
-            String slot = file.getName(file.getNameCount() - 2).toString();
-            StringBuilder moduleName = new StringBuilder();
-            for(int i = moduleRoot.getNameCount(); i < file.getNameCount() - 2; ++i) {
-                if(moduleName.length() != 0) {
-                    moduleName.append(".");
-                }
-                moduleName.append(file.getName(i).toString());
+            try {
+                ModuleParseResult result = ModuleParser.parse(file.toFile());
+                parseResults.add(result);
+            } catch (XMLStreamException e) {
+                throw new RuntimeException(e);
             }
-            ModuleIdentifier identifier = ModuleIdentifier.create(moduleName.toString(), slot);
-            log.info(identifier.toString());
-            moduleIdentifiers.add(identifier);
             return FileVisitResult.CONTINUE;
         }
 
@@ -95,8 +91,8 @@ public class ModuleUtils {
             return FileVisitResult.CONTINUE;
         }
 
-        private Set<ModuleIdentifier> getModuleIdentifiers() {
-            return moduleIdentifiers;
+        private Set<ModuleParseResult> getParseResults() {
+            return parseResults;
         }
     }
 }

@@ -32,6 +32,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
+import org.jboss.modules.ModuleIdentifier;
 import org.wildfly.build.plugin.model.Build;
 import org.wildfly.build.plugin.model.BuildModelParser;
 import org.wildfly.build.plugin.model.CopyArtifact;
@@ -55,8 +56,10 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -104,11 +107,8 @@ public class BuildMojo extends AbstractMojo {
                 extractServer(server);
             }
             copyServers(build);
+            copyModules(build);
             copyArtifacts(build);
-
-            Path moduleDirectory = Paths.get("/Users/stuart/workspace/wildfly/build/src/main/resources/modules/system/layers/base");
-            getLog().info("RUNNING FOR " + moduleDirectory);
-            ModuleUtils.enumerateModuleDirectory(getLog(), moduleDirectory);
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -120,6 +120,13 @@ public class BuildMojo extends AbstractMojo {
                     getLog().error("Failed to cleanup", e);
                 }
             }
+        }
+    }
+
+    private void copyModules(Build build) throws IOException {
+        final Set<ModuleIdentifier> seenModules = new HashSet<>();
+        for(Server server : build.getServers()) {
+            ModuleUtils.enumerateModuleDirectory(getLog(), Paths.get(server.getPath()));
         }
     }
 

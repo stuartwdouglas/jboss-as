@@ -11,6 +11,7 @@ public class Server {
     private String path;
     private String artifact;
 
+
     private final List<FileFilter> filters = new ArrayList<>();
     private final List<ModuleFilter> modules = new ArrayList<>();
 
