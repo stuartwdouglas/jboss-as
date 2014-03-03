@@ -32,8 +32,8 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Stuart Douglas
@@ -45,20 +45,18 @@ public class ModuleUtils {
 
     }
 
-    public static Set<ModuleParseResult> enumerateModuleDirectory(Log log, final Path moduleDirectory) throws IOException {
-        ModuleVisitor visitor = new ModuleVisitor(moduleDirectory, log);
+    public static Map<ModuleIdentifier, ModuleParseResult> enumerateModuleDirectory(Log log, final Path moduleDirectory) throws IOException {
+        ModuleVisitor visitor = new ModuleVisitor(log);
         Files.walkFileTree(moduleDirectory, visitor);
         return visitor.getParseResults();
     }
 
     private static final class ModuleVisitor implements FileVisitor<Path> {
 
-        private final Path moduleRoot;
         final Log log;
-        private final Set<ModuleParseResult> parseResults = new HashSet<>();
+        private final Map<ModuleIdentifier, ModuleParseResult> parseResults = new HashMap<>();
 
-        private ModuleVisitor(Path moduleRoot, Log log) {
-            this.moduleRoot = moduleRoot;
+        private ModuleVisitor(Log log) {
             this.log = log;
         }
 
@@ -74,7 +72,7 @@ public class ModuleUtils {
             }
             try {
                 ModuleParseResult result = ModuleParser.parse(file.toFile());
-                parseResults.add(result);
+                parseResults.put(result.getIdentifier(), result);
             } catch (XMLStreamException e) {
                 throw new RuntimeException(e);
             }
@@ -91,7 +89,7 @@ public class ModuleUtils {
             return FileVisitResult.CONTINUE;
         }
 
-        private Set<ModuleParseResult> getParseResults() {
+        private Map<ModuleIdentifier, ModuleParseResult> getParseResults() {
             return parseResults;
         }
     }

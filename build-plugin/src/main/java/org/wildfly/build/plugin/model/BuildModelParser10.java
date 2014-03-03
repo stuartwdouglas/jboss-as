@@ -24,6 +24,7 @@ package org.wildfly.build.plugin.model;
 
 import org.jboss.staxmapper.XMLElementReader;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
+import org.wildfly.build.plugin.BuildPropertyReplacer;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.Location;

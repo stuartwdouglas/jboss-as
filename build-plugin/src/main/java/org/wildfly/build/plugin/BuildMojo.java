@@ -124,10 +124,11 @@ public class BuildMojo extends AbstractMojo {
     }
 
     private void copyModules(Build build) throws IOException {
-        final Set<ModuleIdentifier> seenModules = new HashSet<>();
+        final List<Map<ModuleIdentifier, ModuleParseResult>> allModules = new ArrayList<>();
         for(Server server : build.getServers()) {
-            ModuleUtils.enumerateModuleDirectory(getLog(), Paths.get(server.getPath()));
+            allModules.add(ModuleUtils.enumerateModuleDirectory(getLog(), Paths.get(server.getPath())));
         }
+        
     }
 
     private void buildArtifactMap() {

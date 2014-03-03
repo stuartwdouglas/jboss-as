@@ -1,4 +1,4 @@
-package org.wildfly.build.plugin.model;
+package org.wildfly.build.plugin;
 
 /**
  * @author Stuart Douglas
@@ -15,7 +15,7 @@ import java.util.Properties;
  * @author <a href="mailto:david.lloyd@redhat.com">David M. Lloyd</a>
  * @author John Bailey
  */
-class BuildPropertyReplacer {
+public class BuildPropertyReplacer {
 
     private static final int INITIAL = 0;
     private static final int GOT_DOLLAR = 1;
@@ -25,7 +25,7 @@ class BuildPropertyReplacer {
 
     private final Properties properties;
 
-    BuildPropertyReplacer(Properties properties) {
+    public BuildPropertyReplacer(Properties properties) {
         this.properties = properties;
     }
 
