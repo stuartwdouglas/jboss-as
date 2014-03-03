@@ -33,6 +33,7 @@
         <xs:complexType>
             <xs:sequence>
                 <xs:element name="servers" type="servers-type" minOccurs="0" maxOccurs="1" />
+                <xs:element name="copy-artifact" type="copy-artifact-type" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
@@ -78,5 +79,9 @@
         <xs:attribute name="pattern" type="xs:string" use="required" />
         <xs:attribute name="include" type="xs:boolean" use="required" />
         <xs:attribute name="transitive" type="xs:boolean" use="optional" default="true" />
+    </xs:complexType>
+    <xs:complexType name="copy-artifact-type">
+        <xs:attribute name="artifact" />
+        <xs:attribute name="to-location" />
     </xs:complexType>
 </xs:schema>

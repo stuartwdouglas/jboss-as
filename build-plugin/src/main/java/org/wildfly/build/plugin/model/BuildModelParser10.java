@@ -56,6 +56,7 @@ class BuildModelParser10 implements XMLElementReader<Build> {
         FILTER,
         MODULES,
         CONFIG,
+        COPY_ARTIFACT,
 
 
         // default unknown element
@@ -74,6 +75,7 @@ class BuildModelParser10 implements XMLElementReader<Build> {
             elementsMap.put(new QName(NAMESPACE_1_0, "filter"), Element.FILTER);
             elementsMap.put(new QName(NAMESPACE_1_0, "modules"), Element.MODULES);
             elementsMap.put(new QName(NAMESPACE_1_0, "config"), Element.CONFIG);
+            elementsMap.put(new QName(NAMESPACE_1_0, "copy-artifact"), Element.COPY_ARTIFACT);
             elements = elementsMap;
         }
 
@@ -90,7 +92,7 @@ class BuildModelParser10 implements XMLElementReader<Build> {
     }
 
     enum Attribute {
-        NAME, PATTERN, INCLUDE, TRANSITIVE,
+        NAME, PATTERN, INCLUDE, TRANSITIVE, ARTIFACT, TO_LOCATION,
 
         // default unknown attribute
         UNKNOWN;
@@ -103,6 +105,8 @@ class BuildModelParser10 implements XMLElementReader<Build> {
             attributesMap.put(new QName("pattern"), PATTERN);
             attributesMap.put(new QName("include"), INCLUDE);
             attributesMap.put(new QName("transitive"), TRANSITIVE);
+            attributesMap.put(new QName("artifact"), ARTIFACT);
+            attributesMap.put(new QName("to-location"), TO_LOCATION);
             attributes = attributesMap;
         }
 
@@ -134,6 +138,9 @@ class BuildModelParser10 implements XMLElementReader<Build> {
                         case SERVERS:
                             parseServers(reader, result);
                             break;
+                        case COPY_ARTIFACT:
+                            parseCopyArtifact(reader, result);
+                            break;
                         case CONFIG:
                             throw new RuntimeException("NYI");
                             //break;
@@ -148,6 +155,34 @@ class BuildModelParser10 implements XMLElementReader<Build> {
             }
         }
         throw endOfDocument(reader.getLocation());
+    }
+
+    private void parseCopyArtifact(XMLExtendedStreamReader reader, Build result) throws XMLStreamException {
+        String artifact = null;
+        String location = null;
+        final Set<Attribute> required = EnumSet.of(Attribute.ARTIFACT, Attribute.TO_LOCATION);
+        final int count = reader.getAttributeCount();
+        for (int i = 0; i < count; i++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            required.remove(attribute);
+            switch (attribute) {
+                case ARTIFACT:
+                    artifact = propertyReplacer.replaceProperties(reader.getAttributeValue(i));
+                    break;
+                case TO_LOCATION:
+                    location = propertyReplacer.replaceProperties(reader.getAttributeValue(i));
+                    break;
+                default:
+                    throw unexpectedContent(reader);
+            }
+        }
+        if (!required.isEmpty()) {
+            throw missingAttributes(reader.getLocation(), required);
+        }
+
+        parseNoContent(reader);
+
+        result.getCopyArtifacts().add(new CopyArtifact(artifact, location));
     }
 
     private void parseServers(final XMLStreamReader reader, final Build result) throws XMLStreamException {
@@ -488,7 +523,7 @@ class BuildModelParser10 implements XMLElementReader<Build> {
 
 
     private static String wildcardToJavaRegexp(String expr) {
-        if(expr == null) {
+        if (expr == null) {
             throw new IllegalArgumentException("expr is null");
         }
         String regex = expr.replaceAll("([(){}\\[\\].+^$])", "\\\\$1"); // escape regex characters

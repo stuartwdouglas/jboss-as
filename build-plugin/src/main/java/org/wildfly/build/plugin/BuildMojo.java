@@ -34,6 +34,7 @@ import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.wildfly.build.plugin.model.Build;
 import org.wildfly.build.plugin.model.BuildModelParser;
+import org.wildfly.build.plugin.model.CopyArtifact;
 import org.wildfly.build.plugin.model.Server;
 
 import java.io.BufferedInputStream;
@@ -103,6 +104,7 @@ public class BuildMojo extends AbstractMojo {
                 extractServer(server);
             }
             copyServers(build);
+            copyArtifacts(build);
 
             Path moduleDirectory = Paths.get("/Users/stuart/workspace/wildfly/build/src/main/resources/modules/system/layers/base");
             getLog().info("RUNNING FOR " + moduleDirectory);
@@ -127,10 +129,13 @@ public class BuildMojo extends AbstractMojo {
             sb.append(artifact.getGroupId());
             sb.append(':');
             sb.append(artifact.getArtifactId());
-            sb.append(":");
             if (artifact.getClassifier() != null && !artifact.getClassifier().isEmpty()) {
+                sb.append(":");
                 sb.append(artifact.getClassifier());
             }
+            artifactMap.put(sb.toString(), artifact);
+            sb.append(":");
+            artifactMap.put(sb.toString(), artifact);
         }
 
     }
@@ -188,14 +193,29 @@ public class BuildMojo extends AbstractMojo {
         }
     }
 
+    private void copyArtifacts(Build build) throws IOException {
+        File baseDir = new File(buildName, serverName);
+        for (CopyArtifact copy : build.getCopyArtifacts()) {
+            File target = new File(baseDir, copy.getToLocation());
+            if (!target.getParentFile().isDirectory()) {
+                if (!target.getParentFile().mkdirs()) {
+                    throw new IOException("Could not create directory " + target.getParentFile());
+                }
+            }
+            Artifact artifact = artifactMap.get(copy.getArtifact());
+            if (artifact == null) {
+                throw new RuntimeException("Could not find artifact " + copy.getArtifact() + " make sure it is a dependency of the project");
+            }
+            copyFile(artifact.getFile(), target);
+        }
+    }
 
     public void copyServers(Build build) throws IOException {
         File baseDir = new File(buildName, serverName);
-        getLog().error(baseDir.getAbsoluteFile().toString());
         deleteRecursive(baseDir);
 
         final Path path = Paths.get(baseDir.getAbsolutePath());
-        for(final Server server : build.getServers()) {
+        for (final Server server : build.getServers()) {
             final Path base = Paths.get(server.getPath());
             Files.walkFileTree(base, new FileVisitor<Path>() {
 
@@ -203,10 +223,12 @@ public class BuildMojo extends AbstractMojo {
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
                     String relative = base.relativize(dir).toString();
                     boolean include = server.includeFile(relative);
-                    if(include) {
+                    if (include) {
                         Path rel = path.resolve(relative);
-                        if(!rel.toFile().mkdirs() ){
-                            throw new IOException("Could not create directory " + rel.toString());
+                        if (!Files.isDirectory(rel)) {
+                            if (!rel.toFile().mkdirs()) {
+                                throw new IOException("Could not create directory " + rel.toString());
+                            }
                         }
                         return FileVisitResult.CONTINUE;
                     }
@@ -216,7 +238,7 @@ public class BuildMojo extends AbstractMojo {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     String relative = base.relativize(file).toString();
-                    if(!server.includeFile(relative)) {
+                    if (!server.includeFile(relative)) {
                         return FileVisitResult.CONTINUE;
                     }
                     Path targetFile = path.resolve(relative);
@@ -278,7 +300,7 @@ public class BuildMojo extends AbstractMojo {
         final OutputStream out = new BufferedOutputStream(new FileOutputStream(dest));
         try {
             int read;
-            while ((read = in.read(data)) >0) {
+            while ((read = in.read(data)) > 0) {
                 out.write(data, 0, read);
             }
         } finally {

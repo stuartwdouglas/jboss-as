@@ -32,4 +32,5 @@
             </modules>
         </server>
     </servers>
+    <copy-artifact artifact="org.jboss.modules:jboss-modules" to-location="jboss-modules.jar" />
 </build>
