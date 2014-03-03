@@ -22,12 +22,21 @@
 
 package org.wildfly.build.plugin;
 
-import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugins.annotations.*;
+import org.apache.maven.plugins.annotations.Execute;
+import org.apache.maven.plugins.annotations.LifecyclePhase;
+import org.apache.maven.plugins.annotations.Mojo;
+import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.plugins.annotations.ResolutionScope;
+import org.apache.maven.project.MavenProject;
+import org.wildfly.build.plugin.model.Build;
+import org.wildfly.build.plugin.model.BuildModelParser;
 
+import java.io.Closeable;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,19 +49,45 @@ import java.nio.file.Paths;
 @Execute(phase = LifecyclePhase.PACKAGE)
 public class BuildMojo extends AbstractMojo {
 
-    @Component
-    private MavenSession mavenSession;
+    @Parameter(defaultValue = "${project}", readonly = true, required = true)
+    protected MavenProject project;
+
+    /**
+     * Commands to run before the deployment
+     */
+    @Parameter(alias = "config-file", required = true)
+    private String configFile;
+
+    @Parameter(defaultValue = "${basedir}", alias = "config-dir")
+    private File configDir;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        getPluginContext().
+        FileInputStream configStream = null;
         try {
+            configStream = new FileInputStream(new File(configDir, configFile));
+            final Build build = new BuildModelParser(project.getProperties()).parse(configStream);
+
 
             Path moduleDirectory = Paths.get("/Users/stuart/workspace/wildfly/build/src/main/resources/modules/system/layers/base");
             getLog().info("RUNNING FOR " + moduleDirectory);
             ModuleUtils.enumerateModuleDirectory(getLog(), moduleDirectory);
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
+        } finally {
+            safeClose(configStream);
+        }
+    }
+
+    private void safeClose(final Closeable ... closeable) {
+        for(Closeable c : closeable) {
+            if(c != null) {
+                try {
+                    c.close();
+                } catch (IOException e) {
+                    getLog().error("Failed to close resource", e);
+                }
+            }
         }
     }
 }

@@ -30,12 +30,16 @@ import javax.xml.stream.Location;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import java.util.*;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * @author Stuart Douglas
  */
-public class BuildModelParser10 implements XMLElementReader<Build> {
+class BuildModelParser10 implements XMLElementReader<Build> {
 
 
     private final BuildPropertyReplacer propertyReplacer;
@@ -108,7 +112,7 @@ public class BuildModelParser10 implements XMLElementReader<Build> {
         }
     }
 
-    private BuildModelParser10(Properties properties) {
+    BuildModelParser10(Properties properties) {
         this.propertyReplacer = new BuildPropertyReplacer(properties);
     }
 
@@ -282,7 +286,7 @@ public class BuildModelParser10 implements XMLElementReader<Build> {
     private void parseFilter(XMLStreamReader reader, Server result) throws XMLStreamException {
         String pattern = null;
         boolean include = false;
-        final Set<Attribute> required = EnumSet.of(Attribute.NAME, Attribute.INCLUDE);
+        final Set<Attribute> required = EnumSet.of(Attribute.PATTERN, Attribute.INCLUDE);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i++) {
             final Attribute attribute = Attribute.of(reader.getAttributeName(i));
@@ -304,7 +308,7 @@ public class BuildModelParser10 implements XMLElementReader<Build> {
 
         parseNoContent(reader);
 
-        result.getFilters().add(new FileFilter(pattern, include));
+        result.getFilters().add(new FileFilter(wildcardToJavaRegexp(pattern), include));
     }
 
 
@@ -343,7 +347,7 @@ public class BuildModelParser10 implements XMLElementReader<Build> {
         String pattern = null;
         boolean include = false;
         boolean transitive = true;
-        final Set<Attribute> required = EnumSet.of(Attribute.NAME, Attribute.INCLUDE);
+        final Set<Attribute> required = EnumSet.of(Attribute.PATTERN, Attribute.INCLUDE);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i++) {
             final Attribute attribute = Attribute.of(reader.getAttributeName(i));
@@ -368,7 +372,7 @@ public class BuildModelParser10 implements XMLElementReader<Build> {
 
         parseNoContent(reader);
 
-        result.getModules().add(new ModuleFilter(pattern, include, transitive));
+        result.getModules().add(new ModuleFilter(wildcardToJavaRegexp(pattern), include, transitive));
 
     }
 
@@ -480,5 +484,16 @@ public class BuildModelParser10 implements XMLElementReader<Build> {
             b.append(' ').append(attribute);
         }
         return new XMLStreamException("Missing required attributes " + b.toString(), location);
+    }
+
+
+    private static String wildcardToJavaRegexp(String expr) {
+        if(expr == null) {
+            throw new IllegalArgumentException("expr is null");
+        }
+        String regex = expr.replaceAll("([(){}\\[\\].+^$])", "\\\\$1"); // escape regex characters
+        regex = regex.replaceAll("\\*", ".*"); // replace * with .*
+        regex = regex.replaceAll("\\?", "."); // replace ? with .
+        return regex;
     }
 }
