@@ -33,6 +33,7 @@
         <xs:complexType>
             <xs:sequence>
                 <xs:element name="servers" type="servers-type" minOccurs="0" maxOccurs="1" />
+                <xs:element name="config" type="config-type" minOccurs="1" maxOccurs="1" />
                 <xs:element name="copy-artifact" type="copy-artifact-type" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
             <xs:attribute name="extract-schema" type="xs:boolean" use="optional" default="true"/>
@@ -84,5 +85,16 @@
     <xs:complexType name="copy-artifact-type">
         <xs:attribute name="artifact" />
         <xs:attribute name="to-location" />
+    </xs:complexType>
+    <xs:complexType name="config-type">
+        <xs:sequence>
+            <xs:element name="standalone" type="config-file-type" minOccurs="0" maxOccurs="unbounded" />
+            <xs:element name="domain" type="config-file-type" minOccurs="0" maxOccurs="unbounded" />
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="config-file-type">
+        <xs:attribute name="template" use="required" type="xs:string"/>
+        <xs:attribute name="subsystems" use="required" type="xs:string"/>
+        <xs:attribute name="output-file" use="required" type="xs:string" />
     </xs:complexType>
 </xs:schema>

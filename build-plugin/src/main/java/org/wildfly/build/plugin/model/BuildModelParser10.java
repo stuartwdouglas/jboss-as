@@ -57,6 +57,8 @@ class BuildModelParser10 implements XMLElementReader<Build> {
         FILTER,
         MODULES,
         CONFIG,
+        STANDALONE,
+        DOMAIN,
         COPY_ARTIFACT,
 
 
@@ -77,6 +79,8 @@ class BuildModelParser10 implements XMLElementReader<Build> {
             elementsMap.put(new QName(NAMESPACE_1_0, "modules"), Element.MODULES);
             elementsMap.put(new QName(NAMESPACE_1_0, "config"), Element.CONFIG);
             elementsMap.put(new QName(NAMESPACE_1_0, "copy-artifact"), Element.COPY_ARTIFACT);
+            elementsMap.put(new QName(NAMESPACE_1_0, "standalone"), Element.STANDALONE);
+            elementsMap.put(new QName(NAMESPACE_1_0, "domain"), Element.DOMAIN);
             elements = elementsMap;
         }
 
@@ -93,7 +97,7 @@ class BuildModelParser10 implements XMLElementReader<Build> {
     }
 
     enum Attribute {
-        NAME, PATTERN, INCLUDE, TRANSITIVE, ARTIFACT, TO_LOCATION, EXTRACT_SCHEMA,
+        NAME, PATTERN, INCLUDE, TRANSITIVE, ARTIFACT, TO_LOCATION, EXTRACT_SCHEMA,TEMPLATE,SUBSYSTEMS,OUTPUT_FILE,
 
         // default unknown attribute
         UNKNOWN;
@@ -109,6 +113,9 @@ class BuildModelParser10 implements XMLElementReader<Build> {
             attributesMap.put(new QName("artifact"), ARTIFACT);
             attributesMap.put(new QName("to-location"), TO_LOCATION);
             attributesMap.put(new QName("extract-schema"), EXTRACT_SCHEMA);
+            attributesMap.put(new QName("template"), TEMPLATE);
+            attributesMap.put(new QName("subsystems"), SUBSYSTEMS);
+            attributesMap.put(new QName("output-file"), OUTPUT_FILE);
             attributes = attributesMap;
         }
 
@@ -158,8 +165,8 @@ class BuildModelParser10 implements XMLElementReader<Build> {
                             parseCopyArtifact(reader, result);
                             break;
                         case CONFIG:
-                            throw new RuntimeException("NYI");
-                            //break;
+                            parseConfig(reader, result);
+                            break;
                         default:
                             throw unexpectedContent(reader);
                     }
@@ -425,6 +432,76 @@ class BuildModelParser10 implements XMLElementReader<Build> {
 
         result.getModules().add(new ModuleFilter(wildcardToJavaRegexp(pattern), include, transitive));
 
+    }
+
+
+    private void parseConfig(final XMLStreamReader reader, final Build result) throws XMLStreamException {
+        Set<Element> visited = EnumSet.noneOf(Element.class);
+        while (reader.hasNext()) {
+            switch (reader.nextTag()) {
+                case XMLStreamConstants.END_ELEMENT: {
+                    return;
+                }
+                case XMLStreamConstants.START_ELEMENT: {
+                    final Element element = Element.of(reader.getName());
+                    if (visited.contains(element)) {
+                        throw unexpectedContent(reader);
+                    }
+                    visited.add(element);
+                    switch (element) {
+                        case STANDALONE:
+                            parseConfigFile(reader, result, false);
+                            break;
+                        case DOMAIN:
+                            parseConfigFile(reader, result, true);
+                            break;
+                        default:
+                            throw unexpectedContent(reader);
+                    }
+                    break;
+                }
+                default: {
+                    throw unexpectedContent(reader);
+                }
+            }
+        }
+        throw endOfDocument(reader.getLocation());
+    }
+
+    private void parseConfigFile(XMLStreamReader reader, Build result, boolean domain) throws XMLStreamException {
+        String template = null;
+        String subsystems = null;
+        String outputFile = null;
+        final Set<Attribute> required = EnumSet.of(Attribute.TEMPLATE, Attribute.SUBSYSTEMS, Attribute.OUTPUT_FILE);
+        final int count = reader.getAttributeCount();
+        for (int i = 0; i < count; i++) {
+            final Attribute attribute = Attribute.of(reader.getAttributeName(i));
+            required.remove(attribute);
+            switch (attribute) {
+                case TEMPLATE:
+                    template = propertyReplacer.replaceProperties(reader.getAttributeValue(i));
+                    break;
+                case SUBSYSTEMS:
+                    subsystems = propertyReplacer.replaceProperties(reader.getAttributeValue(i));
+                    break;
+                case OUTPUT_FILE:
+                    outputFile = propertyReplacer.replaceProperties(reader.getAttributeValue(i));
+                    break;
+                default:
+                    throw unexpectedContent(reader);
+            }
+        }
+        if (!required.isEmpty()) {
+            throw missingAttributes(reader.getLocation(), required);
+        }
+
+        parseNoContent(reader);
+        ConfigFile file = new ConfigFile(template, subsystems, outputFile);
+        if(domain) {
+            result.getDomainConfigs().add(file);
+        } else {
+            result.getStandaloneConfigs().add(file);
+        }
     }
 
 

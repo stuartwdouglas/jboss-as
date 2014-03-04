@@ -39,7 +39,7 @@ import javax.xml.stream.XMLStreamException;
  *
  * @author <a href="kabir.khan@jboss.com">Kabir Khan</a>
  */
-class ConfigurationAssembler {
+public class ConfigurationAssembler {
 
     private final File baseDir;
     private final File templateFile;

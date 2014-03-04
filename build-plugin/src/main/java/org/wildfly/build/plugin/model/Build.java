@@ -11,6 +11,8 @@ public class Build {
     private boolean extractSchema;
     private final List<Server> servers = new ArrayList<>();
     private final List<CopyArtifact> copyArtifacts = new ArrayList<>();
+    private final List<ConfigFile> standaloneConfigs = new ArrayList<>();
+    private final List<ConfigFile> domainConfigs = new ArrayList<>();
 
     public List<Server> getServers() {
         return servers;
@@ -18,6 +20,14 @@ public class Build {
 
     public List<CopyArtifact> getCopyArtifacts() {
         return copyArtifacts;
+    }
+
+    public List<ConfigFile> getStandaloneConfigs() {
+        return standaloneConfigs;
+    }
+
+    public List<ConfigFile> getDomainConfigs() {
+        return domainConfigs;
     }
 
     public boolean isExtractSchema() {

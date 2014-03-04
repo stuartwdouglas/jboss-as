@@ -20,17 +20,22 @@
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
   -->
 
-<build xmlns="urn:wildfly:build:1.0">
+<build xmlns="urn:wildfly:build:1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <servers>
         <server>
-            <path name="${server.dir}" />
+            <path name="${server.dir}"/>
             <files>
-                <filter pattern="*" include="true" />
+                <filter pattern="*" include="true"/>
             </files>
             <modules>
-                <filter pattern="*" include="true" transitive="true" />
+                <filter pattern="*" include="true" transitive="true"/>
             </modules>
         </server>
     </servers>
-    <copy-artifact artifact="org.jboss.modules:jboss-modules" to-location="jboss-modules.jar" />
+    <config>
+        <standalone template="configuration/standalone/template.xml" subsystems="configuration/standalone/subsystems.xml" output-file="standalone/configuration/standalone.xml" />
+        <domain template="configuration/domain/template.xml" subsystems="configuration/domain/subsystems.xml" output-file="domain/configuration/domain.xml" />
+    </config>
+
+    <copy-artifact artifact="org.jboss.modules:jboss-modules" to-location="jboss-modules.jar"/>
 </build>

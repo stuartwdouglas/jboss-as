@@ -33,8 +33,10 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.ResolutionScope;
 import org.apache.maven.project.MavenProject;
 import org.jboss.modules.ModuleIdentifier;
+import org.wildfly.build.plugin.configassembly.ConfigurationAssembler;
 import org.wildfly.build.plugin.model.Build;
 import org.wildfly.build.plugin.model.BuildModelParser;
+import org.wildfly.build.plugin.model.ConfigFile;
 import org.wildfly.build.plugin.model.CopyArtifact;
 import org.wildfly.build.plugin.model.Server;
 
@@ -122,6 +124,7 @@ public class BuildMojo extends AbstractMojo {
             copyModules(build);
             copyArtifacts(build);
             extractResourcesFromJars(build.isExtractSchema());
+            generateConfigFiles(build);
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -136,6 +139,18 @@ public class BuildMojo extends AbstractMojo {
         }
     }
 
+    private void generateConfigFiles(Build build) throws IOException, XMLStreamException {
+        final File baseDir = new File(buildName, serverName);
+        //todo: this seems yuck
+        final File configBaseDir = new File(configDir, "src" + File.separator + "main" + File.separator + "resources");
+        for (ConfigFile standalone : build.getStandaloneConfigs()) {
+            new ConfigurationAssembler(templateTmpDir.toFile(), new File(configBaseDir, standalone.getTemplateFile()), "server", new File(configBaseDir, standalone.getSubsystemFile()), new File(baseDir, standalone.getOutputFile())).assemble();
+        }
+        for (ConfigFile domain : build.getDomainConfigs()) {
+            new ConfigurationAssembler(templateTmpDir.toFile(), new File(configBaseDir, domain.getTemplateFile()), "domain", new File(configBaseDir, domain.getSubsystemFile()), new File(baseDir, domain.getOutputFile())).assemble();
+        }
+    }
+
     private void extractResourcesFromJars(final boolean extractSchema) throws IOException {
         final File baseDir = new File(buildName, serverName);
         final File schemaTarget = new File(baseDir, "docs" + File.separator + "schema");
@@ -143,7 +158,6 @@ public class BuildMojo extends AbstractMojo {
             throw new RuntimeException("Could not create schema directory");
         }
         final Path modulesDir = Paths.get(new File(baseDir, "modules").getAbsolutePath());
-        Map<String, Artifact> gavMap = new HashMap<>();
         Files.walkFileTree(modulesDir, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
@@ -169,10 +183,10 @@ public class BuildMojo extends AbstractMojo {
                     }
                     for (String rootName : result.getResourceRoots()) {
                         Path resourcePath = file.getParent().resolve(rootName);
-                        if(!Files.exists(resourcePath)) {
+                        if (!Files.exists(resourcePath)) {
                             throw new RuntimeException("Could not find resource root " + resourcePath);
                         }
-                        if(!Files.isRegularFile(resourcePath)) {
+                        if (!Files.isRegularFile(resourcePath)) {
                             continue;
                         }
                         ZipFile zip = new ZipFile(resourcePath.toFile());
@@ -412,6 +426,7 @@ public class BuildMojo extends AbstractMojo {
 
     /**
      * Extracts a server to a temp directory, so all servers can be treated the same way.
+     *
      * @param server The server to extract
      */
     private void extractServer(Server server) {
@@ -464,6 +479,7 @@ public class BuildMojo extends AbstractMojo {
 
     /**
      * Copy maven artifacts to the built server
+     *
      * @param build The build definition
      * @throws IOException
      */
@@ -486,9 +502,10 @@ public class BuildMojo extends AbstractMojo {
 
     /**
      * Copy all files except for modules from the listed servers.
-     *
+     * <p/>
      * Servers are iterated in the order defined, so files in later servers will override files in
      * earlier ones, unless the files are explicitly excluded from being copied using a filter
+     *
      * @param build The build model
      * @throws IOException
      */
