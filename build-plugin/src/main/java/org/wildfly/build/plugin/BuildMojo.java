@@ -78,7 +78,7 @@ import java.util.zip.ZipFile;
  */
 
 @Mojo(name = "build", requiresDependencyResolution = ResolutionScope.RUNTIME)
-@Execute(phase = LifecyclePhase.PACKAGE)
+@Execute(phase = LifecyclePhase.COMPILE)
 public class BuildMojo extends AbstractMojo {
 
     int folderCount = 0;
@@ -528,6 +528,7 @@ public class BuildMojo extends AbstractMojo {
         deleteRecursive(baseDir);
 
         final Path path = Paths.get(baseDir.getAbsolutePath());
+
         for (final Server server : build.getServers()) {
             final Path base = Paths.get(server.getPath());
             Files.walkFileTree(base, new FileVisitor<Path>() {

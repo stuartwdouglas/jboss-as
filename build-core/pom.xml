@@ -388,7 +388,13 @@
     </dependencies>
 
     <build>
+        <finalName>${server.output.dir.prefix}-core-${project.version}</finalName>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions></executions>
+            </plugin>
             <plugin>
                 <groupId>org.wildfly</groupId>
                 <artifactId>wildfly-build-plugin</artifactId>
@@ -401,6 +407,30 @@
                         <phase>package</phase>
                         <configuration>
                             <config-file>server-build.xml</config-file>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>assemble</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>assembly.xml</descriptor>
+                            </descriptors>
+                            <finalName>${server.output.dir.prefix}-core-${project.version}</finalName>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <outputDirectory>target/</outputDirectory>
+                            <workDirectory>target/assembly/work</workDirectory>
+                            <tarLongFileMode>gnu</tarLongFileMode>
                         </configuration>
                     </execution>
                 </executions>

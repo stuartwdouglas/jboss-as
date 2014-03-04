@@ -24,7 +24,7 @@ public class Server {
     }
 
     public boolean includeFile(final String path) {
-        if(path.startsWith("modules/") || path.startsWith("configuration/")) {
+        if(path.startsWith("modules/") || path.startsWith("configuration")) {
             return false; //TODO: should we be hard coding this? And if so should it be here?
             //maybe we should move these files into src/modules and src/server-config?
         }
