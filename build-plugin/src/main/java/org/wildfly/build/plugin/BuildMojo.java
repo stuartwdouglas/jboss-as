@@ -103,12 +103,16 @@ public class BuildMojo extends AbstractMojo {
 
     private final Map<String, Artifact> artifactMap = new HashMap<>();
 
+    private Path templateTmpDir;
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         buildArtifactMap();
 
         FileInputStream configStream = null;
         try {
+            templateTmpDir = Files.createTempDirectory("wildfly-templates");
+            cleanupTasks.add(new FileDeleteTask(templateTmpDir.toFile()));
             configStream = new FileInputStream(new File(configDir, configFile));
             final Build build = new BuildModelParser(project.getProperties()).parse(configStream);
             for (Server server : build.getServers()) {
@@ -117,9 +121,7 @@ public class BuildMojo extends AbstractMojo {
             copyServers(build);
             copyModules(build);
             copyArtifacts(build);
-            if (build.isExtractSchema()) {
-                extractSchema();
-            }
+            extractResourcesFromJars(build.isExtractSchema());
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -134,11 +136,11 @@ public class BuildMojo extends AbstractMojo {
         }
     }
 
-    private void extractSchema() throws IOException {
+    private void extractResourcesFromJars(final boolean extractSchema) throws IOException {
         final File baseDir = new File(buildName, serverName);
         final File schemaTarget = new File(baseDir, "docs" + File.separator + "schema");
-        if(!schemaTarget.mkdirs()) {
-           throw new RuntimeException("Could not create schema directory");
+        if (!schemaTarget.mkdirs()) {
+            throw new RuntimeException("Could not create schema directory");
         }
         final Path modulesDir = Paths.get(new File(baseDir, "modules").getAbsolutePath());
         Map<String, Artifact> gavMap = new HashMap<>();
@@ -150,31 +152,35 @@ public class BuildMojo extends AbstractMojo {
                 }
                 try {
                     ModuleParseResult result = ModuleParser.parse(modulesDir, file);
-
                     for (String artifactName : result.getArtifacts()) {
                         Artifact artifact = artifactMap.get(artifactName);
-                        if(artifact == null) {
-                            getLog().warn("Could not extract schema from artifact " + artifactName);
-                            continue;
+                        if (artifact == null) {
+                            throw new RuntimeException("Could not extract resources from artifact " + artifactName);
                         }
                         ZipFile zip = new ZipFile(artifact.getFile());
                         try {
-                            if(zip.getEntry("schema") == null) {
-                                continue;
+                            if (extractSchema) {
+                                extractSchemaFromZip(zip, schemaTarget);
                             }
-                            Enumeration<? extends ZipEntry> entries = zip.entries();
-                            while (entries.hasMoreElements()) {
-                                ZipEntry entry = entries.nextElement();
-                                if(entry.getName().startsWith("schema/") && !entry.isDirectory()) {
-                                    InputStream in = null;
-                                    try {
-                                        in = zip.getInputStream(entry);
-                                        copyFile(in, new File(schemaTarget, entry.getName().substring("schema/".length())));
-                                    } finally {
-                                        safeClose(in);
-                                    }
-                                }
+                            extractTemplatesFromZip(zip);
+                        } finally {
+                            safeClose(zip);
+                        }
+                    }
+                    for (String rootName : result.getResourceRoots()) {
+                        Path resourcePath = file.getParent().resolve(rootName);
+                        if(!Files.exists(resourcePath)) {
+                            throw new RuntimeException("Could not find resource root " + resourcePath);
+                        }
+                        if(!Files.isRegularFile(resourcePath)) {
+                            continue;
+                        }
+                        ZipFile zip = new ZipFile(resourcePath.toFile());
+                        try {
+                            if (extractSchema) {
+                                extractSchemaFromZip(zip, schemaTarget);
                             }
+                            extractTemplatesFromZip(zip);
                         } finally {
                             safeClose(zip);
                         }
@@ -188,6 +194,44 @@ public class BuildMojo extends AbstractMojo {
             }
         });
 
+    }
+
+    private void extractTemplatesFromZip(ZipFile zip) throws IOException {
+        if (zip.getEntry("subsystem-templates") == null) {
+            return;
+        }
+        Enumeration<? extends ZipEntry> entries = zip.entries();
+        while (entries.hasMoreElements()) {
+            ZipEntry entry = entries.nextElement();
+            if (entry.getName().startsWith("subsystem-templates/") && !entry.isDirectory()) {
+                InputStream in = null;
+                try {
+                    in = zip.getInputStream(entry);
+                    copyFile(in, new File(templateTmpDir.toFile(), entry.getName().substring("subsystem-templates/".length())));
+                } finally {
+                    safeClose(in);
+                }
+            }
+        }
+    }
+
+    private void extractSchemaFromZip(ZipFile zip, File schemaTarget) throws IOException {
+        if (zip.getEntry("schema") == null) {
+            return;
+        }
+        Enumeration<? extends ZipEntry> entries = zip.entries();
+        while (entries.hasMoreElements()) {
+            ZipEntry entry = entries.nextElement();
+            if (entry.getName().startsWith("schema/") && !entry.isDirectory()) {
+                InputStream in = null;
+                try {
+                    in = zip.getInputStream(entry);
+                    copyFile(in, new File(schemaTarget, entry.getName().substring("schema/".length())));
+                } finally {
+                    safeClose(in);
+                }
+            }
+        }
     }
 
     private void copyModules(final Build build) throws IOException {
@@ -344,6 +388,9 @@ public class BuildMojo extends AbstractMojo {
 
     }
 
+    /**
+     * Builds a map of all the artifacts, keyed by GAV both with and without the version component
+     */
     private void buildArtifactMap() {
         for (Artifact artifact : project.getArtifacts()) {
             StringBuilder sb = new StringBuilder();
@@ -363,6 +410,10 @@ public class BuildMojo extends AbstractMojo {
 
     }
 
+    /**
+     * Extracts a server to a temp directory, so all servers can be treated the same way.
+     * @param server The server to extract
+     */
     private void extractServer(Server server) {
         if (server.getPath() != null) {
             return;
@@ -371,12 +422,7 @@ public class BuildMojo extends AbstractMojo {
         String name = "wf-server-build" + (folderCount++);
         final File destDir = new File(tempDir, name);
         deleteRecursive(destDir);
-        cleanupTasks.add(new Runnable() {
-            @Override
-            public void run() {
-                deleteRecursive(destDir);
-            }
-        });
+        cleanupTasks.add(new FileDeleteTask(destDir));
         destDir.mkdirs();
         server.setPath(destDir.getAbsolutePath());
         Artifact artifact = artifactMap.get(server.getArtifact());
@@ -416,6 +462,11 @@ public class BuildMojo extends AbstractMojo {
         }
     }
 
+    /**
+     * Copy maven artifacts to the built server
+     * @param build The build definition
+     * @throws IOException
+     */
     private void copyArtifacts(Build build) throws IOException {
         File baseDir = new File(buildName, serverName);
         for (CopyArtifact copy : build.getCopyArtifacts()) {
@@ -433,6 +484,14 @@ public class BuildMojo extends AbstractMojo {
         }
     }
 
+    /**
+     * Copy all files except for modules from the listed servers.
+     *
+     * Servers are iterated in the order defined, so files in later servers will override files in
+     * earlier ones, unless the files are explicitly excluded from being copied using a filter
+     * @param build The build model
+     * @throws IOException
+     */
     public void copyServers(Build build) throws IOException {
         File baseDir = new File(buildName, serverName);
         deleteRecursive(baseDir);
@@ -561,6 +620,19 @@ public class BuildMojo extends AbstractMojo {
                     //ignore
                 }
             }
+        }
+    }
+
+    private class FileDeleteTask implements Runnable {
+        final File file;
+
+        private FileDeleteTask(File file) {
+            this.file = file;
+        }
+
+        @Override
+        public void run() {
+            deleteRecursive(file);
         }
     }
 }
