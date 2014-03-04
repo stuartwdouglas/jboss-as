@@ -123,7 +123,7 @@ public class BuildMojo extends AbstractMojo {
             copyServers(build);
             copyModules(build);
             copyArtifacts(build);
-            extractResourcesFromJars(build.isExtractSchema());
+            postProcessModuleDirectory(build.isExtractSchema(), build.isCopyModuleArtifacts());
             generateConfigFiles(build);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -151,7 +151,7 @@ public class BuildMojo extends AbstractMojo {
         }
     }
 
-    private void extractResourcesFromJars(final boolean extractSchema) throws IOException {
+    private void postProcessModuleDirectory(final boolean extractSchema, final boolean copyModuleArtifacts) throws IOException {
         final File baseDir = new File(buildName, serverName);
         final File schemaTarget = new File(baseDir, "docs" + File.separator + "schema");
         if (!schemaTarget.mkdirs()) {
@@ -165,6 +165,10 @@ public class BuildMojo extends AbstractMojo {
                     return FileVisitResult.CONTINUE;
                 }
                 try {
+                    String moduleXmlContents = null;
+                    if(copyModuleArtifacts) {
+                        moduleXmlContents = readFile(file.toFile());
+                    }
                     ModuleParseResult result = ModuleParser.parse(modulesDir, file);
                     for (String artifactName : result.getArtifacts()) {
                         Artifact artifact = artifactMap.get(artifactName);
@@ -180,6 +184,14 @@ public class BuildMojo extends AbstractMojo {
                         } finally {
                             safeClose(zip);
                         }
+                        if(copyModuleArtifacts) {
+                            String artifactFileName = artifact.getFile().getName();
+                            copyFile(artifact.getFile(), new File(file.getParent().toFile(), artifactFileName));
+                            moduleXmlContents = moduleXmlContents.replaceAll("<artifact\\s+name=\""+artifactName + "\"\\s*/>", "<resource-root path=\"" + artifactFileName + "\"/>");
+                        }
+                    }
+                    if(copyModuleArtifacts) {
+                        copyFile(new ByteArrayInputStream(moduleXmlContents.getBytes("UTF-8")), file.toFile());
                     }
                     for (String rootName : result.getResourceRoots()) {
                         Path resourcePath = file.getParent().resolve(rootName);
@@ -199,6 +211,8 @@ public class BuildMojo extends AbstractMojo {
                             safeClose(zip);
                         }
                     }
+
+
 
                 } catch (XMLStreamException e) {
                     throw new RuntimeException(e);

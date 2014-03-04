@@ -13,6 +13,7 @@ public class Build {
     private final List<CopyArtifact> copyArtifacts = new ArrayList<>();
     private final List<ConfigFile> standaloneConfigs = new ArrayList<>();
     private final List<ConfigFile> domainConfigs = new ArrayList<>();
+    private boolean copyModuleArtifacts;
 
     public List<Server> getServers() {
         return servers;
@@ -36,5 +37,13 @@ public class Build {
 
     public void setExtractSchema(boolean extractSchema) {
         this.extractSchema = extractSchema;
+    }
+
+    public void setCopyModuleArtifacts(boolean copyModuleArtifacts) {
+        this.copyModuleArtifacts = copyModuleArtifacts;
+    }
+
+    public boolean isCopyModuleArtifacts() {
+        return copyModuleArtifacts;
     }
 }

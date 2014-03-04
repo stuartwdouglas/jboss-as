@@ -97,7 +97,9 @@ class BuildModelParser10 implements XMLElementReader<Build> {
     }
 
     enum Attribute {
-        NAME, PATTERN, INCLUDE, TRANSITIVE, ARTIFACT, TO_LOCATION, EXTRACT_SCHEMA,TEMPLATE,SUBSYSTEMS,OUTPUT_FILE,
+        NAME, PATTERN, INCLUDE, TRANSITIVE,
+        ARTIFACT, TO_LOCATION, EXTRACT_SCHEMA,TEMPLATE,SUBSYSTEMS,OUTPUT_FILE,
+        COPY_MODULE_ARTIFACTS,
 
         // default unknown attribute
         UNKNOWN;
@@ -116,6 +118,7 @@ class BuildModelParser10 implements XMLElementReader<Build> {
             attributesMap.put(new QName("template"), TEMPLATE);
             attributesMap.put(new QName("subsystems"), SUBSYSTEMS);
             attributesMap.put(new QName("output-file"), OUTPUT_FILE);
+            attributesMap.put(new QName("copy-module-artifacts"), COPY_MODULE_ARTIFACTS);
             attributes = attributesMap;
         }
 
@@ -132,6 +135,7 @@ class BuildModelParser10 implements XMLElementReader<Build> {
     @Override
     public void readElement(final XMLExtendedStreamReader reader, final Build result) throws XMLStreamException {
         boolean extractSchema = true;
+        boolean copyModuleArtifacts = true;
         final Set<Attribute> required = EnumSet.noneOf(Attribute.class);
         final int count = reader.getAttributeCount();
         for (int i = 0; i < count; i++) {
@@ -141,6 +145,9 @@ class BuildModelParser10 implements XMLElementReader<Build> {
                 case EXTRACT_SCHEMA:
                     extractSchema = Boolean.parseBoolean(propertyReplacer.replaceProperties(reader.getAttributeValue(i)));
                     break;
+                case COPY_MODULE_ARTIFACTS:
+                    copyModuleArtifacts = Boolean.parseBoolean(propertyReplacer.replaceProperties(reader.getAttributeValue(i)));
+                    break;
                 default:
                     throw unexpectedContent(reader);
             }
@@ -149,6 +156,7 @@ class BuildModelParser10 implements XMLElementReader<Build> {
             throw missingAttributes(reader.getLocation(), required);
         }
         result.setExtractSchema(extractSchema);
+        result.setCopyModuleArtifacts(copyModuleArtifacts);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {

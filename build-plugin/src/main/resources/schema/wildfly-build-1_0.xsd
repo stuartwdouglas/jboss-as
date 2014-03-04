@@ -37,6 +37,7 @@
                 <xs:element name="copy-artifact" type="copy-artifact-type" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
             <xs:attribute name="extract-schema" type="xs:boolean" use="optional" default="true"/>
+            <xs:attribute name="copy-module-artifacts" type="xs:boolean" use="optional" default="true"/>
         </xs:complexType>
     </xs:element>
 
