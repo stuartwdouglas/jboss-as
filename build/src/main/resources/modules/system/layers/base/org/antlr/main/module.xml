@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${antlr:antlr:}"/>
+        <artifact name="${antlr:antlr}"/>
     </resources>
 
     <dependencies>

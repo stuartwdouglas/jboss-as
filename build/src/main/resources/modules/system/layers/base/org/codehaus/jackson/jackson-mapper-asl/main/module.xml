@@ -27,7 +27,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.codehaus.jackson:jackson-mapper-asl:}"/>
+        <artifact name="${org.codehaus.jackson:jackson-mapper-asl}"/>
     </resources>
 
     <dependencies>

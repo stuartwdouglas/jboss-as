@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.wildfly:wildfly-sar:}"/>
+        <artifact name="${org.wildfly:wildfly-sar}"/>
     </resources>
 
     <dependencies>

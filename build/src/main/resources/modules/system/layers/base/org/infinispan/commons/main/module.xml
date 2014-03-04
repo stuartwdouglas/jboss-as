@@ -26,7 +26,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.infinispan:infinispan-commons:}"/>
+        <artifact name="${org.infinispan:infinispan-commons}"/>
     </resources>
 
     <dependencies>

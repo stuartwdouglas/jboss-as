@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.hornetq:hornetq-ra:}"/>
+        <artifact name="${org.hornetq:hornetq-ra}"/>
     </resources>
 
     <dependencies>

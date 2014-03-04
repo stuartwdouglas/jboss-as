@@ -788,6 +788,11 @@
                         </dependency>
                     </dependencies>
                 </plugin>
+                <plugin>
+                    <groupId>org.wildfly</groupId>
+                    <artifactId>wildfly-build-plugin</artifactId>
+                    <version>${project.version}</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -880,6 +885,13 @@
                 <groupId>org.wildfly</groupId>
                 <artifactId>wildfly-build</artifactId>
                 <type>pom</type>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly</groupId>
+                <artifactId>wildfly-build-core</artifactId>
+                <type>zip</type>
                 <version>${project.version}</version>
             </dependency>
 

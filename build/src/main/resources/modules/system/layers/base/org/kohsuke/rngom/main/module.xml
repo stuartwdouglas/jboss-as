@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.kohsuke.rngom:rngom:}"/>
+        <artifact name="${org.kohsuke.rngom:rngom}"/>
     </resources>
 
     <dependencies>

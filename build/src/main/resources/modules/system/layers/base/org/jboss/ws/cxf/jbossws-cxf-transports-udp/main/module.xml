@@ -29,7 +29,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.jboss.ws.cxf:jbossws-cxf-transports-udp:}"/>
+        <artifact name="${org.jboss.ws.cxf:jbossws-cxf-transports-udp}"/>
     </resources>
 
     <dependencies>

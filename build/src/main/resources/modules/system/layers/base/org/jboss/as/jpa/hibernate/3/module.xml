@@ -31,7 +31,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.jipijapa:jipijapa-hibernate3:}"/>
+        <artifact name="${org.jipijapa:jipijapa-hibernate3}"/>
     </resources>
 
     <dependencies>

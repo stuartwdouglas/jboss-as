@@ -26,7 +26,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.infinispan:infinispan-cachestore-jdbc:}"/>
+        <artifact name="${org.infinispan:infinispan-cachestore-jdbc}"/>
     </resources>
 
     <dependencies>

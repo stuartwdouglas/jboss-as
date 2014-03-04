@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.jboss.mod_cluster:mod_cluster-container-spi:}"/>
+        <artifact name="${org.jboss.mod_cluster:mod_cluster-container-spi}"/>
     </resources>
 
     <dependencies>

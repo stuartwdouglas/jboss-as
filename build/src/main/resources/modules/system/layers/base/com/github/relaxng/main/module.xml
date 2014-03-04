@@ -29,7 +29,7 @@
     </properties>
 
     <resources>
-        <artifact name="${com.github.relaxng:relaxngDatatype:}"/>
+        <artifact name="${com.github.relaxng:relaxngDatatype}"/>
     </resources>
 
     <dependencies>

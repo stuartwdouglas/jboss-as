@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.infinispan:infinispan-query-dsl:}"/>
+        <artifact name="${org.infinispan:infinispan-query-dsl}"/>
     </resources>
 
     <dependencies>

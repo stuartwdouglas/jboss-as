@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.infinispan:infinispan-query:}"/>
+        <artifact name="${org.infinispan:infinispan-query}"/>
     </resources>
 
     <dependencies>

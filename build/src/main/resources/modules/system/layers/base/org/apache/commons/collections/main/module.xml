@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${commons-collections:commons-collections:}"/>
+        <artifact name="${commons-collections:commons-collections}"/>
     </resources>
 
     <dependencies>

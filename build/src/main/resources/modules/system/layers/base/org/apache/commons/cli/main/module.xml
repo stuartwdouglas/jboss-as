@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${commons-cli:commons-cli:}"/>
+        <artifact name="${commons-cli:commons-cli}"/>
     </resources>
 
     <dependencies>

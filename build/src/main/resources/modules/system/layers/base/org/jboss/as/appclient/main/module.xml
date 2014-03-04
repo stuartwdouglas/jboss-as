@@ -30,7 +30,7 @@
     <main-class name="org.jboss.as.appclient.subsystem.Main"/>
 
     <resources>
-        <artifact name="${org.wildfly:wildfly-appclient:}"/>
+        <artifact name="${org.wildfly:wildfly-appclient}"/>
     </resources>
 
     <dependencies>

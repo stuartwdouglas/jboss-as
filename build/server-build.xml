@@ -1,0 +1,104 @@
+<!--
+  ~ JBoss, Home of Professional Open Source.
+  ~ Copyright 2014, Red Hat, Inc., and individual contributors
+  ~ as indicated by the @author tags. See the copyright.txt file in the
+  ~ distribution for a full listing of individual contributors.
+  ~
+  ~ This is free software; you can redistribute it and/or modify it
+  ~ under the terms of the GNU Lesser General Public License as
+  ~ published by the Free Software Foundation; either version 2.1 of
+  ~ the License, or (at your option) any later version.
+  ~
+  ~ This software is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+  ~ Lesser General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU Lesser General Public
+  ~ License along with this software; if not, write to the Free
+  ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+  ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+  -->
+
+<build xmlns="urn:wildfly:build:1.0" extract-schema="false" copy-module-artifacts="true">
+    <servers>
+        <server>
+            <artifact name="org.wildfly:wildfly-build-core" />
+        </server>
+        <server>
+            <path name="${server.dir}"/>
+        </server>
+    </servers>
+    <config>
+
+
+        <!--  See src/resources/configuration/ReadMe.txt for how the configuration assembly works -->
+
+        <!-- Core configs -->
+        <standalone
+                template="configuration/standalone/template.xml"
+                subsystems="configuration/standalone/subsystems.xml"
+                output-file="standalone/configuration/standalone.xml"/>
+        <standalone
+                template="configuration/standalone/template.xml"
+                subsystems="configuration/standalone/subsystems-full.xml"
+                output-file="standalone/configuration/standalone-full.xml"/>
+        <standalone
+                template="configuration/standalone/template.xml"
+                subsystems="configuration/standalone/subsystems-ha.xml"
+                output-file="standalone/configuration/standalone-ha.xml"/>
+        <standalone
+                template="configuration/standalone/template.xml"
+                subsystems="configuration/standalone/subsystems-full-ha.xml"
+                output-file="standalone/configuration/standalone-full-ha.xml"/>
+        <!--
+        <standalone
+                template="configuration/standalone/template.xml"
+                subsystems="examples/standalone/subsystems-ec2-full-ha.xml"
+                output-file="docs/examples/configs/standalone-ec2-full-ha.xml"/>
+        <standalone
+                template="configuration/standalone/template.xml"
+                subsystems="examples/standalone/subsystems-ec2-ha.xml"
+                output-file="docs/examples/configs/standalone-ec2-ha.xml"/>
+        <standalone
+                template="configuration/standalone/template.xml"
+                subsystems="examples/standalone/subsystems-gossip-full-ha.xml"
+                output-file="docs/examples/configs/standalone-gossip-full-ha.xml"/>
+        <standalone
+                template="configuration/standalone/template.xml"
+                subsystems="examples/standalone/subsystems-gossip-ha.xml"
+                output-file="docs/examples/configs/standalone-gossip-ha.xml"/>-->
+        <standalone
+                template="configuration/standalone/template.xml"
+                subsystems="configuration/examples/subsystems-hornetq-colocated.xml"
+                output-file="docs/examples/configs/standalone-hornetq-colocated.xml"/>
+        <standalone
+                template="configuration/standalone/template.xml"
+                subsystems="configuration/examples/subsystems-jts.xml"
+                output-file="docs/examples/configs/standalone-jts.xml"/>
+        <standalone
+                template="configuration/standalone/template.xml"
+                subsystems="configuration/examples/subsystems-xts.xml"
+                output-file="docs/examples/configs/standalone-xts.xml"/>
+        <standalone
+                template="configuration/standalone/template.xml"
+                subsystems="configuration/examples/subsystems-rts.xml"
+                output-file="docs/examples/configs/standalone-rts.xml"/>
+        <standalone
+                template="configuration/standalone/template.xml"
+                subsystems="configuration/examples/subsystems-genericjms.xml"
+                output-file="docs/examples/configs/standalone-genericjms.xml"/>
+        <domain
+                template="configuration/domain/template.xml"
+                subsystems="configuration/domain/subsystems.xml"
+                output-file="domain/configuration/domain.xml"/>
+    </config>
+
+    <copy-artifact artifact="org.jboss.resteasy:resteasy-spring" to-location="modules/system/layers/base/org/jboss/resteasy/resteasy-spring/main/bundled/resteasy-spring.jar"/>
+    <copy-artifact artifact="org.jboss.seam.integration:jboss-seam-int-jbossas" to-location="modules/system/layers/base/org/jboss/integration/ext-content/main/bundled/jboss-seam-int.jar"/>
+
+    <copy-artifact artifact="org.wildfly:wildfly-client-all" to-location="bin/client/jboss-client.jar"/>
+    <copy-artifact artifact="org.wildfly:wildfly-cli:client}" to-location="bin/client/jboss-cli-client.jar"/>
+    <copy-artifact artifact="org.wildfly:wildfly-version" to-location="modules/org/jboss/as/version/main/jboss-as-version-${project.version}.jar"/>
+
+</build>

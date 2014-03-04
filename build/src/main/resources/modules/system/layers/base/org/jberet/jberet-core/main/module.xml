@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.jberet:jberet-core:}"/>
+        <artifact name="${org.jberet:jberet-core}"/>
     </resources>
 
     <dependencies>

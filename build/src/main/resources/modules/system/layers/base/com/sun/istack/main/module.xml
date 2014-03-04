@@ -28,8 +28,8 @@
     </properties>
 
     <resources>
-        <artifact name="${com.sun.istack:istack-commons-runtime:}"/>
-        <artifact name="${com.sun.istack:istack-commons-tools:}"/>
+        <artifact name="${com.sun.istack:istack-commons-runtime}"/>
+        <artifact name="${com.sun.istack:istack-commons-tools}"/>
     </resources>
 
     <dependencies>

@@ -29,7 +29,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.jboss.weld:weld-spi:}"/>
+        <artifact name="${org.jboss.weld:weld-spi}"/>
     </resources>
 
     <dependencies>

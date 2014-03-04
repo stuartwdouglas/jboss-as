@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.scannotation:scannotation:}"/>
+        <artifact name="${org.scannotation:scannotation}"/>
     </resources>
 
     <dependencies>

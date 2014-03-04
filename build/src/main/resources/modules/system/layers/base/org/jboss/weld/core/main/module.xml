@@ -29,7 +29,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.jboss.weld:weld-core-impl:}"/>
+        <artifact name="${org.jboss.weld:weld-core-impl}"/>
     </resources>
 
     <dependencies>

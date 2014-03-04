@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${commons-codec:commons-codec:}"/>
+        <artifact name="${commons-codec:commons-codec}"/>
     </resources>
 
     <dependencies>

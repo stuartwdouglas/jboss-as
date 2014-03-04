@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.jacorb:jacorb:}"/>
+        <artifact name="${org.jacorb:jacorb}"/>
     </resources>
 
     <dependencies>

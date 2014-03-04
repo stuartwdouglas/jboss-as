@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.jsoup:jsoup:}"/>
+        <artifact name="${org.jsoup:jsoup}"/>
     </resources>
 
     <dependencies>

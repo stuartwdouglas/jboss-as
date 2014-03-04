@@ -29,7 +29,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.wildfly:wildfly-weld:}"/>
+        <artifact name="${org.wildfly:wildfly-weld}"/>
     </resources>
 
     <dependencies>

@@ -36,6 +36,6 @@
     </dependencies>
 
     <resources>
-        <artifact name="${com.sun.faces:jsf-impl:}"/>
+        <artifact name="${com.sun.faces:jsf-impl}"/>
     </resources>
 </module>

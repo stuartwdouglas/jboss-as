@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.wildfly:wildfly-clustering-jgroups:}"/>
+        <artifact name="${org.wildfly:wildfly-clustering-jgroups}"/>
     </resources>
 
     <dependencies>

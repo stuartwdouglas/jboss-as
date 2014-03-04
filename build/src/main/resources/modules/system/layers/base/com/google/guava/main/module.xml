@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${com.google.guava:guava:}"/>
+        <artifact name="${com.google.guava:guava}"/>
     </resources>
 
     <dependencies>

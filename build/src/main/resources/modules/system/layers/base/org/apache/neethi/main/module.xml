@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.apache.neethi:neethi:}"/>
+        <artifact name="${org.apache.neethi:neethi}"/>
     </resources>
 
     <dependencies>

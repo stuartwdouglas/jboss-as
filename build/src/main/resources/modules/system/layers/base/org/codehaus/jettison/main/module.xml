@@ -27,7 +27,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.codehaus.jettison:jettison:}"/>
+        <artifact name="${org.codehaus.jettison:jettison}"/>
     </resources>
 
     <dependencies>

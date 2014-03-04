@@ -31,6 +31,6 @@
     <dependencies>
     </dependencies>
     <resources>
-        <artifact name="${org.glassfish:javax.json:}"/>
+        <artifact name="${org.glassfish:javax.json}"/>
     </resources>
 </module>

@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.wildfly:wildfly-clustering-web-spi:}"/>
+        <artifact name="${org.wildfly:wildfly-clustering-web-spi}"/>
     </resources>
 
     <dependencies>

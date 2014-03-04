@@ -26,7 +26,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.infinispan:infinispan-cachestore-remote:}"/>
+        <artifact name="${org.infinispan:infinispan-cachestore-remote}"/>
     </resources>
 
     <dependencies>

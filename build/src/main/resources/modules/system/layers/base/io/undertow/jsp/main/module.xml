@@ -24,7 +24,7 @@
 
 <module xmlns="urn:jboss:module:1.3" name="io.undertow.jsp">
     <resources>
-        <artifact name="${io.undertow.jastow:jastow:}"/>
+        <artifact name="${io.undertow.jastow:jastow}"/>
     </resources>
 
     <dependencies>

@@ -27,7 +27,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.codehaus.jackson:jackson-core-asl:}"/>
+        <artifact name="${org.codehaus.jackson:jackson-core-asl}"/>
     </resources>
 
     <dependencies>

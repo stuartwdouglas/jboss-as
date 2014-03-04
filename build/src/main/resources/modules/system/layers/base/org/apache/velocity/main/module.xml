@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.apache.velocity:velocity:}"/>
+        <artifact name="${org.apache.velocity:velocity}"/>
     </resources>
 
     <dependencies>

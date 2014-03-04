@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.wildfly:wildfly-batch:}"/>
+        <artifact name="${org.wildfly:wildfly-batch}"/>
     </resources>
 
     <dependencies>

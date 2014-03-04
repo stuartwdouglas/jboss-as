@@ -2,6 +2,6 @@
 <!--  See src/resources/configuration/ReadMe.txt for how the configuration assembly works -->
 <config>
    <subsystems>
-      <subsystem>configuration/subsystems/logging.xml</subsystem>
+      <subsystem>logging.xml</subsystem>
    </subsystems>
 </config>

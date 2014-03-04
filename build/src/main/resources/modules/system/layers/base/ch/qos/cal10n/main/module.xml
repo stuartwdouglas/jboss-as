@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${ch.qos.cal10n:cal10n-api:}"/>
+        <artifact name="${ch.qos.cal10n:cal10n-api}"/>
     </resources>
 
     <dependencies>

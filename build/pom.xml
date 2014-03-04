@@ -45,6 +45,8 @@
         <generated.configs.domain>${generated.configs}/domain/configuration</generated.configs.domain>
         <generated.configs.examples>${generated.configs}/docs/examples/configs</generated.configs.examples>
         <generated.configs.src.dir>${basedir}/src/main/resources</generated.configs.src.dir>
+        <server.dir>${basedir}/src/main/resources</server.dir>
+        <project.version>${project.version}</project.version>
     </properties>
 
 
@@ -81,6 +83,12 @@
                     <artifactId>wildfly-model-test</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-build-core</artifactId>
+            <type>zip</type>
         </dependency>
 
         <dependency>
@@ -2060,46 +2068,11 @@
                                     <goal>build</goal>
                                 </goals>
                                 <phase>package</phase>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <inherited>false</inherited>
-                        <executions>
-                            <execution>
-                                <id>build-dist</id>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <phase>package</phase>
                                 <configuration>
-                                    <target>
-                                        <ant antfile="build.xml" inheritRefs="true">
-                                            <target name="${ant.target}"/>
-                                        </ant>
-                                    </target>
+                                    <config-file>server-build.xml</config-file>
                                 </configuration>
                             </execution>
                         </executions>
-                        <dependencies>
-                            <dependency>
-                                <groupId>org.jboss</groupId>
-                                <artifactId>jandex</artifactId>
-                                <version>${version.org.jboss.jandex}</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>org.apache.ant</groupId>
-                                <artifactId>ant-apache-bsf</artifactId>
-                                <version>${version.org.apache.ant}</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>rhino</groupId>
-                                <artifactId>js</artifactId>
-                                <version>${version.rhino.js}</version>
-                            </dependency>
-                        </dependencies>
                     </plugin>
                 </plugins>
             </build>
@@ -2134,59 +2107,6 @@
                                 </configuration>
                             </execution>
                         </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <inherited>false</inherited>
-                        <executions>
-                            <execution>
-                                <id>build-core</id>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <phase>package</phase>
-                                <configuration>
-                                    <target>
-                                        <ant antfile="build-core.xml" inheritRefs="true">
-                                            <target name="${ant.target}"/>
-                                        </ant>
-                                    </target>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>build-dist</id>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                                <phase>package</phase>
-                                <configuration>
-                                    <target>
-                                        <ant antfile="build.xml" inheritRefs="true">
-                                            <target name="${ant.target}"/>
-                                        </ant>
-                                    </target>
-                                </configuration>
-                            </execution>
-                        </executions>
-
-                        <dependencies>
-                            <dependency>
-                                <groupId>org.jboss</groupId>
-                                <artifactId>jandex</artifactId>
-                                <version>${version.org.jboss.jandex}</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>org.apache.ant</groupId>
-                                <artifactId>ant-apache-bsf</artifactId>
-                                <version>${version.org.apache.ant}</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>rhino</groupId>
-                                <artifactId>js</artifactId>
-                                <version>${version.rhino.js}</version>
-                            </dependency>
-                        </dependencies>
                     </plugin>
                 </plugins>
             </build>

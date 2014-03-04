@@ -154,8 +154,10 @@ public class BuildMojo extends AbstractMojo {
     private void postProcessModuleDirectory(final boolean extractSchema, final boolean copyModuleArtifacts) throws IOException {
         final File baseDir = new File(buildName, serverName);
         final File schemaTarget = new File(baseDir, "docs" + File.separator + "schema");
-        if (!schemaTarget.mkdirs()) {
-            throw new RuntimeException("Could not create schema directory");
+        if (!schemaTarget.isDirectory()) {
+            if (!schemaTarget.mkdirs()) {
+                throw new RuntimeException("Could not create schema directory");
+            }
         }
         final Path modulesDir = Paths.get(new File(baseDir, "modules").getAbsolutePath());
         Files.walkFileTree(modulesDir, new SimpleFileVisitor<Path>() {
@@ -166,7 +168,7 @@ public class BuildMojo extends AbstractMojo {
                 }
                 try {
                     String moduleXmlContents = null;
-                    if(copyModuleArtifacts) {
+                    if (copyModuleArtifacts) {
                         moduleXmlContents = readFile(file.toFile());
                     }
                     ModuleParseResult result = ModuleParser.parse(modulesDir, file);
@@ -184,19 +186,20 @@ public class BuildMojo extends AbstractMojo {
                         } finally {
                             safeClose(zip);
                         }
-                        if(copyModuleArtifacts) {
+                        if (copyModuleArtifacts) {
                             String artifactFileName = artifact.getFile().getName();
                             copyFile(artifact.getFile(), new File(file.getParent().toFile(), artifactFileName));
-                            moduleXmlContents = moduleXmlContents.replaceAll("<artifact\\s+name=\""+artifactName + "\"\\s*/>", "<resource-root path=\"" + artifactFileName + "\"/>");
+                            moduleXmlContents = moduleXmlContents.replaceAll("<artifact\\s+name=\"" + artifactName + "\"\\s*/>", "<resource-root path=\"" + artifactFileName + "\"/>");
                         }
                     }
-                    if(copyModuleArtifacts) {
+                    if (copyModuleArtifacts) {
                         copyFile(new ByteArrayInputStream(moduleXmlContents.getBytes("UTF-8")), file.toFile());
                     }
                     for (String rootName : result.getResourceRoots()) {
                         Path resourcePath = file.getParent().resolve(rootName);
                         if (!Files.exists(resourcePath)) {
-                            throw new RuntimeException("Could not find resource root " + resourcePath);
+                            getLog().warn("Could not find resource root " + resourcePath);
+                            continue;
                         }
                         if (!Files.isRegularFile(resourcePath)) {
                             continue;
@@ -211,7 +214,6 @@ public class BuildMojo extends AbstractMojo {
                             safeClose(zip);
                         }
                     }
-
 
 
                 } catch (XMLStreamException e) {
@@ -453,7 +455,6 @@ public class BuildMojo extends AbstractMojo {
         deleteRecursive(destDir);
         cleanupTasks.add(new FileDeleteTask(destDir));
         destDir.mkdirs();
-        server.setPath(destDir.getAbsolutePath());
         Artifact artifact = artifactMap.get(server.getArtifact());
         if (artifact == null) {
             throw new RuntimeException("Could not find server artifact " + server.getArtifact() + " make sure it is present as a dependency of the project");
@@ -468,7 +469,7 @@ public class BuildMojo extends AbstractMojo {
             while (entries.hasMoreElements()) {
                 JarEntry jarFile = entries.nextElement();
                 java.io.File f = new java.io.File(destDir + java.io.File.separator + jarFile.getName());
-                if (destDir.isDirectory()) { // if its a directory, create it
+                if (jarFile.isDirectory()) { // if its a directory, create it
                     f.mkdir();
                     continue;
                 }
@@ -482,13 +483,16 @@ public class BuildMojo extends AbstractMojo {
                 } finally {
                     safeClose(is, fos);
                 }
-                Path p = Paths.get(f.getAbsolutePath());
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
             safeClose(jar);
         }
+        //todo: make this configurable
+        String[] files = destDir.list();
+
+        server.setPath(new File(destDir, files[0]).getAbsolutePath());
     }
 
     /**

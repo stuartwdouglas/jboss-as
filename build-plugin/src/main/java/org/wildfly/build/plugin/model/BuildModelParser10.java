@@ -217,7 +217,6 @@ class BuildModelParser10 implements XMLElementReader<Build> {
     }
 
     private void parseServers(final XMLStreamReader reader, final Build result) throws XMLStreamException {
-        Set<Element> visited = EnumSet.noneOf(Element.class);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
@@ -225,10 +224,6 @@ class BuildModelParser10 implements XMLElementReader<Build> {
                 }
                 case XMLStreamConstants.START_ELEMENT: {
                     final Element element = Element.of(reader.getName());
-                    if (visited.contains(element)) {
-                        throw unexpectedContent(reader);
-                    }
-                    visited.add(element);
                     switch (element) {
                         case SERVER:
                             Server server = new Server();
@@ -320,7 +315,6 @@ class BuildModelParser10 implements XMLElementReader<Build> {
 
     private void parseFiles(final XMLStreamReader reader, Server result) throws XMLStreamException {
         // xsd:all
-        Set<Element> visited = EnumSet.noneOf(Element.class);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
@@ -328,10 +322,6 @@ class BuildModelParser10 implements XMLElementReader<Build> {
                 }
                 case XMLStreamConstants.START_ELEMENT: {
                     final Element element = Element.of(reader.getName());
-                    if (visited.contains(element)) {
-                        throw unexpectedContent(reader);
-                    }
-                    visited.add(element);
                     switch (element) {
                         case FILTER:
                             parseFilter(reader, result);
@@ -380,7 +370,6 @@ class BuildModelParser10 implements XMLElementReader<Build> {
 
     private void parseModules(final XMLStreamReader reader, Server result) throws XMLStreamException {
         // xsd:all
-        Set<Element> visited = EnumSet.noneOf(Element.class);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
@@ -388,10 +377,6 @@ class BuildModelParser10 implements XMLElementReader<Build> {
                 }
                 case XMLStreamConstants.START_ELEMENT: {
                     final Element element = Element.of(reader.getName());
-                    if (visited.contains(element)) {
-                        throw unexpectedContent(reader);
-                    }
-                    visited.add(element);
                     switch (element) {
                         case FILTER:
                             parseModulesFilter(reader, result);
@@ -444,7 +429,6 @@ class BuildModelParser10 implements XMLElementReader<Build> {
 
 
     private void parseConfig(final XMLStreamReader reader, final Build result) throws XMLStreamException {
-        Set<Element> visited = EnumSet.noneOf(Element.class);
         while (reader.hasNext()) {
             switch (reader.nextTag()) {
                 case XMLStreamConstants.END_ELEMENT: {
@@ -452,10 +436,6 @@ class BuildModelParser10 implements XMLElementReader<Build> {
                 }
                 case XMLStreamConstants.START_ELEMENT: {
                     final Element element = Element.of(reader.getName());
-                    if (visited.contains(element)) {
-                        throw unexpectedContent(reader);
-                    }
-                    visited.add(element);
                     switch (element) {
                         case STANDALONE:
                             parseConfigFile(reader, result, false);

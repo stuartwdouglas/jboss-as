@@ -28,6 +28,6 @@
     </properties>
 
     <resources>
-        <artifact name="${com.fasterxml:classmate:}"/>
+        <artifact name="${com.fasterxml:classmate}"/>
     </resources>
 </module>

@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${com.sun.codemodel:codemodel:}"/>
+        <artifact name="${com.sun.codemodel:codemodel}"/>
     </resources>
 
     <dependencies>

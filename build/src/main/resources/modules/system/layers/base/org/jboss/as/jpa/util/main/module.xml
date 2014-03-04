@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.wildfly:wildfly-jpa-util:}"/>
+        <artifact name="${org.wildfly:wildfly-jpa-util}"/>
     </resources>
 
     <dependencies>

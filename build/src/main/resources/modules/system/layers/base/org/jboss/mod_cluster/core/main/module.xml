@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.jboss.mod_cluster:mod_cluster-core:}"/>
+        <artifact name="${org.jboss.mod_cluster:mod_cluster-core}"/>
     </resources>
 
     <dependencies>

@@ -29,7 +29,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.jboss.ws.projects:jaxws-jboss-httpserver-httpspi:}"/>
+        <artifact name="${org.jboss.ws.projects:jaxws-jboss-httpserver-httpspi}"/>
     </resources>
 
     <dependencies>

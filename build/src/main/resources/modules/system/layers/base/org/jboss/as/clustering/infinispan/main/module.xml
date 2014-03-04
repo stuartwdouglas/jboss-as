@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.wildfly:wildfly-clustering-infinispan:}"/>
+        <artifact name="${org.wildfly:wildfly-clustering-infinispan}"/>
     </resources>
 
     <dependencies>

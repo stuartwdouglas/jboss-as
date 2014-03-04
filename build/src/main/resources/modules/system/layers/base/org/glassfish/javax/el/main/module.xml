@@ -29,6 +29,6 @@
     </properties>
 
     <resources>
-        <artifact name="${org.glassfish:javax.el:}"/>
+        <artifact name="${org.glassfish:javax.el}"/>
     </resources>
 </module>

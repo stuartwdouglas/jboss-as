@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.apache.avro:avro:}"/>
+        <artifact name="${org.apache.avro:avro}"/>
     </resources>
 
     <dependencies>

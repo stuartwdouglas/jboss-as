@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${net.jcip:jcip-annotations:}"/>
+        <artifact name="${net.jcip:jcip-annotations}"/>
     </resources>
 
     <dependencies>

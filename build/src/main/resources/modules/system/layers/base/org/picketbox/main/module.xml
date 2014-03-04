@@ -24,9 +24,9 @@
 
 <module xmlns="urn:jboss:module:1.3" name="org.picketbox">
     <resources>
-        <artifact name="${org.picketbox:picketbox:}"/>
-        <artifact name="${org.picketbox:picketbox-infinispan:}"/>
-        <artifact name="${org.picketbox:picketbox-commons:}"/>
+        <artifact name="${org.picketbox:picketbox}"/>
+        <artifact name="${org.picketbox:picketbox-infinispan}"/>
+        <artifact name="${org.picketbox:picketbox-commons}"/>
     </resources>
 
     <dependencies>

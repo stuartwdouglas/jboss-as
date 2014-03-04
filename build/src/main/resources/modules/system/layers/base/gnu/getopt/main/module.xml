@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${gnu.getopt:java-getopt:}"/>
+        <artifact name="${gnu.getopt:java-getopt}"/>
     </resources>
 
 </module>

@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.javassist:javassist:}"/>
+        <artifact name="${org.javassist:javassist}"/>
     </resources>
 
     <dependencies>

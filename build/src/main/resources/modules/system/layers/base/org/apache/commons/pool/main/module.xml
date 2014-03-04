@@ -28,7 +28,7 @@
     </properties>
 
     <resources>
-        <artifact name="${commons-pool:commons-pool:}"/>
+        <artifact name="${commons-pool:commons-pool}"/>
     </resources>
 
     <dependencies>

@@ -29,7 +29,7 @@
     </properties>
 
     <resources>
-        <artifact name="${org.jboss.ws.cxf:jbossws-cxf-transports-httpserver:}"/>
+        <artifact name="${org.jboss.ws.cxf:jbossws-cxf-transports-httpserver}"/>
     </resources>
 
     <dependencies>
