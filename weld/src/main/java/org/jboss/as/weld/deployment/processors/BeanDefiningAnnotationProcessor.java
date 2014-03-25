@@ -8,6 +8,7 @@ import static org.jboss.as.weld.util.Indices.getAnnotatedClasses;
 
 import java.util.Collection;
 
+import javax.enterprise.inject.Model;
 import javax.transaction.TransactionScoped;
 
 import org.jboss.as.server.deployment.Attachments;
@@ -51,6 +52,9 @@ public class BeanDefiningAnnotationProcessor implements DeploymentUnitProcessor 
 
         addAnnotations(deploymentUnit, getAnnotationsAnnotatedWith(index, CdiAnnotations.NORM_SCOPE.getDotName()));
         addAnnotations(deploymentUnit, getAnnotationsAnnotatedWith(index, CdiAnnotations.SCOPE));
+
+        //model stereotype
+        addAnnotation(deploymentUnit, new AnnotationType(Model.class));
     }
 
     private static void addAnnotations(final DeploymentUnit deploymentUnit, Collection<AnnotationType> annotations) {
