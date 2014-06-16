@@ -601,7 +601,7 @@
     </dependencies>
 
     <build>
-        <finalName>${server.output.dir.prefix}-web-${project.version}</finalName>
+        <finalName>${wildfly.web.build.finalName}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

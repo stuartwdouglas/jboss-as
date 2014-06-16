@@ -66,6 +66,7 @@
     <name>WildFly Test Suite: Aggregator</name>
 
     <modules>
+        <module>web-integration</module>
         <module>integration</module>
     </modules>
 
@@ -421,6 +422,7 @@
             <id>all-modules.module.profile</id>
             <activation><property><name>allTests</name></property></activation>
             <modules>
+                <module>web-integration</module>
                 <module>integration</module>
                 <module>compat</module>
                 <module>domain</module>
@@ -439,13 +441,17 @@
             <id>integ.module.profile</id>
             <activation><property><name>integ.module</name></property></activation>
             <modules>
+                <module>web-integration</module>
                 <module>integration</module>
             </modules>
         </profile>
         <profile>
             <id>integ-basic.module.profile</id>
             <activation><property><name>ts.basic</name></property></activation>
-            <modules><module>integration</module></modules>
+            <modules>
+                <module>web-integration</module>
+                <module>integration</module>
+            </modules>
         </profile>
         <profile>
             <id>integ-clust.module.profile</id>
