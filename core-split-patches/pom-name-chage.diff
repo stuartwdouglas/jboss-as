@@ -1,0 +1,32 @@
+diff --git a/pom.xml b/pom.xml
+index 81443b4..b6d9ee6 100644
+--- a/pom.xml
++++ b/pom.xml
+@@ -29,12 +29,12 @@
+       <version>14</version>
+     </parent>
+ 
+-    <groupId>org.wildfly</groupId>
+-    <artifactId>wildfly-parent</artifactId>
++    <groupId>org.wildfly.core</groupId>
++    <artifactId>wildfly-core-parent</artifactId>
+     <version>9.0.0.Alpha1-SNAPSHOT</version>
+ 
+-    <name>WildFly: Parent Aggregator</name>
+-    <description>WildFly: Parent Aggregator</description>
++    <name>WildFly: Core Parent Aggregator</name>
++    <description>WildFly: Core Parent Aggregator</description>
+ 
+     <packaging>pom</packaging>
+ 
+@@ -56,8 +56,8 @@
+         <!-- Release Info -->
+         <jboss.as.release.version>${project.version}</jboss.as.release.version>
+         <jboss.as.release.codename>Kenny</jboss.as.release.codename>
+-        <jboss.as.scm.url>https://github.com/wildfly/wildfly</jboss.as.scm.url>
+-        <jboss.as.scm.connection>git@github.com:wildfly/wildfly.git</jboss.as.scm.connection>
++        <jboss.as.scm.url>https://github.com/wildfly/wildfly-core</jboss.as.scm.url>
++        <jboss.as.scm.connection>git@github.com:wildfly/wildfly-core.git</jboss.as.scm.connection>
+ 
+         <!--
+             Build configuration.  Override JBoss Parent settings as necessary.
