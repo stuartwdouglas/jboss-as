@@ -1,0 +1,13 @@
+diff --git a/web-build/server-build.xml b/web-build/server-build.xml
+index e5077ee..854699b 100644
+--- a/web-build/server-build.xml
++++ b/web-build/server-build.xml
+@@ -23,7 +23,7 @@
+ <build xmlns="urn:wildfly:build:1.0" extract-schema="false" copy-module-artifacts="false">
+     <servers>
+         <server>
+-            <artifact name="org.wildfly:wildfly-core-build" />
++            <artifact name="org.wildfly.core:wildfly-core-build" />
+         </server>
+         <server>
+             <path name="${server.dir}"/>
