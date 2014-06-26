@@ -1,0 +1,15 @@
+diff --git a/appclient/pom.xml b/appclient/pom.xml
+index fc7f023..1e0cecc 100644
+--- a/appclient/pom.xml
++++ b/appclient/pom.xml
+@@ -70,6 +70,11 @@
+ 
+         <dependency>
+             <groupId>org.wildfly</groupId>
++            <artifactId>wildfly-ejb3</artifactId>
++        </dependency>
++
++        <dependency>
++            <groupId>org.wildfly</groupId>
+             <artifactId>wildfly-webservices-server-integration</artifactId>
+         </dependency>
