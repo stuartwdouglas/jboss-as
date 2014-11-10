@@ -158,6 +158,10 @@ public abstract class ListenerService<T> implements Service<T> {
 
     protected abstract String getProtocol();
 
+    protected OptionMap getListenerOptions() {
+        return listenerOptions;
+    }
+
     private static class ListenerBinding implements ManagedBinding {
 
         private final SocketBinding binding;

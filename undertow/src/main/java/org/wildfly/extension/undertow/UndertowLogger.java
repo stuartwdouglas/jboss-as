@@ -181,4 +181,8 @@ public interface UndertowLogger extends BasicLogger {
 
     @Message(id = 17541, value = "Could not load handler %s from %s module")
     RuntimeException couldNotLoadHandlerFromModule(String className,String moduleName, @Cause Exception e);
+
+    @LogMessage(level = ERROR)
+    @Message(id = 17542, value = "Could not start SPDY or HTTP2 support, as the Jetty ALPN jar was not present on the boot class path.")
+    void noAlpn();
 }

@@ -89,7 +89,7 @@ public class HttpListenerService extends ListenerService<HttpListenerService> {
 
     @Override
     protected OpenListener createOpenListener() {
-        return new HttpOpenListener(getBufferPool().getValue(), OptionMap.builder().addAll(commonOptions).addAll(listenerOptions).getMap(), getBufferSize());
+        return new HttpOpenListener(getBufferPool().getValue(), OptionMap.builder().addAll(commonOptions).addAll(listenerOptions).getMap());
     }
 
     @Override

@@ -41,6 +41,7 @@ import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
 import org.wildfly.extension.io.IOServices;
+import org.wildfly.extension.io.OptionAttributeDefinition;
 import org.wildfly.extension.io.OptionList;
 import org.xnio.OptionMap;
 import org.xnio.Pool;
@@ -75,7 +76,7 @@ abstract class ListenerAdd extends AbstractAddStepHandler {
         final boolean enabled = ListenerResourceDefinition.ENABLED.resolveModelAttribute(context, model).asBoolean();
         final boolean peerHostLookup = ListenerResourceDefinition.RESOLVE_PEER_ADDRESS.resolveModelAttribute(context, model).asBoolean();
 
-        OptionMap listenerOptions = OptionList.resolveOptions(context, model, ListenerResourceDefinition.LISTENER_OPTIONS);
+        OptionMap listenerOptions = OptionList.resolveOptions(context, model, listenerOptions());
         OptionMap socketOptions = OptionList.resolveOptions(context, model, ListenerResourceDefinition.SOCKET_OPTIONS);
         String serverName = parent.getLastElement().getValue();
         final ServiceName listenerServiceName = UndertowService.listenerName(name);
@@ -103,6 +104,10 @@ abstract class ListenerAdd extends AbstractAddStepHandler {
         if (newControllers != null) {
             newControllers.add(serviceController);
         }
+    }
+
+    protected List<OptionAttributeDefinition> listenerOptions() {
+        return ListenerResourceDefinition.LISTENER_OPTIONS;
     }
 
     abstract ListenerService<? extends ListenerService> createService(String name, final String serverName, final OperationContext context, ModelNode model, OptionMap listenerOptions, OptionMap socketOptions) throws OperationFailedException;

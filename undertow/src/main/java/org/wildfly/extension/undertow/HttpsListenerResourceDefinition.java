@@ -27,6 +27,7 @@ import static org.xnio.Options.SSL_CLIENT_AUTH_MODE;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import io.undertow.UndertowOptions;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
@@ -74,6 +75,13 @@ public class HttpsListenerResourceDefinition extends ListenerResourceDefinition 
             .build();
 
 
+    protected static final OptionAttributeDefinition ENABLE_SPDY = OptionAttributeDefinition.builder("enable-spdy", UndertowOptions.ENABLE_SPDY)
+            .setAllowNull(true)
+            .setDefaultValue(new ModelNode(false))
+            .setFlags(AttributeAccess.Flag.RESTART_ALL_SERVICES)
+            .setAllowExpression(true)
+            .build();
+
     private HttpsListenerResourceDefinition() {
         super(UndertowExtension.HTTPS_LISTENER_PATH);
     }
@@ -85,6 +93,7 @@ public class HttpsListenerResourceDefinition extends ListenerResourceDefinition 
         res.add(VERIFY_CLIENT);
         res.add(ENABLED_CIPHER_SUITES);
         res.add(ENABLED_PROTOCOLS);
+        res.add(ENABLE_SPDY);
         return res;
     }
 

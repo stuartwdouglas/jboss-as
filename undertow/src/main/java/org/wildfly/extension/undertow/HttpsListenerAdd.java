@@ -28,7 +28,11 @@ import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceBuilder;
+import org.wildfly.extension.io.OptionAttributeDefinition;
 import org.xnio.OptionMap;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Add handler for HTTPS listeners.
@@ -44,7 +48,7 @@ public class HttpsListenerAdd extends ListenerAdd {
     @Override
     ListenerService<? extends ListenerService> createService(String name, final String serverName, final OperationContext context, ModelNode model, OptionMap listenerOptions, OptionMap socketOptions) throws OperationFailedException {
         OptionMap.Builder builder = OptionMap.builder().addAll(socketOptions);
-        HttpsListenerResourceDefinition.VERIFY_CLIENT.resolveOption(context, model,builder);
+        HttpsListenerResourceDefinition.VERIFY_CLIENT.resolveOption(context, model, builder);
         HttpsListenerResourceDefinition.ENABLED_CIPHER_SUITES.resolveOption(context, model, builder);
         HttpsListenerResourceDefinition.ENABLED_PROTOCOLS.resolveOption(context, model, builder);
         return new HttpsListenerService(name, serverName, listenerOptions, builder.getMap());
@@ -57,4 +61,10 @@ public class HttpsListenerAdd extends ListenerAdd {
         SecurityRealm.ServiceUtil.addDependency(serviceBuilder, ((HttpsListenerService) service).getSecurityRealm(), securityRealm, false);
     }
 
+    @Override
+    protected List<OptionAttributeDefinition> listenerOptions() {
+        List<OptionAttributeDefinition> ret = new ArrayList<>(super.listenerOptions());
+        ret.add(HttpsListenerResourceDefinition.ENABLE_SPDY);
+        return ret;
+    }
 }

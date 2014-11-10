@@ -24,15 +24,27 @@ package org.wildfly.extension.undertow;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import javax.net.ssl.SSLContext;
 
+import io.undertow.UndertowOptions;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.OpenListener;
+import io.undertow.server.protocol.http.AlpnOpenListener;
+import io.undertow.server.protocol.http.HttpOpenListener;
+import io.undertow.server.protocol.spdy.SpdyOpenListener;
 import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.msc.value.InjectedValue;
+import org.xnio.BufferAllocator;
+import org.xnio.ByteBufferSlicePool;
 import org.xnio.ChannelListener;
 import org.xnio.IoUtils;
 import org.xnio.OptionMap;
 import org.xnio.OptionMap.Builder;
 import org.xnio.Options;
+import org.xnio.Pool;
 import org.xnio.StreamConnection;
 import org.xnio.XnioWorker;
 import org.xnio.channels.AcceptingChannel;
@@ -70,6 +82,69 @@ public class HttpsListenerService extends HttpListenerService {
         sslServer.resumeAccepts();
 
         UndertowLogger.ROOT_LOGGER.listenerStarted("HTTPS", getName(), socketAddress);
+    }
+
+
+    @Override
+    protected OpenListener createOpenListener() {
+
+        boolean spdy = getListenerOptions().get(UndertowOptions.ENABLE_SPDY, false);
+        HttpOpenListener httpOpenListener = new HttpOpenListener(getBufferPool().getValue(), OptionMap.builder().addAll(commonOptions).addAll(listenerOptions).getMap());
+        if(!spdy) {
+            return httpOpenListener;
+        }
+        try {
+            getClass().getClassLoader().loadClass("org.eclipse.jetty.alpn.ALPN");
+        } catch (ClassNotFoundException e) {
+            UndertowLogger.ROOT_LOGGER.noAlpn();
+            return httpOpenListener;
+        }
+        final List<OpenListener> listeners = new ArrayList<>();
+        listeners.add(httpOpenListener);
+        final AlpnOpenListener alpn = new AlpnOpenListener(getBufferPool().getValue(), "http/1.1", httpOpenListener);
+        if(spdy) {
+            //TODO: non-direct buffer pool should be configurable
+            SpdyOpenListener spdyOpen = new SpdyOpenListener(getBufferPool().getValue(), new ByteBufferSlicePool(BufferAllocator.BYTE_BUFFER_ALLOCATOR, 1000, 1000), OptionMap.builder().addAll(commonOptions).addAll(listenerOptions).getMap());
+            listeners.add(spdyOpen);
+            alpn.addProtocol(SpdyOpenListener.SPDY_3_1, spdyOpen, 5);
+        }
+        return new OpenListener() {
+
+
+            @Override
+            public HttpHandler getRootHandler() {
+                return listeners.get(0).getRootHandler();
+            }
+
+            @Override
+            public void setRootHandler(HttpHandler rootHandler) {
+                for(OpenListener l : listeners) {
+                    l.setRootHandler(rootHandler);
+                }
+            }
+
+            @Override
+            public OptionMap getUndertowOptions() {
+                return listeners.get(0).getUndertowOptions();
+            }
+
+            @Override
+            public void setUndertowOptions(OptionMap undertowOptions) {
+                for(OpenListener l : listeners) {
+                    l.setUndertowOptions(undertowOptions);
+                }
+            }
+
+            @Override
+            public Pool<ByteBuffer> getBufferPool() {
+                return bufferPool.getValue();
+            }
+
+            @Override
+            public void handleEvent(StreamConnection channel) {
+                alpn.handleEvent(channel);
+            }
+        };
     }
 
     @Override
