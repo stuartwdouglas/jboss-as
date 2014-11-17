@@ -179,8 +179,8 @@ public class ServletContainerInitializerDeploymentProcessor implements Deploymen
             String servletContainerInitializerClassName = reader.readLine().trim();
             while (servletContainerInitializerClassName != null) {
                 try {
-                    if(!servletContainerInitializerClassName.isEmpty()) {
-                        int pos = servletContainerInitializerClassName.indexOf('#');
+                    int pos = servletContainerInitializerClassName.indexOf('#');
+                    if(!servletContainerInitializerClassName.isEmpty() && pos != 0) { //if pos==0 then this is a comment line
                         if (pos > 0) {
                             servletContainerInitializerClassName = servletContainerInitializerClassName.substring(0, pos);
                         }
