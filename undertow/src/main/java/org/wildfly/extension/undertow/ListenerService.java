@@ -56,6 +56,7 @@ public abstract class ListenerService<T> implements Service<T> {
     protected static final OptionMap commonOptions = OptionMap.builder()
             .set(Options.TCP_NODELAY, true)
             .set(Options.REUSE_ADDRESSES, true)
+            .set(Options.BACKLOG, 1000)
             .set(Options.BALANCING_TOKENS, 1)
             .set(Options.BALANCING_CONNECTIONS, 2)
             .getMap();
