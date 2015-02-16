@@ -101,9 +101,17 @@ public class WeldEjbInjectionServices extends AbstractResourceInjectionServices 
         if (!ejb.lookup().equals("")) {
             return handleServiceLookup(ejb.lookup(), injectionPoint);
         } else {
+            //we just look up the view from JNDI
+            //otherwise we get problems in the app client where the view service is not actually created
             final ViewDescription viewDescription = getViewDescription(ejb, injectionPoint);
             if(viewDescription != null) {
-                return handleServiceLookup(viewDescription, injectionPoint);
+                final String bindingName = viewDescription.getBindingNames().iterator().next();
+                return new ResourceReferenceFactory<Object>() {
+                    @Override
+                    public ResourceReference<Object> createResource() {
+                        return new SimpleResourceReference<Object>(doLookup(bindingName, null));
+                    }
+                };
             } else {
 
                 final String proposedName = ResourceInjectionUtilities.getEjbBindLocation(injectionPoint);
@@ -139,10 +147,8 @@ public class WeldEjbInjectionServices extends AbstractResourceInjectionServices 
             if(!found) {
                 throw BeanLogger.LOG.invalidResourceProducerType(injectionPoint.getAnnotated(), clazz.getName());
             }
-            return new ComponentViewToResourceReferenceFactoryAdapter<Object>(view);
-        } else {
-            return createLazyResourceReferenceFactory(viewDescription);
         }
+        return createLazyResourceReferenceFactory(viewDescription);
     }
 
     private ComponentView getComponentView(ViewDescription viewDescription) {
