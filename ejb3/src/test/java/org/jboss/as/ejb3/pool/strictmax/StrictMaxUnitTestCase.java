@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.jboss.as.ejb3.logging.EjbLogger;
 import org.jboss.as.ejb3.pool.Pool;
 import org.jboss.as.ejb3.pool.StatelessObjectFactory;
+import org.jboss.as.ejb3.pool.StrictMaxPool;
 import org.jboss.as.ejb3.pool.common.MockBean;
 import org.jboss.as.ejb3.pool.common.MockFactory;
 

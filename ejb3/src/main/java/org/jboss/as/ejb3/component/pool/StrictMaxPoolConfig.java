@@ -24,7 +24,7 @@ package org.jboss.as.ejb3.component.pool;
 
 import org.jboss.as.ejb3.pool.Pool;
 import org.jboss.as.ejb3.pool.StatelessObjectFactory;
-import org.jboss.as.ejb3.pool.strictmax.StrictMaxPool;
+import org.jboss.as.ejb3.pool.StrictMaxPool;
 
 import java.util.concurrent.TimeUnit;
 

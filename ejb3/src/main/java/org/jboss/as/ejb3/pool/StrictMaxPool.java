@@ -19,13 +19,11 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
-package org.jboss.as.ejb3.pool.strictmax;
+package org.jboss.as.ejb3.pool;
 
 import static org.jboss.as.ejb3.logging.EjbLogger.ROOT_LOGGER;
 
 import org.jboss.as.ejb3.logging.EjbLogger;
-import org.jboss.as.ejb3.pool.AbstractPool;
-import org.jboss.as.ejb3.pool.StatelessObjectFactory;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
