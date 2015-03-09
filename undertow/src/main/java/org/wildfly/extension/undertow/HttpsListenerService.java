@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import javax.net.ssl.SSLContext;
 
+import io.undertow.protocols.ssl.UndertowXnioSsl;
 import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.msc.value.InjectedValue;
 import org.wildfly.extension.undertow.logging.UndertowLogger;
@@ -37,7 +38,6 @@ import org.xnio.Options;
 import org.xnio.StreamConnection;
 import org.xnio.XnioWorker;
 import org.xnio.channels.AcceptingChannel;
-import org.xnio.ssl.JsseXnioSsl;
 import org.xnio.ssl.SslConnection;
 import org.xnio.ssl.XnioSsl;
 
@@ -66,7 +66,7 @@ public class HttpsListenerService extends HttpListenerService {
         builder.set(Options.USE_DIRECT_BUFFERS, true);
         OptionMap combined = builder.getMap();
 
-        XnioSsl xnioSsl = new JsseXnioSsl(worker.getXnio(), combined, sslContext);
+        XnioSsl xnioSsl = new UndertowXnioSsl(worker.getXnio(), combined, sslContext);
         sslServer = xnioSsl.createSslConnectionServer(worker, socketAddress, (ChannelListener) acceptListener, combined);
         sslServer.resumeAccepts();
 
