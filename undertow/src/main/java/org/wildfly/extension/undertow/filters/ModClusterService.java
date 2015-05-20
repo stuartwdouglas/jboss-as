@@ -82,6 +82,8 @@ public class ModClusterService extends FilterService {
                 .setQueueNewRequests(requestQueueSize > 0)
                 .setRequestQueueSize(requestQueueSize)
                 .setRemoveBrokenNodes(removeBrokenNodes)
+                .setMaxConnections(connectionsPerThread)
+                .setTtl(connectionIdleTimeout)
                 .build();
 
         MCMPConfig.Builder builder = MCMPConfig.builder();

@@ -27,6 +27,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUB
 import org.jboss.as.controller.Extension;
 import org.jboss.as.controller.ExtensionContext;
 import org.jboss.as.controller.ModelVersion;
+import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SubsystemRegistration;
 import org.jboss.as.controller.access.constraint.SensitivityClassification;
@@ -93,7 +94,12 @@ public class UndertowExtension implements Extension {
         final ManagementResourceRegistration deployments = subsystem.registerDeploymentModel(DeploymentDefinition.INSTANCE);
         deployments.registerSubModel(DeploymentServletDefinition.INSTANCE);
 
-        subsystem.registerXMLElementWriter(UndertowSubsystemParser_2_0.INSTANCE);
+        ModClusterRuntimeResource resource = new ModClusterRuntimeResource();
+
+        ManagementResourceRegistration modCluster = registration.getSubModel(PathAddress.pathAddress(PathElement.pathElement(Constants.CONFIGURATION, Constants.FILTER), PathElement.pathElement(Constants.MOD_CLUSTER)));
+        int balancer = modCluster.regi
+
+                subsystem.registerXMLElementWriter(UndertowSubsystemParser_2_0.INSTANCE);
     }
 
 
