@@ -23,6 +23,7 @@
 package org.wildfly.extension.undertow.deployment;
 
 import java.io.File;
+import java.util.concurrent.ExecutorService;
 
 import io.undertow.server.HttpHandler;
 import io.undertow.servlet.api.Deployment;
@@ -55,6 +56,9 @@ public class UndertowDeploymentService implements Service<UndertowDeploymentServ
     private final WebInjectionContainer webInjectionContainer;
     private final InjectedValue<Host> host = new InjectedValue<>();
     private final InjectedValue<DeploymentInfo> deploymentInfoInjectedValue = new InjectedValue<>();
+
+    // used for blocking tasks in this Service's start/stop
+    private final InjectedValue<ExecutorService> serverExecutor = new InjectedValue<>();
     private final boolean autostart;
 
     private volatile DeploymentManager deploymentManager;
@@ -65,62 +69,86 @@ public class UndertowDeploymentService implements Service<UndertowDeploymentServ
     }
 
     @Override
-    public void start(final StartContext startContext) throws StartException {
+    public void start(final StartContext sc) throws StartException {
         if (autostart) {
-            try {
-                startContext();
-            } catch (ServletException e) {
-                throw new StartException(e);
-            }
+            sc.asynchronous();
+            serverExecutor.getValue().execute(new Runnable() {
+                @Override
+                public void run() {
+                    startContext(sc);
+                }
+            });
         }
     }
 
-    public void startContext() throws ServletException {
-        final ClassLoader old = Thread.currentThread().getContextClassLoader();
-        DeploymentInfo deploymentInfo = deploymentInfoInjectedValue.getValue();
-        Thread.currentThread().setContextClassLoader(deploymentInfo.getClassLoader());
+    public void startContext(StartContext sc) {
         try {
-            StartupContext.setInjectionContainer(webInjectionContainer);
+            final ClassLoader old = Thread.currentThread().getContextClassLoader();
+            DeploymentInfo deploymentInfo = deploymentInfoInjectedValue.getValue();
+            Thread.currentThread().setContextClassLoader(deploymentInfo.getClassLoader());
             try {
-                deploymentManager = container.getValue().getServletContainer().addDeployment(deploymentInfo);
-                deploymentManager.deploy();
-                HttpHandler handler = deploymentManager.start();
-                Deployment deployment = deploymentManager.getDeployment();
-                host.getValue().registerDeployment(deployment, handler);
+                StartupContext.setInjectionContainer(webInjectionContainer);
+                try {
+                    deploymentManager = container.getValue().getServletContainer().addDeployment(deploymentInfo);
+                    deploymentManager.deploy();
+                    HttpHandler handler = deploymentManager.start();
+                    Deployment deployment = deploymentManager.getDeployment();
+                    host.getValue().registerDeployment(deployment, handler);
+                } finally {
+                    StartupContext.setInjectionContainer(null);
+                }
             } finally {
-                StartupContext.setInjectionContainer(null);
+                Thread.currentThread().setContextClassLoader(old);
             }
-        } finally {
-            Thread.currentThread().setContextClassLoader(old);
+            if(sc != null) {
+                sc.complete();
+            }
+        } catch (Throwable e) {
+            if(sc != null) {
+                sc.failed(new StartException(e));
+            } else {
+                throw new RuntimeException(e);
+            }
         }
     }
 
     @Override
-    public void stop(final StopContext stopContext) {
-        stopContext();
+    public void stop(final StopContext sc) {
+        sc.asynchronous();
+        serverExecutor.getValue().execute(new Runnable() {
+            @Override
+            public void run() {
+                stopContext(sc);
+            }
+        });
     }
 
-    public void stopContext() {
-
-        final ClassLoader old = Thread.currentThread().getContextClassLoader();
-        DeploymentInfo deploymentInfo = deploymentInfoInjectedValue.getValue();
-        Thread.currentThread().setContextClassLoader(deploymentInfo.getClassLoader());
+    public void stopContext(StopContext sc) {
         try {
-            FactoryFinderCache.clearClassLoader(deploymentInfo.getClassLoader());
-            if (deploymentManager != null) {
-                Deployment deployment = deploymentManager.getDeployment();
-                try {
-                    host.getValue().unregisterDeployment(deployment);
-                    deploymentManager.stop();
-                } catch (ServletException e) {
-                    throw new RuntimeException(e);
+            final ClassLoader old = Thread.currentThread().getContextClassLoader();
+            DeploymentInfo deploymentInfo = deploymentInfoInjectedValue.getValue();
+            Thread.currentThread().setContextClassLoader(deploymentInfo.getClassLoader());
+            try {
+                FactoryFinderCache.clearClassLoader(deploymentInfo.getClassLoader());
+                if (deploymentManager != null) {
+                    Deployment deployment = deploymentManager.getDeployment();
+                    try {
+                        host.getValue().unregisterDeployment(deployment);
+                        deploymentManager.stop();
+                    } catch (ServletException e) {
+                        throw new RuntimeException(e);
+                    }
+                    deploymentManager.undeploy();
+                    container.getValue().getServletContainer().removeDeployment(deploymentInfoInjectedValue.getValue());
                 }
-                deploymentManager.undeploy();
-                container.getValue().getServletContainer().removeDeployment(deploymentInfoInjectedValue.getValue());
+                recursiveDelete(deploymentInfoInjectedValue.getValue().getTempDir());
+            } finally {
+                Thread.currentThread().setContextClassLoader(old);
             }
-            recursiveDelete(deploymentInfoInjectedValue.getValue().getTempDir());
         } finally {
-            Thread.currentThread().setContextClassLoader(old);
+            if(sc != null) {
+                sc.complete();
+            }
         }
     }
 
@@ -166,7 +194,7 @@ public class UndertowDeploymentService implements Service<UndertowDeploymentServ
         public synchronized boolean startContext() {
             try {
                 UndertowDeploymentService service = controller.getValue();
-                service.startContext();
+                service.startContext(null);
             } catch (Exception ex) {
                 throw UndertowLogger.ROOT_LOGGER.cannotActivateContext(ex, controller.getName());
             }
@@ -181,7 +209,7 @@ public class UndertowDeploymentService implements Service<UndertowDeploymentServ
         @Override
         public synchronized boolean stopContext() {
             UndertowDeploymentService service = controller.getValue();
-            service.stopContext();
+            service.stopContext(null);
             return true;
         }
 
@@ -207,5 +235,9 @@ public class UndertowDeploymentService implements Service<UndertowDeploymentServ
         if(!file.delete()) {
             UndertowLogger.ROOT_LOGGER.couldNotDeleteTempFile(file);
         }
+    }
+
+    public InjectedValue<ExecutorService> getServerExecutor() {
+        return serverExecutor;
     }
 }

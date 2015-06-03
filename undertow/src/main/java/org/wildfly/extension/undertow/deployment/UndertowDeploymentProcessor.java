@@ -35,6 +35,7 @@ import org.jboss.as.security.deployment.SecurityAttachments;
 import org.jboss.as.security.plugins.SecurityDomainContext;
 import org.jboss.as.security.service.JaccService;
 import org.jboss.as.security.service.SecurityDomainService;
+import org.jboss.as.server.Services;
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentResourceSupport;
@@ -348,6 +349,10 @@ public class UndertowDeploymentProcessor implements DeploymentUnitProcessor {
                 .addDependency(deploymentInfoServiceName, DeploymentInfo.class, service.getDeploymentInfoInjectedValue());
 
         deploymentUnit.addToAttachmentList(Attachments.DEPLOYMENT_COMPLETE_SERVICES, deploymentServiceName);
+
+        // inject the server executor which can be used by the WebDeploymentService for blocking tasks in start/stop
+        // of that service
+        Services.addServerExecutorDependency(builder, service.getServerExecutor(), false);
 
 
         // adding JACC service
