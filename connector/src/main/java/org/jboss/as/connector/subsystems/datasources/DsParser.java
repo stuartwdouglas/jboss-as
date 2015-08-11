@@ -350,6 +350,10 @@ public class DsParser extends AbstractParser {
 
                         list.add(operation);
                         list.addAll(configPropertiesOperations);
+
+                        //so this is a big mess. This operation is no longer supported in standalone, so will throw an
+                        //exception, however for managing legacy hosts in domain mode this is still required
+
                         if (enabled) {
                             final ModelNode enableOperation = new ModelNode();
                             enableOperation.get(OP).set(ENABLE);

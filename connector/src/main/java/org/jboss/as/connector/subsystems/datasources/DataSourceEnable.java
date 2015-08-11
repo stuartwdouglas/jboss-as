@@ -26,6 +26,7 @@ import org.jboss.as.connector.logging.ConnectorLogger;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
+import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.dmr.ModelNode;
 
 /**
@@ -45,7 +46,15 @@ public class DataSourceEnable implements OperationStepHandler {
     }
 
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-
+        if(operation.hasDefined(ModelDescriptionConstants.PERSISTENT)) {
+            //this is not a user operation, but has been added by the XML parser. If we throw
+            //an exception here is means that older subsystems won't boot
+            //instead we just return
+            boolean persistent = operation.get(ModelDescriptionConstants.PERSISTENT).asBoolean();
+            if(persistent) {
+                return;
+            }
+        }
         if (context.isNormalServer()) {
             throw ConnectorLogger.ROOT_LOGGER.legacyOperation();
         }
