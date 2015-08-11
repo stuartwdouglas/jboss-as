@@ -297,7 +297,8 @@ public class ModClusterNodeDefinition extends SimpleResourceDefinition {
 
             @Override
             protected void handleNode(OperationContext context, ModClusterStatus.Node ctx, ModelNode operation) throws OperationFailedException {
-                ModelNode list = new ModelNode(ModelType.LIST);
+                ModelNode list = new ModelNode();
+                list.setEmptyList();
                 for(String alias : ctx.getAliases()) {
                     list.add(alias);
                 }

@@ -133,6 +133,9 @@ public class ModClusterResource implements Resource {
                 return Collections.emptySet();
             }
             ModCluster modCluster = service.getModCluster();
+            if(modCluster == null) {
+                return Collections.emptySet();
+            }
             ModClusterStatus status = modCluster.getController().getStatus();
             final Set<String> result = new LinkedHashSet<>();
             for (ModClusterStatus.LoadBalancer balancer : status.getLoadBalancers()) {
