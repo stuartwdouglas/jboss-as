@@ -45,8 +45,10 @@ import org.wildfly.extension.undertow.Constants;
 import org.wildfly.extension.undertow.UndertowExtension;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -63,6 +65,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.COR
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.EXTENSION;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.MANAGEMENT;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.MODULE;
+import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.PATH;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.PROTOCOL;
@@ -115,6 +118,10 @@ public class WebMigrateOperation implements OperationStepHandler {
     private static final OperationStepHandler DESCRIBE_MIGRATION_INSTANCE = new WebMigrateOperation(true);
     private static final OperationStepHandler MIGRATE_INSTANCE = new WebMigrateOperation(false);
     public static final PathElement DEFAULT_SERVER_PATH = pathElement(Constants.SERVER, "default-server");
+    public static final String MIGRATE = "migrate";
+    public static final String MIGRATION_WARNINGS = "migration-warnings";
+    public static final String MIGRATION_OPERATIONS = "migration-operations";
+    public static final String DESCRIBE_MIGRATION = "describe-migration";
 
     private final boolean describe;
 
@@ -124,12 +131,12 @@ public class WebMigrateOperation implements OperationStepHandler {
     }
 
     static void registerOperations(ManagementResourceRegistration registry, ResourceDescriptionResolver resourceDescriptionResolver) {
-        registry.registerOperationHandler(new SimpleOperationDefinitionBuilder("migrate", resourceDescriptionResolver)
+        registry.registerOperationHandler(new SimpleOperationDefinitionBuilder(MIGRATE, resourceDescriptionResolver)
                         .setRuntimeOnly()
                         .setAccessConstraints(SensitiveTargetAccessConstraintDefinition.READ_WHOLE_CONFIG)
                         .build(),
                 WebMigrateOperation.MIGRATE_INSTANCE);
-        registry.registerOperationHandler(new SimpleOperationDefinitionBuilder("describe-migration", resourceDescriptionResolver)
+        registry.registerOperationHandler(new SimpleOperationDefinitionBuilder(DESCRIBE_MIGRATION, resourceDescriptionResolver)
                         .setReplyType(ModelType.LIST).setReplyValueType(ModelType.OBJECT)
                         .setRuntimeOnly()
                         .setAccessConstraints(SensitiveTargetAccessConstraintDefinition.READ_WHOLE_CONFIG)
@@ -142,6 +149,8 @@ public class WebMigrateOperation implements OperationStepHandler {
         if (!describe && context.getRunningMode() != RunningMode.ADMIN_ONLY) {
             throw WebLogger.ROOT_LOGGER.migrateOperationAllowedOnlyInAdminOnly();
         }
+
+        final List<String> warnings = new ArrayList<>();
 
         // node containing the description (list of add operations) of the legacy subsystem
         final ModelNode legacyModelAddOps = new ModelNode();
@@ -168,7 +177,7 @@ public class WebMigrateOperation implements OperationStepHandler {
         context.addStep(new OperationStepHandler() {
             @Override
             public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                addDefaultResources(migrationOperations, legacyModelAddOps);
+                addDefaultResources(migrationOperations, legacyModelAddOps, warnings);
 
                 //create the new IO subsystem
                 createIoSubsystem(context, migrationOperations);
@@ -176,7 +185,7 @@ public class WebMigrateOperation implements OperationStepHandler {
                 createWelcomeContentHandler(migrationOperations);
 
                 // transform the legacy add operations and put them in migrationOperations
-                transformResources(context, legacyModelAddOps, migrationOperations);
+                transformResources(context, legacyModelAddOps, migrationOperations, warnings);
 
                 // put the /subsystem=messaging:remove operation
                 removeWebSubsystem(migrationOperations);
@@ -188,7 +197,17 @@ public class WebMigrateOperation implements OperationStepHandler {
 
                     // for describe-migration operation, do nothing and return the list of operations that would
                     // be executed in the composite operation
-                    context.getResult().set(migrationOperations.values());
+                    final Collection<ModelNode> values = migrationOperations.values();
+                    ModelNode result = new ModelNode();
+                    ModelNode rw = new ModelNode().setEmptyList();
+                    for(String warning : warnings) {
+                        rw.add(warning);
+                    }
+                    result.get(MIGRATION_WARNINGS).set(rw);
+
+                    result.get(MIGRATION_OPERATIONS).set(values);
+
+                    context.getResult().set(result);
                 } else {
                     // :migrate operation
                     // invoke an OSH on a composite operation with all the migration operations
@@ -205,7 +224,7 @@ public class WebMigrateOperation implements OperationStepHandler {
      * @param migrationOperations
      * @return
      */
-    private SSLInformation createSecurityRealm(OperationContext context, Map<PathAddress, ModelNode> migrationOperations, ModelNode legacyModelAddOps, String connector) {
+    private SSLInformation createSecurityRealm(OperationContext context, Map<PathAddress, ModelNode> migrationOperations, ModelNode legacyModelAddOps, String connector, List<String> warnings) {
         ModelNode legacyAddOp = findResource(pathAddress(WebExtension.SUBSYSTEM_PATH, pathElement(WebExtension.CONNECTOR_PATH.getKey(), connector), pathElement("configuration", "ssl")), legacyModelAddOps);
         if (legacyAddOp == null) {
             return null;
@@ -271,14 +290,14 @@ public class WebMigrateOperation implements OperationStepHandler {
         //addOp.get(KeystoreAttributes.KEY_PASSWORD.getName()).set(password); //TODO: is this correct? both key and keystore have same password?
 
         if(verifyDepth.isDefined()) {
-            WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebSSLDefinition.VERIFY_DEPTH.getName(), pathAddress(legacyAddOp.get(ADDRESS)));
+            warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebSSLDefinition.VERIFY_DEPTH.getName(), pathAddress(legacyAddOp.get(ADDRESS))));
         }
         if(certificateFile.isDefined()) {
-            WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebSSLDefinition.CERTIFICATE_FILE.getName(), pathAddress(legacyAddOp.get(ADDRESS)));
+            warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebSSLDefinition.CERTIFICATE_FILE.getName(), pathAddress(legacyAddOp.get(ADDRESS))));
         }
 
         if(csRevocationURL.isDefined()) {
-            WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebSSLDefinition.CA_REVOCATION_URL.getName(), pathAddress(legacyAddOp.get(ADDRESS)));
+            warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebSSLDefinition.CA_REVOCATION_URL.getName(), pathAddress(legacyAddOp.get(ADDRESS))));
         }
 
         migrationOperations.put(addres, addOp);
@@ -355,7 +374,7 @@ public class WebMigrateOperation implements OperationStepHandler {
         migrationOperations.put(address, add);
     }
 
-    private void addDefaultResources(Map<PathAddress, ModelNode> migrationOperations, final ModelNode legacyModelDescription) {
+    private void addDefaultResources(Map<PathAddress, ModelNode> migrationOperations, final ModelNode legacyModelDescription, List<String> warnings) {
         //add the default server
         PathAddress address = pathAddress(pathElement(SUBSYSTEM, UndertowExtension.SUBSYSTEM_NAME), DEFAULT_SERVER_PATH);
         ModelNode add = createAddOperation(address);
@@ -391,37 +410,37 @@ public class WebMigrateOperation implements OperationStepHandler {
                 }
                 node = legacyAddOp.get(WebStaticResources.SENDFILE.getName());
                 if (node.isDefined()) {
-                    WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebStaticResources.SENDFILE.getName(), pathAddress(legacyAddOp.get(ADDRESS)));
+                    warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebStaticResources.SENDFILE.getName(), pathAddress(legacyAddOp.get(ADDRESS))));
                     sendfile = node;
                 }
                 node = legacyAddOp.get(WebStaticResources.FILE_ENCODING.getName());
                 if (node.isDefined()) {
-                    WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebStaticResources.FILE_ENCODING.getName(), pathAddress(legacyAddOp.get(ADDRESS)));
+                    warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebStaticResources.FILE_ENCODING.getName(), pathAddress(legacyAddOp.get(ADDRESS))));
                     fileEncoding = node;
                 }
                 node = legacyAddOp.get(WebStaticResources.READ_ONLY.getName());
                 if (node.isDefined()) {
-                    WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebStaticResources.READ_ONLY.getName(), pathAddress(legacyAddOp.get(ADDRESS)));
+                    warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebStaticResources.READ_ONLY.getName(), pathAddress(legacyAddOp.get(ADDRESS))));
                     readOnly = node;
                 }
                 node = legacyAddOp.get(WebStaticResources.WEBDAV.getName());
                 if (node.isDefined()) {
-                    WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebStaticResources.WEBDAV.getName(), pathAddress(legacyAddOp.get(ADDRESS)));
+                    warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebStaticResources.WEBDAV.getName(), pathAddress(legacyAddOp.get(ADDRESS))));
                     webdav = node;
                 }
                 node = legacyAddOp.get(WebStaticResources.SECRET.getName());
                 if (node.isDefined()) {
-                    WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebStaticResources.SECRET.getName(), pathAddress(legacyAddOp.get(ADDRESS)));
+                    warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebStaticResources.SECRET.getName(), pathAddress(legacyAddOp.get(ADDRESS))));
                     secret = node;
                 }
                 node = legacyAddOp.get(WebStaticResources.MAX_DEPTH.getName());
                 if (node.isDefined()) {
-                    WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebStaticResources.MAX_DEPTH.getName(), pathAddress(legacyAddOp.get(ADDRESS)));
+                    warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebStaticResources.MAX_DEPTH.getName(), pathAddress(legacyAddOp.get(ADDRESS))));
                     maxDepth = node;
                 }
                 node = legacyAddOp.get(WebStaticResources.DISABLED.getName());
                 if (node.isDefined()) {
-                    WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebStaticResources.DISABLED.getName(), pathAddress(legacyAddOp.get(ADDRESS)));
+                    warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebStaticResources.DISABLED.getName(), pathAddress(legacyAddOp.get(ADDRESS))));
                     disabled = node;
                 }
             }
@@ -472,11 +491,17 @@ public class WebMigrateOperation implements OperationStepHandler {
 
     private void migrateSubsystems(OperationContext context, final Map<PathAddress, ModelNode> migrationOperations) {
         ModelNode compositeOp = createOperation(COMPOSITE, EMPTY_ADDRESS);
-        compositeOp.get(STEPS).set(migrationOperations.values());
+        List<ModelNode> steps = new LinkedList<>();
+        final ModelNode describe = new ModelNode();
+        describe.get(OP).set(DESCRIBE_MIGRATION);
+        describe.get(ADDRESS).set(pathAddress(WebExtension.SUBSYSTEM_PATH).toModelNode());
+        steps.add(describe);
+        steps.addAll(migrationOperations.values());
+        compositeOp.get(STEPS).set(steps);
         context.addStep(compositeOp, CompositeOperationHandler.INSTANCE, MODEL);
     }
 
-    private void transformResources(final OperationContext context, final ModelNode legacyModelDescription, final Map<PathAddress, ModelNode> newAddOperations) throws OperationFailedException {
+    private void transformResources(final OperationContext context, final ModelNode legacyModelDescription, final Map<PathAddress, ModelNode> newAddOperations, List<String> warnings) throws OperationFailedException {
         for (ModelNode legacyAddOp : legacyModelDescription.get(RESULT).asList()) {
             final ModelNode newAddOp = legacyAddOp.clone();
             PathAddress address = pathAddress(newAddOp.get(ADDRESS));
@@ -491,23 +516,23 @@ public class WebMigrateOperation implements OperationStepHandler {
             } else if (address.equals(pathAddress(WebExtension.SUBSYSTEM_PATH, WebExtension.CONTAINER_PATH))) {
                 migrateMimeMapping(newAddOperations, newAddOp);
             } else if (wildcardEquals(address, pathAddress(WebExtension.SUBSYSTEM_PATH, WebExtension.CONNECTOR_PATH))) {
-                migrateConnector(context, newAddOperations, newAddOp, address, legacyModelDescription);
+                migrateConnector(context, newAddOperations, newAddOp, address, legacyModelDescription, warnings);
             } else if (wildcardEquals(address, pathAddress(WebExtension.SUBSYSTEM_PATH, WebExtension.HOST_PATH))) {
                 migrateVirtualHost(newAddOperations, newAddOp, address);
             } else if (wildcardEquals(address, pathAddress(WebExtension.SUBSYSTEM_PATH, WebExtension.HOST_PATH, WebExtension.ACCESS_LOG_PATH))) {
-                migrateAccessLog(newAddOperations, newAddOp, address, legacyModelDescription);
+                migrateAccessLog(newAddOperations, newAddOp, address, legacyModelDescription, warnings);
             } else if (wildcardEquals(address, pathAddress(WebExtension.SUBSYSTEM_PATH, WebExtension.HOST_PATH, WebExtension.ACCESS_LOG_PATH, WebExtension.DIRECTORY_PATH))) {
                 //ignore, handled by access-log
             } else if (wildcardEquals(address, pathAddress(WebExtension.SUBSYSTEM_PATH, WebExtension.HOST_PATH, WebExtension.SSO_PATH))) {
-                migrateSso(newAddOperations, newAddOp, address);
+                migrateSso(newAddOperations, newAddOp, address, warnings);
             } else {
-                WebLogger.ROOT_LOGGER.couldNotMigrateResource(legacyAddOp);
+                warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(legacyAddOp));
             }
 
         }
     }
 
-    private void migrateSso(Map<PathAddress, ModelNode> newAddOperations, ModelNode newAddOp, PathAddress address) {
+    private void migrateSso(Map<PathAddress, ModelNode> newAddOperations, ModelNode newAddOp, PathAddress address, List<String> warnings) {
         PathAddress newAddress = pathAddress(UndertowExtension.SUBSYSTEM_PATH, DEFAULT_SERVER_PATH, pathElement(Constants.HOST, address.getElement(address.size() - 2).getValue()), UndertowExtension.PATH_SSO);
         ModelNode add = createAddOperation(newAddress);
 
@@ -515,19 +540,19 @@ public class WebMigrateOperation implements OperationStepHandler {
         add.get(Constants.HTTP_ONLY).set(newAddOp.get(WebSSODefinition.HTTP_ONLY.getName()).clone());
 
         if (newAddOp.hasDefined(WebSSODefinition.CACHE_CONTAINER.getName())) {
-            WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebSSODefinition.CACHE_CONTAINER.getName(), pathAddress(newAddOp.get(ADDRESS)));
+            warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebSSODefinition.CACHE_CONTAINER.getName(), pathAddress(newAddOp.get(ADDRESS))));
         }
         if (newAddOp.hasDefined(WebSSODefinition.REAUTHENTICATE.getName())) {
-            WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebSSODefinition.REAUTHENTICATE.getName(), pathAddress(newAddOp.get(ADDRESS)));
+            warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebSSODefinition.REAUTHENTICATE.getName(), pathAddress(newAddOp.get(ADDRESS))));
         }
         if (newAddOp.hasDefined(WebSSODefinition.CACHE_NAME.getName())) {
-            WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebSSODefinition.CACHE_NAME.getName(), pathAddress(newAddOp.get(ADDRESS)));
+            warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebSSODefinition.CACHE_NAME.getName(), pathAddress(newAddOp.get(ADDRESS))));
         }
 
         newAddOperations.put(newAddress, add);
     }
 
-    private void migrateAccessLog(Map<PathAddress, ModelNode> newAddOperations, ModelNode newAddOp, PathAddress address, ModelNode legacyAddOps) {
+    private void migrateAccessLog(Map<PathAddress, ModelNode> newAddOperations, ModelNode newAddOp, PathAddress address, ModelNode legacyAddOps, List<String> warnings) {
         PathAddress newAddress = pathAddress(UndertowExtension.SUBSYSTEM_PATH, DEFAULT_SERVER_PATH, pathElement(Constants.HOST, address.getElement(address.size() - 2).getValue()), UndertowExtension.PATH_ACCESS_LOG);
         ModelNode add = createAddOperation(newAddress);
 
@@ -536,11 +561,11 @@ public class WebMigrateOperation implements OperationStepHandler {
         add.get(Constants.PREFIX).set(newAddOp.get(WebAccessLogDefinition.PREFIX.getName()).clone());
         add.get(Constants.ROTATE).set(newAddOp.get(WebAccessLogDefinition.ROTATE.getName()).clone());
         if (newAddOp.hasDefined(WebAccessLogDefinition.RESOLVE_HOSTS.getName())) {
-            WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebAccessLogDefinition.RESOLVE_HOSTS.getName(), pathAddress(newAddOp.get(ADDRESS)));
+            warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebAccessLogDefinition.RESOLVE_HOSTS.getName(), pathAddress(newAddOp.get(ADDRESS))));
         }
         //TODO: extended access log
         if (newAddOp.hasDefined(WebAccessLogDefinition.EXTENDED.getName())) {
-            WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebAccessLogDefinition.EXTENDED.getName(), pathAddress(newAddOp.get(ADDRESS)));
+            warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebAccessLogDefinition.EXTENDED.getName(), pathAddress(newAddOp.get(ADDRESS))));
         }
 
         ModelNode directory = findResource(pathAddress(pathAddress(newAddOp.get(ADDRESS)), WebExtension.DIRECTORY_PATH), legacyAddOps);
@@ -587,7 +612,7 @@ public class WebMigrateOperation implements OperationStepHandler {
         newAddOperations.put(newAddress, add);
     }
 
-    private void migrateConnector(OperationContext context, Map<PathAddress, ModelNode> newAddOperations, ModelNode newAddOp, PathAddress address, ModelNode legacyModelAddOps) throws OperationFailedException {
+    private void migrateConnector(OperationContext context, Map<PathAddress, ModelNode> newAddOperations, ModelNode newAddOp, PathAddress address, ModelNode legacyModelAddOps, List<String> warnings) throws OperationFailedException {
         String protocol = newAddOp.get(WebConnectorDefinition.PROTOCOL.getName()).asString();
         String scheme = null;
         if (newAddOp.hasDefined(WebConnectorDefinition.SCHEME.getName())) {
@@ -604,7 +629,7 @@ public class WebMigrateOperation implements OperationStepHandler {
                     newAddress = pathAddress(UndertowExtension.SUBSYSTEM_PATH, DEFAULT_SERVER_PATH, pathElement(Constants.HTTPS_LISTENER, address.getLastElement().getValue()));
                     addConnector = createAddOperation(newAddress);
 
-                    SSLInformation sslInfo = createSecurityRealm(context, newAddOperations, legacyModelAddOps, newAddress.getLastElement().getValue());
+                    SSLInformation sslInfo = createSecurityRealm(context, newAddOperations, legacyModelAddOps, newAddress.getLastElement().getValue(), warnings);
                     if (sslInfo == null) {
                         throw WebLogger.ROOT_LOGGER.noSslConfig();
                     } else {
@@ -620,7 +645,7 @@ public class WebMigrateOperation implements OperationStepHandler {
                     addConnector = null;
                 }
                 break;
-            case "AJP":
+            case "AJP/1.3":
                 newAddress = pathAddress(UndertowExtension.SUBSYSTEM_PATH, DEFAULT_SERVER_PATH, pathElement(Constants.AJP_LISTENER, address.getLastElement().getValue()));
                 addConnector = createAddOperation(newAddress);
                 break;
@@ -629,7 +654,7 @@ public class WebMigrateOperation implements OperationStepHandler {
                 addConnector = null;
         }
         if (newAddress == null) {
-            WebLogger.ROOT_LOGGER.couldNotMigrateResource(newAddOp);
+            warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(newAddOp));
             return;
         }
         addConnector.get(Constants.SOCKET_BINDING).set(newAddOp.get(SOCKET_BINDING));
@@ -645,7 +670,7 @@ public class WebMigrateOperation implements OperationStepHandler {
         //TODO: proxy binding
         if (newAddOp.hasDefined(WebConnectorDefinition.EXECUTOR.getName())) {
             //TODO: migrate executor to worker
-            WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebConnectorDefinition.EXECUTOR.getName(), pathAddress(newAddOp.get(ADDRESS)));
+            warnings.add(WebLogger.ROOT_LOGGER.couldNotMigrateResource(WebConnectorDefinition.EXECUTOR.getName(), pathAddress(newAddOp.get(ADDRESS))));
         }
 
         newAddOperations.put(pathAddress(newAddOp.get(OP_ADDR)), addConnector);
