@@ -40,6 +40,7 @@ import io.undertow.server.HttpServerExchange;
 import io.undertow.server.ListenerRegistry;
 import io.undertow.server.handlers.ChannelUpgradeHandler;
 import org.apache.activemq.artemis.core.remoting.impl.netty.NettyAcceptor;
+import org.apache.activemq.artemis.core.remoting.impl.netty.PartialPooledByteBufAllocator;
 import org.apache.activemq.artemis.core.remoting.server.RemotingService;
 import org.apache.activemq.artemis.core.server.ActiveMQServer;
 import org.jboss.as.remoting.HttpListenerRegistryService;
@@ -147,7 +148,8 @@ public class HTTPUpgradeService implements Service<HTTPUpgradeService> {
             @Override
             public void handleEvent(final StreamConnection connection) {
                 MessagingLogger.ROOT_LOGGER.debugf("Switching to %s protocol for %s http-acceptor", protocolName, acceptorName);
-                SocketChannel channel = new WrappingXnioSocketChannel(connection);
+                WrappingXnioSocketChannel channel = new WrappingXnioSocketChannel(connection);
+                channel.config().setAllocator(PartialPooledByteBufAllocator.INSTANCE);
                 RemotingService remotingService = activemqServer.getRemotingService();
 
                 NettyAcceptor acceptor = (NettyAcceptor)remotingService.getAcceptor(acceptorName);
