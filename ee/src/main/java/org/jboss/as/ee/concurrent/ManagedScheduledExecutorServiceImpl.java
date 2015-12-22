@@ -28,6 +28,7 @@ import org.wildfly.extension.requestcontroller.ControlPoint;
 import javax.enterprise.concurrent.LastExecution;
 import javax.enterprise.concurrent.Trigger;
 import java.util.Date;
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
@@ -79,6 +80,7 @@ public class ManagedScheduledExecutorServiceImpl extends org.glassfish.enterpris
 
     @Override
     public <V> ScheduledFuture<V> schedule(Callable<V> callable, Trigger trigger) {
+        Objects.nonNull(callable);
         final CancellableTrigger ctrigger = new CancellableTrigger(trigger);
         ScheduledCallableFuture<V> future = new ScheduledCallableFuture<>(callable);
         ScheduledFuture<?> underlying = super.schedule(doScheduledWrap(future.getTask(), controlPoint, this), ctrigger);
@@ -94,6 +96,7 @@ public class ManagedScheduledExecutorServiceImpl extends org.glassfish.enterpris
 
     @Override
     public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
+        Objects.nonNull(callable);
         ScheduledCallableFuture<V> future = new ScheduledCallableFuture<>(callable);
         ScheduledFuture<?> underlying = super.schedule(doScheduledWrap(future.getTask(), controlPoint, this), delay, unit);
         future.setUnderlying(underlying);

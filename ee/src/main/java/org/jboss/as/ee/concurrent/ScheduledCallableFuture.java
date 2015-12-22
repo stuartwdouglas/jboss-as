@@ -72,12 +72,12 @@ public class ScheduledCallableFuture<V> implements ScheduledFuture<V> {
 
     @Override
     public boolean isCancelled() {
-        return underlying.isCancelled();
+        return underlying.isCancelled() || cancelled;
     }
 
     @Override
     public boolean isDone() {
-        return underlying.isDone();
+        return underlying.isDone() || done;
     }
 
     private synchronized void complete(V value) {
@@ -109,6 +109,7 @@ public class ScheduledCallableFuture<V> implements ScheduledFuture<V> {
         if(exception != null) {
             throw new ExecutionException(exception);
         }
+        underlying.get(); //needed to check for SkippedException
         return value;
     }
 
@@ -117,6 +118,9 @@ public class ScheduledCallableFuture<V> implements ScheduledFuture<V> {
         long end = System.currentTimeMillis() + unit.toMillis(timeout);
         while (System.currentTimeMillis() < end) {
             wait(end - System.currentTimeMillis());
+            if(done) {
+                break;
+            }
         }
         if(!done) {
             throw new TimeoutException();
