@@ -46,6 +46,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.util.concurrent.TimeUnit;
+
 /**
  * Tests that the CDI request scope is active in MDB invocations.
  *
@@ -94,7 +96,7 @@ public class MDBCdiIntegrationTestCase {
     public static Archive getDeployment() {
 
         final JavaArchive ejbJar = ShrinkWrap.create(JavaArchive.class, "mdb-cdi-integration-test.jar");
-        ejbJar.addClasses(CdiIntegrationMDB.class, RequestScopedCDIBean.class, JMSMessagingUtil.class, MDBCdiIntegrationTestCase.class, JmsQueueSetup.class)
+        ejbJar.addClasses(CdiIntegrationMDB.class, RequestScopedCDIBean.class, JMSMessagingUtil.class, MDBCdiIntegrationTestCase.class, JmsQueueSetup.class, CDIMDBInterceptor.class, CDIMDBBinding.class)
            .addPackage(JMSOperations.class.getPackage());
         ejbJar.addAsManifestResource(new StringAsset("Dependencies: org.jboss.as.controller-client, org.jboss.dmr \n"), "MANIFEST.MF");
         ejbJar.addAsManifestResource(EmptyAsset.INSTANCE, "beans.xml");
@@ -113,6 +115,9 @@ public class MDBCdiIntegrationTestCase {
         // test the reply
         final TextMessage textMessage = (TextMessage) reply;
         Assert.assertEquals("Unexpected reply message on reply queue: " + this.replyQueue, CdiIntegrationMDB.REPLY, textMessage.getText());
+
+        //also check the interceptor worked
+        Assert.assertEquals("intercepted", CDIMDBInterceptor.MESSAGES.poll(5, TimeUnit.SECONDS));
     }
 
 }
