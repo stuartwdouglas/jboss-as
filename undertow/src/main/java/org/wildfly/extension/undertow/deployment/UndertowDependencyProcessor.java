@@ -30,9 +30,21 @@ import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
 import org.jboss.as.server.deployment.module.ModuleDependency;
 import org.jboss.as.server.deployment.module.ModuleSpecification;
+import org.jboss.modules.AbstractResourceLoader;
+import org.jboss.modules.ClassSpec;
 import org.jboss.modules.Module;
 import org.jboss.modules.ModuleIdentifier;
+import org.jboss.modules.ModuleLoadException;
 import org.jboss.modules.ModuleLoader;
+import org.jboss.modules.ResourceLoaderSpec;
+import org.jboss.modules.filter.PathFilters;
+import org.wildfly.extension.undertow.logging.UndertowLogger;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Module dependencies processor.
@@ -85,8 +97,44 @@ public class UndertowDependencyProcessor implements DeploymentUnitProcessor {
         moduleSpecification.addSystemDependency(new ModuleDependency(moduleLoader, UNDERTOW_SERVLET, false, false, true, false));
         moduleSpecification.addSystemDependency(new ModuleDependency(moduleLoader, UNDERTOW_JSP, false, false, true, false));
         moduleSpecification.addSystemDependency(new ModuleDependency(moduleLoader, UNDERTOW_WEBSOCKET, false, false, true, false));
-        moduleSpecification.addSystemDependency(new ModuleDependency(moduleLoader, UNDERTOW_JS, true, false, true, false));
         moduleSpecification.addSystemDependency(new ModuleDependency(moduleLoader, CLUSTERING_API, true, false, false, false));
+        try {
+            final Module undertowJs = moduleLoader.loadModule(UNDERTOW_JS);
+            ModuleDependency dependency = new ModuleDependency(moduleLoader, UNDERTOW_JS, true, false, true, false);
+            dependency.addImportFilter(PathFilters.match("io/undertow/js/templates/freemarker"), false);
+            dependency.addImportFilter(PathFilters.match("io/undertow/js/templates/freemarker/**"), false);
+            moduleSpecification.addResourceLoader(ResourceLoaderSpec.createResourceLoaderSpec(new AbstractResourceLoader() {
+                @Override
+                public ClassSpec getClassSpec(String fileName) throws IOException {
+
+                    try (final InputStream is = undertowJs.getClassLoader().getResourceAsStream(fileName)) {
+                        if (is == null) {
+                            return null;
+                        }
+                        final ClassSpec spec = new ClassSpec();
+                        final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        final byte[] buf = new byte[16384];
+                        int res;
+                        while ((res = is.read(buf)) > 0) {
+                            baos.write(buf, 0, res);
+                        }
+                        // done
+                        baos.close();
+                        is.close();
+                        spec.setBytes(baos.toByteArray());
+                        return spec;
+                    }
+                }
+
+                @Override
+                public Collection<String> getPaths() {
+                    return Collections.singleton("io/undertow/js/templates/freemarker");
+                }
+            }, PathFilters.match("io/undertow/js/templates/freemarker")));
+            moduleSpecification.addSystemDependency(dependency);
+        } catch (ModuleLoadException e) {
+            UndertowLogger.ROOT_LOGGER.debug("Undertow.js not available", e);
+        }
     }
 
     @Override
