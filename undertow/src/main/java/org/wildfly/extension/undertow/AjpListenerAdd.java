@@ -27,6 +27,7 @@ import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.network.SocketBinding;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceBuilder;
+import org.wildfly.extension.undertow.deployment.GateHandlerWrapper;
 import org.xnio.OptionMap;
 
 /**
@@ -39,7 +40,7 @@ class AjpListenerAdd extends ListenerAdd {
     }
 
     @Override
-    ListenerService<? extends ListenerService> createService(String name, final String serverName, final OperationContext context, ModelNode model, OptionMap listenerOptions, OptionMap socketOptions) throws OperationFailedException {
+    ListenerService<? extends ListenerService> createService(String name, final String serverName, final OperationContext context, ModelNode model, OptionMap listenerOptions, OptionMap socketOptions, GateHandlerWrapper gateHandlerWrapper) throws OperationFailedException {
         ModelNode schemeNode = AjpListenerResourceDefinition.SCHEME.resolveModelAttribute(context, model);
         String scheme = null;
         if (schemeNode.isDefined()) {
@@ -47,7 +48,7 @@ class AjpListenerAdd extends ListenerAdd {
         }
         OptionMap.Builder listenerBuilder = OptionMap.builder().addAll(listenerOptions);
         AjpListenerResourceDefinition.MAX_AJP_PACKET_SIZE.resolveOption(context, model,listenerBuilder);
-        return new AjpListenerService(name, scheme, listenerBuilder.getMap(), socketOptions);
+        return new AjpListenerService(name, scheme, listenerBuilder.getMap(), socketOptions, gateHandlerWrapper);
     }
 
     @Override

@@ -39,6 +39,7 @@ import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
+import org.wildfly.extension.undertow.deployment.GateHandlerWrapper;
 import org.xnio.ChannelListener;
 import org.xnio.ChannelListeners;
 import org.xnio.OptionMap;
@@ -71,13 +72,15 @@ public abstract class ListenerService<T> implements Service<T> {
     private final String name;
     protected final OptionMap listenerOptions;
     protected final OptionMap socketOptions;
+    private final GateHandlerWrapper gateHandlerWrapper;
     protected volatile OpenListener openListener;
 
 
-    protected ListenerService(String name, OptionMap listenerOptions, OptionMap socketOptions) {
+    protected ListenerService(String name, OptionMap listenerOptions, OptionMap socketOptions, GateHandlerWrapper gateHandlerWrapper) {
         this.name = name;
         this.listenerOptions = listenerOptions;
         this.socketOptions = socketOptions;
+        this.gateHandlerWrapper = gateHandlerWrapper;
     }
 
     public InjectedValue<XnioWorker> getWorker() {
@@ -134,6 +137,7 @@ public abstract class ListenerService<T> implements Service<T> {
             for(HandlerWrapper wrapper : listenerHandlerWrappers) {
                 handler = wrapper.wrap(handler);
             }
+            handler = gateHandlerWrapper.wrap(handler);
             openListener.setRootHandler(handler);
             startListening(worker.getValue(), socketAddress, acceptListener);
             registerBinding();

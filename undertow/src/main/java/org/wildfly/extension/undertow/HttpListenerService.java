@@ -42,6 +42,7 @@ import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.ValueService;
 import org.jboss.msc.value.ImmediateValue;
 import org.jboss.msc.value.InjectedValue;
+import org.wildfly.extension.undertow.deployment.GateHandlerWrapper;
 import org.wildfly.extension.undertow.logging.UndertowLogger;
 import org.xnio.ChannelListener;
 import org.xnio.IoUtils;
@@ -64,8 +65,8 @@ public class HttpListenerService extends ListenerService<HttpListenerService> {
 
     private final String serverName;
 
-    public HttpListenerService(String name, final String serverName, OptionMap listenerOptions, OptionMap socketOptions, boolean certificateForwarding, boolean proxyAddressForwarding) {
-        super(name, listenerOptions, socketOptions);
+    public HttpListenerService(String name, final String serverName, OptionMap listenerOptions, OptionMap socketOptions, boolean certificateForwarding, boolean proxyAddressForwarding, final GateHandlerWrapper gateHandlerWrapper) {
+        super(name, listenerOptions, socketOptions, gateHandlerWrapper);
         this.serverName = serverName;
         addWrapperHandler(new HandlerWrapper() {
             @Override

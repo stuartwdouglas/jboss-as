@@ -39,6 +39,7 @@ import io.undertow.server.protocol.spdy.SpdyOpenListener;
 import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.as.network.NetworkUtils;
 import org.jboss.msc.value.InjectedValue;
+import org.wildfly.extension.undertow.deployment.GateHandlerWrapper;
 import org.wildfly.extension.undertow.logging.UndertowLogger;
 import org.wildfly.security.ssl.CipherSuiteSelector;
 import org.xnio.ChannelListener;
@@ -68,8 +69,8 @@ public class HttpsListenerService extends HttpListenerService {
     static final String PROTOCOL = "https";
     private final String cipherSuites;
 
-    public HttpsListenerService(final String name, String serverName, OptionMap listenerOptions, String cipherSuites, OptionMap socketOptions) {
-        super(name, serverName, listenerOptions, socketOptions, false, false);
+    public HttpsListenerService(final String name, String serverName, OptionMap listenerOptions, String cipherSuites, OptionMap socketOptions, final GateHandlerWrapper gateHandlerWrapper) {
+        super(name, serverName, listenerOptions, socketOptions, false, false, gateHandlerWrapper);
         this.cipherSuites = cipherSuites;
     }
 

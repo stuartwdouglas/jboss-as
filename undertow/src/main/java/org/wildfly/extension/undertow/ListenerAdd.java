@@ -31,14 +31,20 @@ import io.undertow.util.HttpString;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
+import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.network.SocketBinding;
+import org.jboss.as.server.Services;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.inject.Injector;
+import org.jboss.msc.service.AbstractServiceListener;
 import org.jboss.msc.service.ServiceBuilder;
+import org.jboss.msc.service.ServiceContainer;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
+import org.jboss.msc.service.StabilityMonitor;
 import org.wildfly.extension.io.OptionList;
+import org.wildfly.extension.undertow.deployment.GateHandlerWrapper;
 import org.xnio.OptionMap;
 import org.xnio.Pool;
 import org.xnio.XnioWorker;
@@ -46,6 +52,7 @@ import org.xnio.XnioWorker;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author <a href="mailto:tomaz.cerar@redhat.com">Tomaz Cerar</a> (c) 2012 Red Hat Inc.
@@ -72,7 +79,8 @@ abstract class ListenerAdd extends AbstractAddStepHandler {
         OptionMap socketOptions = OptionList.resolveOptions(context, model, ListenerResourceDefinition.SOCKET_OPTIONS);
         String serverName = parent.getLastElement().getValue();
         final ServiceName listenerServiceName = UndertowService.listenerName(name);
-        final ListenerService<? extends ListenerService> service = createService(name, serverName, context, model, listenerOptions,socketOptions);
+        GateHandlerWrapper gateHandlerWrapper = new GateHandlerWrapper();
+        final ListenerService<? extends ListenerService> service = createService(name, serverName, context, model, listenerOptions,socketOptions, gateHandlerWrapper);
         if (peerHostLookup) {
             service.addWrapperHandler(new HandlerWrapper() {
                 @Override
@@ -108,12 +116,50 @@ abstract class ListenerAdd extends AbstractAddStepHandler {
                 .addDependency(UndertowService.SERVER.append(serverName), Server.class, service.getServerService());
 
         configureAdditionalDependencies(context, serviceBuilder, model, service);
-        serviceBuilder.setInitialMode(enabled ? ServiceController.Mode.ACTIVE : ServiceController.Mode.NEVER)
+        final ServiceController<? extends ListenerService> controller = serviceBuilder.setInitialMode(enabled ? ServiceController.Mode.ACTIVE : ServiceController.Mode.NEVER)
                 .install();
+        context.addStep(new OperationStepHandler() {
+            @Override
+            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
+                final StabilityMonitor monitor = new StabilityMonitor();
+                ServiceContainer serviceContainer = controller.getServiceContainer();
+                serviceContainer.addMonitor(monitor);
+                controller.addListener(new AbstractServiceListener<Object>() {
+                    @Override
+                    public void listenerAdded(ServiceController<?> controller) {
+                        for(ServiceName name : controller.getServiceContainer().getServiceNames()) {
+                            ServiceController<?> sc = controller.getServiceContainer().getService(name);
+                            monitor.addController(sc);
+                        }
+                        monitor.addController(controller);
+                        controller.removeListener(this);
+                    }
+                });
+
+                ServiceController<?> execService = serviceContainer.getService(Services.JBOSS_SERVER_EXECUTOR);
+                if(execService != null) {
+                    ExecutorService executor = (ExecutorService) execService.getValue();
+                    //this may be null in tests
+                    executor.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                monitor.awaitStability();
+                                gateHandlerWrapper.open();
+                            } catch (InterruptedException e) {
+                                gateHandlerWrapper.open();
+                            }
+                        }
+                    });
+                } else {
+                    gateHandlerWrapper.open();
+                }
+            }
+        }, OperationContext.Stage.VERIFY);
 
     }
 
-    abstract ListenerService<? extends ListenerService> createService(String name, final String serverName, final OperationContext context, ModelNode model, OptionMap listenerOptions, OptionMap socketOptions) throws OperationFailedException;
+    abstract ListenerService<? extends ListenerService> createService(String name, final String serverName, final OperationContext context, ModelNode model, OptionMap listenerOptions, OptionMap socketOptions, GateHandlerWrapper gateHandlerWrapper) throws OperationFailedException;
 
     abstract void configureAdditionalDependencies(OperationContext context, ServiceBuilder<? extends ListenerService> serviceBuilder, ModelNode model, ListenerService service) throws OperationFailedException;
 

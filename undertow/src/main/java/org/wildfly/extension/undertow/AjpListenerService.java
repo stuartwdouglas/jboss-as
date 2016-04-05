@@ -31,6 +31,7 @@ import io.undertow.server.protocol.ajp.AjpOpenListener;
 
 import org.jboss.as.network.NetworkUtils;
 import org.jboss.msc.service.StartContext;
+import org.wildfly.extension.undertow.deployment.GateHandlerWrapper;
 import org.wildfly.extension.undertow.logging.UndertowLogger;
 import org.xnio.ChannelListener;
 import org.xnio.IoUtils;
@@ -47,8 +48,8 @@ public class AjpListenerService extends ListenerService<AjpListenerService> {
     private volatile AcceptingChannel<StreamConnection> server;
     private final String scheme;
 
-    public AjpListenerService(String name, final String scheme, OptionMap listenerOptions, OptionMap socketOptions) {
-        super(name, listenerOptions, socketOptions);
+    public AjpListenerService(String name, final String scheme, OptionMap listenerOptions, OptionMap socketOptions, final GateHandlerWrapper gateHandlerWrapper) {
+        super(name, listenerOptions, socketOptions, gateHandlerWrapper);
         this.scheme = scheme;
     }
 
