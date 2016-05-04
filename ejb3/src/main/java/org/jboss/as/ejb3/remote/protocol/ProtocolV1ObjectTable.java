@@ -1,4 +1,4 @@
-package org.jboss.as.ejb3.remote.protocol.versionone;
+package org.jboss.as.ejb3.remote.protocol;
 
 import org.jboss.ejb.client.Affinity;
 import org.jboss.ejb.client.AttachmentKeys;

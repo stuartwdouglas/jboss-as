@@ -44,6 +44,7 @@ import org.jboss.as.ejb3.remote.RegistryCollector;
 import org.jboss.as.ejb3.remote.RegistryCollectorService;
 import org.jboss.as.ejb3.remote.RegistryInstallerService;
 import org.jboss.as.ejb3.remote.RemoteAsyncInvocationCancelStatusService;
+import org.jboss.as.ejb3.remote.protocol.http.EjbHttpInvocationRegistrationService;
 import org.jboss.as.remoting.RemotingConnectorBindingInfoService;
 import org.jboss.as.remoting.RemotingServices;
 import org.jboss.as.server.suspend.SuspendController;
@@ -161,6 +162,8 @@ public class EJB3RemoteServiceAdd extends AbstractAddStepHandler {
             builder.addDependency(EJB3SubsystemModel.BASE_THREAD_POOL_SERVICE_NAME.append(threadPoolName), ExecutorService.class, ejbRemoteConnectorService.getExecutorService());
         }
         builder.install();
+
+        EjbHttpInvocationRegistrationService.install(target, executeInWorker, threadPoolName);
     }
 
     @Override

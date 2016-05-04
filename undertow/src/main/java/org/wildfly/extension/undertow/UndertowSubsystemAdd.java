@@ -61,6 +61,7 @@ import org.wildfly.extension.undertow.session.DistributableSessionIdentifierCode
 import org.wildfly.extension.undertow.session.RouteValueService;
 import org.wildfly.extension.undertow.session.SharedSessionConfigParser_1_0;
 import org.wildfly.extension.undertow.session.SharedSessionManagerConfig;
+import org.wildfly.httpinvocation.HttpInvocationRegistryService;
 
 
 /**
@@ -151,6 +152,9 @@ class UndertowSubsystemAdd extends AbstractBoottimeAddStepHandler {
         RouteValueService.build(target)
                 .setInitialMode(ServiceController.Mode.ON_DEMAND)
                 .install();
+
+        //add support for HTTP services
+        HttpInvocationRegistryService.install(target);
 
     }
 }

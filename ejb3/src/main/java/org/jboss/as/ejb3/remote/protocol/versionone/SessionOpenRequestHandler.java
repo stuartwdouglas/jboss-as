@@ -33,6 +33,7 @@ import org.jboss.as.ejb3.logging.EjbLogger;
 import org.jboss.as.ejb3.component.stateful.StatefulSessionComponent;
 import org.jboss.as.ejb3.deployment.DeploymentRepository;
 import org.jboss.as.ejb3.deployment.EjbDeploymentInformation;
+import org.jboss.as.ejb3.remote.protocol.MarshallingSupport;
 import org.jboss.ejb.client.Affinity;
 import org.jboss.ejb.client.SessionID;
 import org.jboss.ejb.client.remoting.PackedInteger;
@@ -114,7 +115,7 @@ class SessionOpenRequestHandler extends EJBIdentifierBasedMessageHandler {
             // write out the session id bytes
             dataOutputStream.write(sessionIdBytes);
             // now marshal the hard affinity associated with this session
-            final Marshaller marshaller = this.prepareForMarshalling(this.marshallerFactory, dataOutputStream);
+            final Marshaller marshaller = MarshallingSupport.prepareForMarshalling(this.marshallerFactory, dataOutputStream);
             marshaller.writeObject(hardAffinity);
 
             // finish marshalling

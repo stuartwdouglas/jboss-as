@@ -32,6 +32,7 @@ import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.OpenListener;
 
+import io.undertow.server.handlers.PathHandler;
 import org.jboss.as.network.ManagedBinding;
 import org.jboss.as.network.SocketBinding;
 import org.jboss.msc.service.Service;
@@ -39,6 +40,7 @@ import org.jboss.msc.service.StartContext;
 import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
+import org.wildfly.httpinvocation.HttpInvocationRegistryService;
 import org.xnio.ChannelListener;
 import org.xnio.ChannelListeners;
 import org.xnio.OptionMap;
@@ -66,12 +68,14 @@ public abstract class ListenerService<T> implements Service<T> {
     @SuppressWarnings("rawtypes")
     protected final InjectedValue<Pool<ByteBuffer>> bufferPool = new InjectedValue<>();
     protected final InjectedValue<Server> serverService = new InjectedValue<>();
+    protected final InjectedValue<HttpInvocationRegistryService> httpInvocationRegistryService = new InjectedValue<>();
     private final List<HandlerWrapper> listenerHandlerWrappers = new ArrayList<>();
 
     private final String name;
     protected final OptionMap listenerOptions;
     protected final OptionMap socketOptions;
     protected volatile OpenListener openListener;
+    private volatile PathHandler pathHandler;
 
 
     protected ListenerService(String name, OptionMap listenerOptions, OptionMap socketOptions) {
@@ -101,6 +105,10 @@ public abstract class ListenerService<T> implements Service<T> {
         return serverService;
     }
 
+    InjectedValue<HttpInvocationRegistryService> getHttpInvocationRegistryService() {
+        return httpInvocationRegistryService;
+    }
+
     protected UndertowService getUndertowService() {
         return serverService.getValue().getUndertowService();
     }
@@ -124,6 +132,7 @@ public abstract class ListenerService<T> implements Service<T> {
 
     @Override
     public void start(StartContext context) throws StartException {
+        pathHandler = new PathHandler();
         preStart(context);
         serverService.getValue().registerListener(this);
         try {
@@ -131,6 +140,9 @@ public abstract class ListenerService<T> implements Service<T> {
             openListener = createOpenListener();
             final ChannelListener<AcceptingChannel<StreamConnection>> acceptListener = ChannelListeners.openListenerAdapter(openListener);
             HttpHandler handler = serverService.getValue().getRoot();
+            pathHandler.addPrefixPath("/", handler);
+            pathHandler.addPrefixPath("/wildfly-services", httpInvocationRegistryService.getValue().getPathHandler()); //TODO: make configurable
+            handler = pathHandler;
             for(HandlerWrapper wrapper : listenerHandlerWrappers) {
                 handler = wrapper.wrap(handler);
             }
@@ -147,6 +159,7 @@ public abstract class ListenerService<T> implements Service<T> {
 
     @Override
     public void stop(StopContext context) {
+        pathHandler = null;
         serverService.getValue().unregisterListener(this);
         stopListening();
         unregisterBinding();

@@ -34,6 +34,7 @@ import com.arjuna.ats.jta.utils.XAHelper;
 import org.jboss.as.ejb3.logging.EjbLogger;
 import org.jboss.as.ejb3.remote.EJBRemoteTransactionsRepository;
 import org.jboss.as.ejb3.remote.protocol.AbstractMessageHandler;
+import org.jboss.as.ejb3.remote.protocol.MarshallingSupport;
 import org.jboss.as.ejb3.remote.protocol.versionone.ChannelAssociation;
 import org.jboss.ejb.client.XidTransactionID;
 import org.jboss.ejb.client.remoting.PackedInteger;
@@ -141,7 +142,7 @@ class TransactionRecoverMessageHandler extends AbstractMessageHandler {
                 dataOutputStream.writeShort(invocationId);
                 PackedInteger.writePackedInteger(dataOutputStream, xids.length);
                 if (xids.length > 0) {
-                    final Marshaller marshaller = TransactionRecoverMessageHandler.this.prepareForMarshalling(marshallerFactory, dataOutputStream);
+                    final Marshaller marshaller = MarshallingSupport.prepareForMarshalling(marshallerFactory, dataOutputStream);
                     for (int i = 0; i < xids.length; i++) {
                         marshaller.writeObject(new XidTransactionID(xids[i]));
                     }

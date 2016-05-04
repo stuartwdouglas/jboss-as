@@ -39,6 +39,7 @@ import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceController;
 import org.jboss.msc.service.ServiceName;
 import org.wildfly.extension.io.OptionList;
+import org.wildfly.httpinvocation.HttpInvocationRegistryService;
 import org.xnio.OptionMap;
 import org.xnio.Pool;
 import org.xnio.XnioWorker;
@@ -105,6 +106,7 @@ abstract class ListenerAdd extends AbstractAddStepHandler {
         serviceBuilder.addDependency(workerServiceName, XnioWorker.class, service.getWorker())
                 .addDependency(socketBindingServiceName, SocketBinding.class, service.getBinding())
                 .addDependency(bufferPoolServiceName, (Injector) service.getBufferPool())
+                .addDependency(HttpInvocationRegistryService.SERVICE_NAME, HttpInvocationRegistryService.class, service.getHttpInvocationRegistryService())
                 .addDependency(UndertowService.SERVER.append(serverName), Server.class, service.getServerService());
 
         configureAdditionalDependencies(context, serviceBuilder, model, service);

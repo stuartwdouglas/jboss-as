@@ -82,5 +82,6 @@
         <module name="javax.security.jacc.api"/>
         <module name="org.jboss.xnio"/>
         <module name="org.jboss.xnio.nio" services="import"/>
+        <module name="org.wildfly.http-invocation" />
     </dependencies>
 </module>
