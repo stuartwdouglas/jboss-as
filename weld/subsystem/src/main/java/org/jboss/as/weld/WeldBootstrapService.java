@@ -144,23 +144,20 @@ public class WeldBootstrapService implements Service<WeldBootstrapService> {
             final Container container = Container.instance(deploymentName);
             if (container != null && !ContainerState.SHUTDOWN.equals(container.getState())) {
                 final ExecutorService executorService = serverExecutor.getValue();
-                final Runnable task = new Runnable() {
-                    @Override
-                    public void run() {
-                        WeldLogger.DEPLOYMENT_LOGGER.debugf("Weld container cleanup for deployment %s", deploymentName);
-                        ClassLoader oldTccl = WildFlySecurityManager.getCurrentContextClassLoaderPrivileged();
-                        try {
-                            WildFlySecurityManager
-                                    .setCurrentContextClassLoaderPrivileged(deployment.getModule().getClassLoader());
-                            WeldProvider.containerShutDown(container);
-                            container.setState(ContainerState.SHUTDOWN);
-                            container.cleanup();
-                            setStarted(false);
-                        } finally {
-                            WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(oldTccl);
-                            ModuleGroupSingletonProvider.removeClassLoader(deployment.getModule().getClassLoader());
-                            context.complete();
-                        }
+                final Runnable task = () -> {
+                    WeldLogger.DEPLOYMENT_LOGGER.debugf("Weld container cleanup for deployment %s", deploymentName);
+                    ClassLoader oldTccl = WildFlySecurityManager.getCurrentContextClassLoaderPrivileged();
+                    try {
+                        WildFlySecurityManager
+                                .setCurrentContextClassLoaderPrivileged(deployment.getModule().getClassLoader());
+                        WeldProvider.containerShutDown(container);
+                        container.setState(ContainerState.SHUTDOWN);
+                        container.cleanup();
+                        setStarted(false);
+                    } finally {
+                        WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(oldTccl);
+                        ModuleGroupSingletonProvider.removeClassLoader(deployment.getModule().getClassLoader());
+                        context.complete();
                     }
                 };
                 try {

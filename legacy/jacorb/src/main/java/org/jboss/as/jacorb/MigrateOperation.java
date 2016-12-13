@@ -133,42 +133,55 @@ public class MigrateOperation implements OperationStepHandler {
             addOpenjdkExtension(context, migrateOperations);
         }
 
-        context.addStep(new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext operationContext, ModelNode modelNode) throws OperationFailedException {
+        context.addStep((operationContext, modelNode) -> {
 
-                final Resource jacorbResource = context.readResourceForUpdate(PathAddress.EMPTY_ADDRESS);
-                final ModelNode jacorbModel = Resource.Tools.readModel(jacorbResource).clone();
+            final Resource jacorbResource = context.readResourceForUpdate(PathAddress.EMPTY_ADDRESS);
+            final ModelNode jacorbModel = Resource.Tools.readModel(jacorbResource).clone();
 
-                final List<String> warnings = new LinkedList<>();
+            final List<String> warnings = new LinkedList<>();
 
-                List<String> unsupportedProperties = TransformUtils.checkLegacyModel(jacorbModel);
-                if (!unsupportedProperties.isEmpty()) {
-                    warnings.add(JacORBLogger.ROOT_LOGGER.cannotEmulatePropertiesWarning(unsupportedProperties));
-                    for(String unsupportedProperty : unsupportedProperties){
-                        jacorbModel.get(unsupportedProperty).clear();
-                    }
+            List<String> unsupportedProperties = TransformUtils.checkLegacyModel(jacorbModel);
+            if (!unsupportedProperties.isEmpty()) {
+                warnings.add(JacORBLogger.ROOT_LOGGER.cannotEmulatePropertiesWarning(unsupportedProperties));
+                for(String unsupportedProperty : unsupportedProperties){
+                    jacorbModel.get(unsupportedProperty).clear();
                 }
+            }
 
-                checkPropertiesWithExpression(jacorbModel, warnings);
+            checkPropertiesWithExpression(jacorbModel, warnings);
 
-                final ModelNode openjdkModel = TransformUtils.transformModel(jacorbModel);
+            final ModelNode openjdkModel = TransformUtils.transformModel(jacorbModel);
 
-                final PathAddress openjdkAddress = subsystemsAddress.append(OPENJDK_SUBSYSTEM_ELEMENT);
-                addOpenjdkSubsystem(openjdkAddress, openjdkModel, migrateOperations);
+            final PathAddress openjdkAddress = subsystemsAddress.append(OPENJDK_SUBSYSTEM_ELEMENT);
+            addOpenjdkSubsystem(openjdkAddress, openjdkModel, migrateOperations);
 
-                final PathAddress jacorbAddress = subsystemsAddress.append(JACORB_SUBSYSTEM_ELEMENT);
-                removeJacorbSubsystem(jacorbAddress, migrateOperations, context.getProcessType() == ProcessType.STANDALONE_SERVER);
+            final PathAddress jacorbAddress = subsystemsAddress.append(JACORB_SUBSYSTEM_ELEMENT);
+            removeJacorbSubsystem(jacorbAddress, migrateOperations, context.getProcessType() == ProcessType.STANDALONE_SERVER);
 
-                if (describe) {
-                    // :describe-migration operation
+            if (describe) {
+                // :describe-migration operation
 
-                    // for describe-migration operation, do nothing and return the list of operations that would
-                    // be executed in the composite operation
-                    final Collection<ModelNode> values = migrateOperations.values();
-                    ModelNode result = new ModelNode();
+                // for describe-migration operation, do nothing and return the list of operations that would
+                // be executed in the composite operation
+                final Collection<ModelNode> values = migrateOperations.values();
+                ModelNode result = new ModelNode();
 
-                    result.get(MIGRATION_OPERATIONS).set(values);
+                result.get(MIGRATION_OPERATIONS).set(values);
+
+                ModelNode rw = new ModelNode().setEmptyList();
+                for (String warning : warnings) {
+                    rw.add(warning);
+                }
+                result.get(MIGRATION_WARNINGS).set(rw);
+
+                context.getResult().set(result);
+            } else {
+                // :migrate operation
+                // invoke an OSH on a composite operation with all the migration operations
+                final Map<PathAddress, ModelNode> migrateOpResponses = migrateSubsystems(context, migrateOperations);
+
+                context.completeStep((resultAction, context1, operation1) -> {
+                    final ModelNode result = new ModelNode();
 
                     ModelNode rw = new ModelNode().setEmptyList();
                     for (String warning : warnings) {
@@ -176,44 +189,25 @@ public class MigrateOperation implements OperationStepHandler {
                     }
                     result.get(MIGRATION_WARNINGS).set(rw);
 
-                    context.getResult().set(result);
-                } else {
-                    // :migrate operation
-                    // invoke an OSH on a composite operation with all the migration operations
-                    final Map<PathAddress, ModelNode> migrateOpResponses = migrateSubsystems(context, migrateOperations);
-
-                    context.completeStep(new OperationContext.ResultHandler() {
-                        @Override
-                        public void handleResult(OperationContext.ResultAction resultAction, OperationContext context, ModelNode operation) {
-                            final ModelNode result = new ModelNode();
-
-                            ModelNode rw = new ModelNode().setEmptyList();
-                            for (String warning : warnings) {
-                                rw.add(warning);
+                    if (resultAction == OperationContext.ResultAction.ROLLBACK) {
+                        for (Map.Entry<PathAddress, ModelNode> entry : migrateOpResponses.entrySet()) {
+                            if (entry.getValue().hasDefined(FAILURE_DESCRIPTION)) {
+                                //we check for failure description, as every node has 'failed', but one
+                                //the real error has a failure description
+                                //we break when we find the first one, as there will only ever be one failure
+                                //as the op stops after the first failure
+                                ModelNode desc = new ModelNode();
+                                desc.get(OP).set(migrateOperations.get(entry.getKey()));
+                                desc.get(RESULT).set(entry.getValue());
+                                result.get(MIGRATION_ERROR).set(desc);
+                                break;
                             }
-                            result.get(MIGRATION_WARNINGS).set(rw);
-
-                            if (resultAction == OperationContext.ResultAction.ROLLBACK) {
-                                for (Map.Entry<PathAddress, ModelNode> entry : migrateOpResponses.entrySet()) {
-                                    if (entry.getValue().hasDefined(FAILURE_DESCRIPTION)) {
-                                        //we check for failure description, as every node has 'failed', but one
-                                        //the real error has a failure description
-                                        //we break when we find the first one, as there will only ever be one failure
-                                        //as the op stops after the first failure
-                                        ModelNode desc = new ModelNode();
-                                        desc.get(OP).set(migrateOperations.get(entry.getKey()));
-                                        desc.get(RESULT).set(entry.getValue());
-                                        result.get(MIGRATION_ERROR).set(desc);
-                                        break;
-                                    }
-                                }
-                                context.getFailureDescription().set(new ModelNode(JacORBLogger.ROOT_LOGGER.migrationFailed()));
-                            }
-
-                            context.getResult().set(result);
                         }
-                    });
-                }
+                        context1.getFailureDescription().set(new ModelNode(JacORBLogger.ROOT_LOGGER.migrationFailed()));
+                    }
+
+                    context1.getResult().set(result);
+                });
             }
         }, MODEL);
 

@@ -1,7 +1,6 @@
 package org.jboss.as.ee.component;
 
 import org.jboss.invocation.Interceptor;
-import org.jboss.invocation.InterceptorContext;
 import org.jboss.invocation.InterceptorFactory;
 import org.jboss.invocation.InterceptorFactoryContext;
 
@@ -20,13 +19,10 @@ public class AroundConstructInterceptorFactory implements InterceptorFactory {
     @Override
     public Interceptor create(final InterceptorFactoryContext context) {
         final Interceptor aroundConstruct = aroundConstrctChain.create(context);
-        return new Interceptor() {
-            @Override
-            public Object processInvocation(final InterceptorContext context) throws Exception {
-                aroundConstruct.processInvocation(context);
-                context.setParameters(null);
-                return context.proceed();
-            }
+        return context1 -> {
+            aroundConstruct.processInvocation(context1);
+            context1.setParameters(null);
+            return context1.proceed();
         };
     }
 }

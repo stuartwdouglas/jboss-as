@@ -47,15 +47,12 @@ public final class ComponentStartService implements Service<Component> {
      * {@inheritDoc}
      */
     public void start(final StartContext context) throws StartException {
-        final Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    getValue().start();
-                    context.complete();
-                } catch (Throwable e) {
-                    context.failed(new StartException(e));
-                }
+        final Runnable task = () -> {
+            try {
+                getValue().start();
+                context.complete();
+            } catch (Throwable e) {
+                context.failed(new StartException(e));
             }
         };
         try {
@@ -71,14 +68,11 @@ public final class ComponentStartService implements Service<Component> {
      * {@inheritDoc}
      */
     public void stop(final StopContext context) {
-        final Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    getValue().stop();
-                } finally {
-                    context.complete();
-                }
+        final Runnable task = () -> {
+            try {
+                getValue().stop();
+            } finally {
+                context.complete();
             }
         };
         try {

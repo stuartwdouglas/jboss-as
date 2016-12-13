@@ -52,11 +52,7 @@ class SecurityActions {
         if (System.getSecurityManager() == null)
             return c.getDeclaredMethods();
 
-        return AccessController.doPrivileged(new PrivilegedAction<Method[]>() {
-            public Method[] run() {
-                return c.getDeclaredMethods();
-            }
-        });
+        return AccessController.doPrivileged((PrivilegedAction<Method[]>) () -> c.getDeclaredMethods());
     }
 
     /**
@@ -69,11 +65,7 @@ class SecurityActions {
         if (System.getSecurityManager() == null)
             return c.getDeclaredFields();
 
-        return AccessController.doPrivileged(new PrivilegedAction<Field[]>() {
-            public Field[] run() {
-                return c.getDeclaredFields();
-            }
-        });
+        return AccessController.doPrivileged((PrivilegedAction<Field[]>) () -> c.getDeclaredFields());
     }
 
     /**
@@ -85,11 +77,9 @@ class SecurityActions {
         if (System.getSecurityManager() == null)
             ao.setAccessible(true);
 
-        AccessController.doPrivileged(new PrivilegedAction<Object>() {
-            public Object run() {
-                ao.setAccessible(true);
-                return null;
-            }
+        AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+            ao.setAccessible(true);
+            return null;
         });
     }
 
@@ -106,13 +96,11 @@ class SecurityActions {
         if (System.getSecurityManager() == null)
             return c.getConstructor(params);
 
-        Constructor<?> result = AccessController.doPrivileged(new PrivilegedAction<Constructor<?>>() {
-            public Constructor<?> run() {
-                try {
-                    return c.getConstructor(params);
-                } catch (NoSuchMethodException e) {
-                    return null;
-                }
+        Constructor<?> result = AccessController.doPrivileged((PrivilegedAction<Constructor<?>>) () -> {
+            try {
+                return c.getConstructor(params);
+            } catch (NoSuchMethodException e) {
+                return null;
             }
         });
 
@@ -136,13 +124,11 @@ class SecurityActions {
         if (System.getSecurityManager() == null)
             return c.getMethod(name, params);
 
-        Method result = AccessController.doPrivileged(new PrivilegedAction<Method>() {
-            public Method run() {
-                try {
-                    return c.getMethod(name, params);
-                } catch (NoSuchMethodException e) {
-                    return null;
-                }
+        Method result = AccessController.doPrivileged((PrivilegedAction<Method>) () -> {
+            try {
+                return c.getMethod(name, params);
+            } catch (NoSuchMethodException e) {
+                return null;
             }
         });
 

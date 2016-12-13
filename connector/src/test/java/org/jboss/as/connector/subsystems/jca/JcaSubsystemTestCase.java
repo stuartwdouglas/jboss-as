@@ -31,7 +31,6 @@ import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.model.test.FailedOperationTransformationConfig;
-import org.jboss.as.model.test.ModelFixer;
 import org.jboss.as.model.test.ModelTestControllerVersion;
 import org.jboss.as.model.test.ModelTestUtils;
 import org.jboss.as.model.test.SingleClassFilter;
@@ -173,16 +172,13 @@ public class JcaSubsystemTestCase extends AbstractSubsystemBaseTest {
                 .setExtensionClassName("org.jboss.as.connector.subsystems.jca.JcaExtension")
                 .excludeFromParent(SingleClassFilter.createFilter(ConnectorLogger.class))
                 //.skipReverseControllerCheck();
-        .configureReverseControllerCheck(AdditionalInitialization.MANAGEMENT, new ModelFixer() {
-            @Override
-            public ModelNode fixModel(ModelNode modelNode) {
-                //These two are true in the original model but get removed by the transformers, so they default to false. Set them to true
-                //modelNode.get(Constants.TRACER, Constants.TRACER). add(new ModelNode(Constants.TRACER));
-                //.add(Constants.TRACER);
-                modelNode.get(Constants.TRACER, Constants.TRACER, TracerDefinition.TracerParameters.TRACER_ENABLED.getAttribute().getName()).set(true);
-                return modelNode;
+        .configureReverseControllerCheck(AdditionalInitialization.MANAGEMENT, modelNode -> {
+            //These two are true in the original model but get removed by the transformers, so they default to false. Set them to true
+            //modelNode.get(Constants.TRACER, Constants.TRACER). add(new ModelNode(Constants.TRACER));
+            //.add(Constants.TRACER);
+            modelNode.get(Constants.TRACER, Constants.TRACER, TracerDefinition.TracerParameters.TRACER_ENABLED.getAttribute().getName()).set(true);
+            return modelNode;
 
-            }
         });
 
         KernelServices mainServices = builder.build();

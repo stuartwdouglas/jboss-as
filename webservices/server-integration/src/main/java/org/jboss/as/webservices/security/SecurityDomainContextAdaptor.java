@@ -69,17 +69,14 @@ public final class SecurityDomainContextAdaptor implements org.jboss.wsf.spi.sec
 
     @Override
     public void pushSubjectContext(final Subject subject, final Principal principal, final Object credential) {
-        AccessController.doPrivileged(new PrivilegedAction<Void>() {
-
-            public Void run() {
-                SecurityContext securityContext = SecurityContextAssociation.getSecurityContext();
-                if (securityContext == null) {
-                    securityContext = createSecurityContext(getSecurityDomain());
-                    setSecurityContextOnAssociation(securityContext);
-                }
-                securityContext.getUtil().createSubjectInfo(principal, credential, subject);
-                return null;
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            SecurityContext securityContext = SecurityContextAssociation.getSecurityContext();
+            if (securityContext == null) {
+                securityContext = createSecurityContext(getSecurityDomain());
+                setSecurityContextOnAssociation(securityContext);
             }
+            securityContext.getUtil().createSubjectInfo(principal, credential, subject);
+            return null;
         });
     }
 
@@ -90,15 +87,11 @@ public final class SecurityDomainContextAdaptor implements org.jboss.wsf.spi.sec
      * @return an instanceof {@code SecurityContext}
      */
     private static SecurityContext createSecurityContext(final String domain) {
-        return AccessController.doPrivileged(new PrivilegedAction<SecurityContext>() {
-
-            @Override
-            public SecurityContext run() {
-                try {
-                    return SecurityContextFactory.createSecurityContext(domain);
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+        return AccessController.doPrivileged((PrivilegedAction<SecurityContext>) () -> {
+            try {
+                return SecurityContextFactory.createSecurityContext(domain);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
         });
     }
@@ -109,13 +102,9 @@ public final class SecurityDomainContextAdaptor implements org.jboss.wsf.spi.sec
      * @param sc the security context
      */
     private static void setSecurityContextOnAssociation(final SecurityContext sc) {
-        AccessController.doPrivileged(new PrivilegedAction<Void>() {
-
-            @Override
-            public Void run() {
-                SecurityContextAssociation.setSecurityContext(sc);
-                return null;
-            }
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            SecurityContextAssociation.setSecurityContext(sc);
+            return null;
         });
     }
 }

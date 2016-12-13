@@ -23,7 +23,6 @@
 package org.jboss.as.test.manualmode.messaging.ha;
 
 import java.io.File;
-import java.io.FilenameFilter;
 
 import javax.naming.InitialContext;
 
@@ -190,11 +189,7 @@ public abstract class FailoverTestCase extends AbstractMessagingHATestCase {
         }
         log.trace("@@@@@@@@@@@@@@@@@@@@@@@@@");
         log.trace("SHARED_STORE_DIR = " + SHARED_STORE_DIR);
-        for (File file : SHARED_STORE_DIR.listFiles(new FilenameFilter() {
-            @Override
-            public boolean accept(File dir, String name) {
-                return true;
-            }})) {
+        for (File file : SHARED_STORE_DIR.listFiles((dir, name) -> true)) {
             log.trace(String.format("+ %s [r=%s,w=%s,x=%s]\n", file, file.canRead(), file.canWrite(), file.canExecute()));
             if (file.isDirectory()) {
                 for (File f : file.listFiles()) {

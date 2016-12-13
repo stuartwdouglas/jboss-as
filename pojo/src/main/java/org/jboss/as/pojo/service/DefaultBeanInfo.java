@@ -84,39 +84,29 @@ public class DefaultBeanInfo<T> implements BeanInfo<T> {
 
     public Constructor<T> getConstructor(final String... parameterTypes) {
         return lookup(
-                new Lookup<Constructor<T>>() {
-                    public Constructor<T> lookup(ClassReflectionIndex index) {
-                        final Constructor ctor = index.getConstructor(parameterTypes);
-                        if (ctor == null)
-                            throw PojoLogger.ROOT_LOGGER.ctorNotFound(Arrays.toString(parameterTypes), beanClass.getName());
-                        return ctor;
-                    }
+                (Lookup<Constructor<T>>) index -> {
+                    final Constructor ctor = index.getConstructor(parameterTypes);
+                    if (ctor == null)
+                        throw PojoLogger.ROOT_LOGGER.ctorNotFound(Arrays.toString(parameterTypes), beanClass.getName());
+                    return ctor;
                 }, 0, 1);
     }
 
     @Override
     public Constructor<T> findConstructor(final String... parameterTypes) {
-        return lookup(new Lookup<Constructor<T>>() {
-            @Override
-            public Constructor<T> lookup(ClassReflectionIndex index) {
-                final Collection<Constructor<?>> ctors = index.getConstructors();
-                for (Constructor c : ctors) {
-                    if (Configurator.equals(parameterTypes, c.getParameterTypes()))
-                        return c;
-                }
-                throw PojoLogger.ROOT_LOGGER.ctorNotFound(Arrays.toString(parameterTypes), beanClass.getName());
+        return lookup((Lookup<Constructor<T>>) index -> {
+            final Collection<Constructor<?>> ctors = index.getConstructors();
+            for (Constructor c : ctors) {
+                if (Configurator.equals(parameterTypes, c.getParameterTypes()))
+                    return c;
             }
+            throw PojoLogger.ROOT_LOGGER.ctorNotFound(Arrays.toString(parameterTypes), beanClass.getName());
         }, 0, 1);
     }
 
     @Override
     public Field getField(final String name) {
-        final Field lookup = lookup(new Lookup<Field>() {
-            @Override
-            public Field lookup(ClassReflectionIndex index) {
-                return index.getField(name);
-            }
-        }, 0, Integer.MAX_VALUE);
+        final Field lookup = lookup(index -> index.getField(name), 0, Integer.MAX_VALUE);
         if (lookup == null)
             throw PojoLogger.ROOT_LOGGER.fieldNotFound(name, beanClass.getName());
         return lookup;
@@ -124,19 +114,16 @@ public class DefaultBeanInfo<T> implements BeanInfo<T> {
 
     @Override
     public Method getMethod(final String name, final String... parameterTypes) {
-        final Method lookup = lookup(new Lookup<Method>() {
-            @Override
-            public Method lookup(ClassReflectionIndex index) {
-                Collection<Method> methods = index.getMethods(name, parameterTypes);
-                int size = methods.size();
-                switch (size) {
-                    case 0:
-                        return null;
-                    case 1:
-                        return methods.iterator().next();
-                    default:
-                        throw PojoLogger.ROOT_LOGGER.ambiguousMatch(methods, name, beanClass.getName());
-                }
+        final Method lookup = lookup(index -> {
+            Collection<Method> methods = index.getMethods(name, parameterTypes);
+            int size = methods.size();
+            switch (size) {
+                case 0:
+                    return null;
+                case 1:
+                    return methods.iterator().next();
+                default:
+                    throw PojoLogger.ROOT_LOGGER.ambiguousMatch(methods, name, beanClass.getName());
             }
         }, 0, Integer.MAX_VALUE);
         if (lookup == null)
@@ -153,23 +140,20 @@ public class DefaultBeanInfo<T> implements BeanInfo<T> {
     public Method getGetter(final String propertyName, final Class<?> type) {
         final boolean isBoolean = Boolean.TYPE.equals(type);
         final String name = ((isBoolean) ? "is" : "get") + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
-        final Method result = lookup(new Lookup<Method>() {
-            @Override
-            public Method lookup(ClassReflectionIndex index) {
-                Collection<Method> methods = index.getAllMethods(name, 0);
-                if (type == null) {
-                    if (methods.size() == 1)
-                        return methods.iterator().next();
-                    else
-                        return null;
-                }
-                for (Method m : methods) {
-                    Class<?> pt = m.getReturnType();
-                    if (pt.isAssignableFrom(type))
-                        return m;
-                }
-                return null;
+        final Method result = lookup(index -> {
+            Collection<Method> methods = index.getAllMethods(name, 0);
+            if (type == null) {
+                if (methods.size() == 1)
+                    return methods.iterator().next();
+                else
+                    return null;
             }
+            for (Method m : methods) {
+                Class<?> pt = m.getReturnType();
+                if (pt.isAssignableFrom(type))
+                    return m;
+            }
+            return null;
         }, 0, Integer.MAX_VALUE);
         if (result == null)
             throw PojoLogger.ROOT_LOGGER.getterNotFound(type, beanClass.getName());
@@ -179,23 +163,20 @@ public class DefaultBeanInfo<T> implements BeanInfo<T> {
     @Override
     public Method getSetter(final String propertyName, final Class<?> type) {
         final String name = "set" + Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
-        final Method result = lookup(new Lookup<Method>() {
-            @Override
-            public Method lookup(ClassReflectionIndex index) {
-                Collection<Method> methods = index.getAllMethods(name, 1);
-                if (type == null) {
-                    if (methods.size() == 1)
-                        return methods.iterator().next();
-                    else
-                        return null;
-                }
-                for (Method m : methods) {
-                    Class<?> pt = m.getParameterTypes()[0];
-                    if (pt.isAssignableFrom(type))
-                        return m;
-                }
-                return null;
+        final Method result = lookup(index -> {
+            Collection<Method> methods = index.getAllMethods(name, 1);
+            if (type == null) {
+                if (methods.size() == 1)
+                    return methods.iterator().next();
+                else
+                    return null;
             }
+            for (Method m : methods) {
+                Class<?> pt = m.getParameterTypes()[0];
+                if (pt.isAssignableFrom(type))
+                    return m;
+            }
+            return null;
         }, 0, Integer.MAX_VALUE);
         if (result == null)
             throw PojoLogger.ROOT_LOGGER.setterNotFound(type, beanClass.getName());

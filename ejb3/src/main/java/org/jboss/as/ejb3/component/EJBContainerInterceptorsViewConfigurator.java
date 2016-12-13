@@ -48,7 +48,6 @@ import org.jboss.as.server.deployment.reflect.ClassReflectionIndexUtil;
 import org.jboss.as.server.deployment.reflect.DeploymentReflectionIndex;
 import org.jboss.invocation.Interceptor;
 import org.jboss.invocation.InterceptorFactory;
-import org.jboss.invocation.InterceptorFactoryContext;
 import org.jboss.invocation.Interceptors;
 import org.jboss.invocation.proxy.MethodIdentifier;
 import org.jboss.modules.Module;
@@ -209,16 +208,13 @@ public class EJBContainerInterceptorsViewConfigurator implements ViewConfigurato
     }
 
     private static InterceptorFactory weaved(final Collection<InterceptorFactory> interceptorFactories) {
-        return new InterceptorFactory() {
-            @Override
-            public Interceptor create(InterceptorFactoryContext context) {
-                final Interceptor[] interceptors = new Interceptor[interceptorFactories.size()];
-                final Iterator<InterceptorFactory> factories = interceptorFactories.iterator();
-                for (int i = 0; i < interceptors.length; i++) {
-                    interceptors[i] = factories.next().create(context);
-                }
-                return Interceptors.getWeavedInterceptor(interceptors);
+        return context -> {
+            final Interceptor[] interceptors = new Interceptor[interceptorFactories.size()];
+            final Iterator<InterceptorFactory> factories = interceptorFactories.iterator();
+            for (int i = 0; i < interceptors.length; i++) {
+                interceptors[i] = factories.next().create(context);
             }
+            return Interceptors.getWeavedInterceptor(interceptors);
         };
     }
 

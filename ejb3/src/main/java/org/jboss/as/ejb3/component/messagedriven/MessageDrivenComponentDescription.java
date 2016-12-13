@@ -32,12 +32,9 @@ import org.jboss.as.connector.util.ConnectorServices;
 import org.jboss.as.ee.component.Attachments;
 import org.jboss.as.ee.component.Component;
 import org.jboss.as.ee.component.ComponentConfiguration;
-import org.jboss.as.ee.component.ComponentConfigurator;
 import org.jboss.as.ee.component.ComponentDescription;
 import org.jboss.as.ee.component.DependencyConfigurator;
 import org.jboss.as.ee.component.EEApplicationClasses;
-import org.jboss.as.ee.component.ViewConfiguration;
-import org.jboss.as.ee.component.ViewConfigurator;
 import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ee.component.interceptors.InterceptorClassDescription;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
@@ -56,13 +53,10 @@ import org.jboss.as.ejb3.tx.CMTTxInterceptor;
 import org.jboss.as.ejb3.tx.EjbBMTInterceptor;
 import org.jboss.as.ejb3.tx.LifecycleCMTTxInterceptor;
 import org.jboss.as.ejb3.tx.TimerCMTTxInterceptor;
-import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.reflect.ClassReflectionIndex;
 import org.jboss.as.server.suspend.SuspendController;
 import org.jboss.invocation.ImmediateInterceptorFactory;
-import org.jboss.invocation.Interceptor;
-import org.jboss.invocation.InterceptorContext;
 import org.jboss.metadata.ejb.spec.MessageDrivenBeanMetaData;
 import org.jboss.modules.ModuleLoader;
 import org.jboss.msc.service.Service;
@@ -109,12 +103,7 @@ public class MessageDrivenComponentDescription extends EJBComponentDescription {
         // add the interceptor which will invoke the setMessageDrivenContext() method on a MDB which implements
         // MessageDrivenBean interface
         this.addSetMessageDrivenContextMethodInvocationInterceptor();
-        getConfigurators().add(new ComponentConfigurator() {
-            @Override
-            public void configure(final DeploymentPhaseContext context, final ComponentDescription description, final ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                configuration.addTimeoutViewInterceptor(MessageDrivenComponentInstanceAssociatingFactory.instance(), InterceptorOrder.View.ASSOCIATING_INTERCEPTOR);
-            }
-        });
+        getConfigurators().add((context, description, configuration) -> configuration.addTimeoutViewInterceptor(MessageDrivenComponentInstanceAssociatingFactory.instance(), InterceptorOrder.View.ASSOCIATING_INTERCEPTOR));
     }
 
     @Override
@@ -136,36 +125,27 @@ public class MessageDrivenComponentDescription extends EJBComponentDescription {
         // setup the configurator to inject the resource adapter
         mdbComponentConfiguration.getCreateDependencies().add(new ResourceAdapterInjectingConfiguration());
 
-        mdbComponentConfiguration.getCreateDependencies().add(new DependencyConfigurator<MessageDrivenComponentCreateService>() {
-            @Override
-            public void configureDependency(final ServiceBuilder<?> serviceBuilder, final MessageDrivenComponentCreateService mdbComponentCreateService) throws DeploymentUnitProcessingException {
-                serviceBuilder.addDependency(EJBUtilities.SERVICE_NAME, EJBUtilities.class, mdbComponentCreateService.getEJBUtilitiesInjector());
-                serviceBuilder.addDependency(SuspendController.SERVICE_NAME, SuspendController.class, mdbComponentCreateService.getSuspendControllerInjectedValue());
-            }
+        mdbComponentConfiguration.getCreateDependencies().add((DependencyConfigurator<MessageDrivenComponentCreateService>)(serviceBuilder, mdbComponentCreateService) -> {
+            serviceBuilder.addDependency(EJBUtilities.SERVICE_NAME, EJBUtilities.class, mdbComponentCreateService.getEJBUtilitiesInjector());
+            serviceBuilder.addDependency(SuspendController.SERVICE_NAME, SuspendController.class, mdbComponentCreateService.getSuspendControllerInjectedValue());
         });
 
         // add the bmt interceptor
         if (TransactionManagementType.BEAN.equals(this.getTransactionManagementType())) {
-            getConfigurators().add(new ComponentConfigurator() {
-                @Override
-                public void configure(final DeploymentPhaseContext context, final ComponentDescription description, final ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
+            getConfigurators().add((context, description, configuration) -> {
 
-                    // add the bmt interceptor factory
-                    configuration.addComponentInterceptor(EjbBMTInterceptor.FACTORY, InterceptorOrder.Component.BMT_TRANSACTION_INTERCEPTOR, false);
-                }
+                // add the bmt interceptor factory
+                configuration.addComponentInterceptor(EjbBMTInterceptor.FACTORY, InterceptorOrder.Component.BMT_TRANSACTION_INTERCEPTOR, false);
             });
         } else {
-            getConfigurators().add(new ComponentConfigurator() {
-                @Override
-                public void configure(final DeploymentPhaseContext context, final ComponentDescription description, final ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                    final EEApplicationClasses applicationClasses = context.getDeploymentUnit().getAttachment(Attachments.EE_APPLICATION_CLASSES_DESCRIPTION);
-                    InterceptorClassDescription interceptorConfig = ComponentDescription.mergeInterceptorConfig(configuration.getComponentClass(), applicationClasses.getClassByName(description.getComponentClassName()), description, MetadataCompleteMarker.isMetadataComplete(context.getDeploymentUnit()));
+            getConfigurators().add((context, description, configuration) -> {
+                final EEApplicationClasses applicationClasses = context.getDeploymentUnit().getAttachment(Attachments.EE_APPLICATION_CLASSES_DESCRIPTION);
+                InterceptorClassDescription interceptorConfig = ComponentDescription.mergeInterceptorConfig(configuration.getComponentClass(), applicationClasses.getClassByName(description.getComponentClassName()), description, MetadataCompleteMarker.isMetadataComplete(context.getDeploymentUnit()));
 
-                    configuration.addPostConstructInterceptor(new LifecycleCMTTxInterceptor.Factory(interceptorConfig.getPostConstruct(), true), InterceptorOrder.ComponentPostConstruct.TRANSACTION_INTERCEPTOR);
-                    configuration.addPreDestroyInterceptor(new LifecycleCMTTxInterceptor.Factory(interceptorConfig.getPreDestroy(), true), InterceptorOrder.ComponentPreDestroy.TRANSACTION_INTERCEPTOR);
+                configuration.addPostConstructInterceptor(new LifecycleCMTTxInterceptor.Factory(interceptorConfig.getPostConstruct(), true), InterceptorOrder.ComponentPostConstruct.TRANSACTION_INTERCEPTOR);
+                configuration.addPreDestroyInterceptor(new LifecycleCMTTxInterceptor.Factory(interceptorConfig.getPreDestroy(), true), InterceptorOrder.ComponentPreDestroy.TRANSACTION_INTERCEPTOR);
 
-                    configuration.addTimeoutViewInterceptor(TimerCMTTxInterceptor.FACTORY, InterceptorOrder.View.CMT_TRANSACTION_INTERCEPTOR);
-                }
+                configuration.addTimeoutViewInterceptor(TimerCMTTxInterceptor.FACTORY, InterceptorOrder.View.CMT_TRANSACTION_INTERCEPTOR);
             });
         }
 
@@ -226,27 +206,21 @@ public class MessageDrivenComponentDescription extends EJBComponentDescription {
         // let the super do its job
         super.setupViewInterceptors(view);
 
-        view.getConfigurators().add(new ViewConfigurator() {
-            @Override
-            public void configure(DeploymentPhaseContext context, ComponentConfiguration componentConfiguration, ViewDescription description, ViewConfiguration configuration) throws DeploymentUnitProcessingException {
+        view.getConfigurators().add((context, componentConfiguration, description, configuration) -> {
 
-                //add the invocation type to the start of the chain
-                //TODO: is there a cleaner way to do this?
-                configuration.addViewInterceptor(new ImmediateInterceptorFactory(new Interceptor() {
-                    @Override
-                    public Object processInvocation(final InterceptorContext context) throws Exception {
-                        context.putPrivateData(InvocationType.class, InvocationType.MESSAGE_DELIVERY);
-                        return context.proceed();
-                    }
-                }), InterceptorOrder.View.INVOCATION_TYPE);
+            //add the invocation type to the start of the chain
+            //TODO: is there a cleaner way to do this?
+            configuration.addViewInterceptor(new ImmediateInterceptorFactory(context1 -> {
+                context1.putPrivateData(InvocationType.class, InvocationType.MESSAGE_DELIVERY);
+                return context1.proceed();
+            }), InterceptorOrder.View.INVOCATION_TYPE);
 
-                // add the instance associating interceptor at the start of the interceptor chain
-                configuration.addViewInterceptor(MessageDrivenComponentInstanceAssociatingFactory.instance(), InterceptorOrder.View.ASSOCIATING_INTERCEPTOR);
+            // add the instance associating interceptor at the start of the interceptor chain
+            configuration.addViewInterceptor(MessageDrivenComponentInstanceAssociatingFactory.instance(), InterceptorOrder.View.ASSOCIATING_INTERCEPTOR);
 
-                final MessageDrivenComponentDescription mdb = (MessageDrivenComponentDescription) componentConfiguration.getComponentDescription();
-                if (mdb.getTransactionManagementType() == TransactionManagementType.CONTAINER) {
-                    configuration.addViewInterceptor(CMTTxInterceptor.FACTORY, InterceptorOrder.View.CMT_TRANSACTION_INTERCEPTOR);
-                }
+            final MessageDrivenComponentDescription mdb = (MessageDrivenComponentDescription) componentConfiguration.getComponentDescription();
+            if (mdb.getTransactionManagementType() == TransactionManagementType.CONTAINER) {
+                configuration.addViewInterceptor(CMTTxInterceptor.FACTORY, InterceptorOrder.View.CMT_TRANSACTION_INTERCEPTOR);
             }
         });
 
@@ -255,23 +229,15 @@ public class MessageDrivenComponentDescription extends EJBComponentDescription {
     @Override
     protected void addCurrentInvocationContextFactory() {
         // add the current invocation context interceptor at the beginning of the component instance post construct chain
-        this.getConfigurators().add(new ComponentConfigurator() {
-            @Override
-            public void configure(DeploymentPhaseContext context, ComponentDescription description, ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                configuration.addPostConstructInterceptor(CurrentInvocationContextInterceptor.FACTORY, InterceptorOrder.ComponentPostConstruct.EJB_SESSION_CONTEXT_INTERCEPTOR);
-                configuration.addPreDestroyInterceptor(CurrentInvocationContextInterceptor.FACTORY, InterceptorOrder.ComponentPostConstruct.EJB_SESSION_CONTEXT_INTERCEPTOR);
-            }
+        this.getConfigurators().add((context, description, configuration) -> {
+            configuration.addPostConstructInterceptor(CurrentInvocationContextInterceptor.FACTORY, InterceptorOrder.ComponentPostConstruct.EJB_SESSION_CONTEXT_INTERCEPTOR);
+            configuration.addPreDestroyInterceptor(CurrentInvocationContextInterceptor.FACTORY, InterceptorOrder.ComponentPostConstruct.EJB_SESSION_CONTEXT_INTERCEPTOR);
         });
     }
 
     @Override
     protected void addCurrentInvocationContextFactory(ViewDescription view) {
-        view.getConfigurators().add(new ViewConfigurator() {
-            @Override
-            public void configure(DeploymentPhaseContext context, ComponentConfiguration componentConfiguration, ViewDescription description, ViewConfiguration configuration) throws DeploymentUnitProcessingException {
-                configuration.addViewInterceptor(CurrentInvocationContextInterceptor.FACTORY, InterceptorOrder.View.INVOCATION_CONTEXT_INTERCEPTOR);
-            }
-        });
+        view.getConfigurators().add((context, componentConfiguration, description, configuration) -> configuration.addViewInterceptor(CurrentInvocationContextInterceptor.FACTORY, InterceptorOrder.View.INVOCATION_CONTEXT_INTERCEPTOR));
     }
 
     /**
@@ -281,12 +247,9 @@ public class MessageDrivenComponentDescription extends EJBComponentDescription {
     private void addSetMessageDrivenContextMethodInvocationInterceptor() {
         // add the setMessageDrivenContext(MessageDrivenContext) method invocation interceptor for MDB
         // implementing the javax.ejb.MessageDrivenBean interface
-        this.getConfigurators().add(new ComponentConfigurator() {
-            @Override
-            public void configure(DeploymentPhaseContext context, ComponentDescription description, ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                if (MessageDrivenBean.class.isAssignableFrom(configuration.getComponentClass())) {
-                    configuration.addPostConstructInterceptor(new ImmediateInterceptorFactory(MessageDrivenBeanSetMessageDrivenContextInterceptor.INSTANCE), InterceptorOrder.ComponentPostConstruct.EJB_SET_CONTEXT_METHOD_INVOCATION_INTERCEPTOR);
-                }
+        this.getConfigurators().add((context, description, configuration) -> {
+            if (MessageDrivenBean.class.isAssignableFrom(configuration.getComponentClass())) {
+                configuration.addPostConstructInterceptor(new ImmediateInterceptorFactory(MessageDrivenBeanSetMessageDrivenContextInterceptor.INSTANCE), InterceptorOrder.ComponentPostConstruct.EJB_SET_CONTEXT_METHOD_INVOCATION_INTERCEPTOR);
             }
         });
     }

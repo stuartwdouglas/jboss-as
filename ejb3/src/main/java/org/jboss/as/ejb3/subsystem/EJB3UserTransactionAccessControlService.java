@@ -47,12 +47,7 @@ public class EJB3UserTransactionAccessControlService implements Service<EJB3User
 
     @Override
     public void start(StartContext context) throws StartException {
-        UserTransactionAccessControl accessControl = new UserTransactionAccessControl() {
-            @Override
-            public void authorizeAccess() {
-                AllowedMethodsInformation.checkAllowed(MethodType.GET_USER_TRANSACTION);
-            }
-        };
+        UserTransactionAccessControl accessControl = () -> AllowedMethodsInformation.checkAllowed(MethodType.GET_USER_TRANSACTION);
         this.accessControlService.getValue().setAccessControl(accessControl);
     }
 

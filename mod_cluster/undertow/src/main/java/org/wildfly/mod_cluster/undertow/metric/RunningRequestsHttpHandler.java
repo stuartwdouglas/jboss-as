@@ -24,7 +24,6 @@ package org.wildfly.mod_cluster.undertow.metric;
 
 import java.util.concurrent.atomic.LongAdder;
 
-import io.undertow.server.ExchangeCompletionListener;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 
@@ -56,14 +55,11 @@ public class RunningRequestsHttpHandler implements HttpHandler {
     public void handleRequest(HttpServerExchange exchange) throws Exception {
         runningCount.increment();
 
-        exchange.addExchangeCompleteListener(new ExchangeCompletionListener() {
-            @Override
-            public void exchangeEvent(HttpServerExchange exchange, NextListener nextListener) {
-                runningCount.decrement();
+        exchange.addExchangeCompleteListener((exchange1, nextListener) -> {
+            runningCount.decrement();
 
-                // Proceed to next listener must be called!
-                nextListener.proceed();
-            }
+            // Proceed to next listener must be called!
+            nextListener.proceed();
         });
 
         wrappedHandler.handleRequest(exchange);

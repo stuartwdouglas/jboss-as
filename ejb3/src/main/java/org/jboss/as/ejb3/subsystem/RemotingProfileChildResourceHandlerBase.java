@@ -24,7 +24,6 @@ package org.jboss.as.ejb3.subsystem;
 
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.RestartParentResourceHandlerBase;
@@ -44,12 +43,9 @@ public abstract class RemotingProfileChildResourceHandlerBase extends RestartPar
             case RUNTIME:
                 // service installation in another step: when interruption is thrown then it is handled by RollbackHandler
                 // declared in RestartParentResourceHandlerBase
-                context.addStep(new OperationStepHandler() {
-                    @Override
-                    public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                        RemotingProfileAdd.INSTANCE.installServices(context, parentAddress, parentModel);
-                        context.stepCompleted();
-                    }
+                context.addStep((context1, operation) -> {
+                    RemotingProfileAdd.INSTANCE.installServices(context1, parentAddress, parentModel);
+                    context1.stepCompleted();
                 }, OperationContext.Stage.RUNTIME);
             break;
             case DONE:

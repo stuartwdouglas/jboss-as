@@ -119,58 +119,52 @@ public abstract class AbstractUpdateJndiHandler implements OperationStepHandler 
                 return;
             }
 
-            context.addStep(new OperationStepHandler() {
-                @Override
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    final String resourceName = PathAddress.pathAddress(operation.require(ModelDescriptionConstants.OP_ADDR)).getLastElement().getValue();
+            context.addStep((context12, operation12) -> {
+                final String resourceName = PathAddress.pathAddress(operation12.require(ModelDescriptionConstants.OP_ADDR)).getLastElement().getValue();
 
-                    final ServiceName serviceName = MessagingServices.getActiveMQServiceName(PathAddress.pathAddress(operation.get(ModelDescriptionConstants.OP_ADDR)));
-                    final ServiceName jmsManagerServiceName = JMSServices.getJmsManagerBaseServiceName(serviceName);
+                final ServiceName serviceName = MessagingServices.getActiveMQServiceName(PathAddress.pathAddress(operation12.get(ModelDescriptionConstants.OP_ADDR)));
+                final ServiceName jmsManagerServiceName = JMSServices.getJmsManagerBaseServiceName(serviceName);
 
-                    final ServiceController<?> jmsServerService = context.getServiceRegistry(false).getService(jmsManagerServiceName);
+                final ServiceController<?> jmsServerService = context12.getServiceRegistry(false).getService(jmsManagerServiceName);
+                if (jmsServerService != null) {
+                    JMSServerManager jmsServerManager = JMSServerManager.class.cast(jmsServerService.getValue());
+
+                    if (jmsServerManager == null) {
+                        PathAddress address = PathAddress.pathAddress(operation12.require(OP_ADDR));
+                        throw ControllerLogger.ROOT_LOGGER.managementResourceNotFound(address);
+                    }
+
+                    try {
+                        if (addOperation) {
+                            addJndiName(jmsServerManager, resourceName, jndiName);
+                        } else {
+                            removeJndiName(jmsServerManager, resourceName, jndiName);
+                        }
+                    } catch (Exception e) {
+                        context12.getFailureDescription().set(e.getLocalizedMessage());
+                    }
+
+                } // else the subsystem isn't started yet
+
+                if (!context12.hasFailureDescription()) {
+                    context12.getResult();
+                }
+
+                context12.completeStep((context1, operation1) -> {
                     if (jmsServerService != null) {
                         JMSServerManager jmsServerManager = JMSServerManager.class.cast(jmsServerService.getValue());
 
-                        if (jmsServerManager == null) {
-                            PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
-                            throw ControllerLogger.ROOT_LOGGER.managementResourceNotFound(address);
-                        }
-
                         try {
                             if (addOperation) {
-                                addJndiName(jmsServerManager, resourceName, jndiName);
-                            } else {
                                 removeJndiName(jmsServerManager, resourceName, jndiName);
+                            } else {
+                                addJndiName(jmsServerManager, resourceName, jndiName);
                             }
                         } catch (Exception e) {
-                            context.getFailureDescription().set(e.getLocalizedMessage());
+                            context1.getFailureDescription().set(e.getLocalizedMessage());
                         }
-
-                    } // else the subsystem isn't started yet
-
-                    if (!context.hasFailureDescription()) {
-                        context.getResult();
                     }
-
-                    context.completeStep(new OperationContext.RollbackHandler() {
-                        @Override
-                        public void handleRollback(OperationContext context, ModelNode operation) {
-                            if (jmsServerService != null) {
-                                JMSServerManager jmsServerManager = JMSServerManager.class.cast(jmsServerService.getValue());
-
-                                try {
-                                    if (addOperation) {
-                                        removeJndiName(jmsServerManager, resourceName, jndiName);
-                                    } else {
-                                        addJndiName(jmsServerManager, resourceName, jndiName);
-                                    }
-                                } catch (Exception e) {
-                                    context.getFailureDescription().set(e.getLocalizedMessage());
-                                }
-                            }
-                        }
-                    });
-                }
+                });
             }, OperationContext.Stage.RUNTIME);
         }
     }

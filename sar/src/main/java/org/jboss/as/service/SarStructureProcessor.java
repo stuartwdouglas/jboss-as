@@ -35,10 +35,8 @@ public class SarStructureProcessor implements DeploymentUnitProcessor {
     private static final SuffixMatchFilter CHILD_ARCHIVE_FILTER = new SuffixMatchFilter(JAR_EXTENSION,
             VisitorAttributes.RECURSE_LEAVES_ONLY);
 
-    private static Closeable NO_OP_CLOSEABLE = new Closeable() {
-        public void close() throws IOException {
-            // NO-OP
-        }
+    private static Closeable NO_OP_CLOSEABLE = () -> {
+        // NO-OP
     };
 
     @Override

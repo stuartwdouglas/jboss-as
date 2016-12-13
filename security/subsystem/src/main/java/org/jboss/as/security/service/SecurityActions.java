@@ -109,13 +109,7 @@ class SecurityActions {
             @Override
             public Class<?> loadClass(final String name) throws ClassNotFoundException {
                 try {
-                    return doPrivileged(new PrivilegedExceptionAction<Class<?>>() {
-
-                        @Override
-                        public Class<?> run() throws Exception {
-                            return NON_PRIVILEGED.loadClass(name);
-                        }
-                    });
+                    return doPrivileged((PrivilegedExceptionAction<Class<?>>) () -> NON_PRIVILEGED.loadClass(name));
                 } catch (PrivilegedActionException e) {
                     Exception cause = e.getException();
                     if (cause instanceof ClassNotFoundException) {
@@ -129,13 +123,7 @@ class SecurityActions {
 
             @Override
             public ClassLoader setThreadContextClassLoader(final ClassLoader toSet) {
-                return doPrivileged(new PrivilegedAction<ClassLoader>() {
-
-                    @Override
-                    public ClassLoader run() {
-                        return NON_PRIVILEGED.setThreadContextClassLoader(toSet);
-                    }
-                });
+                return doPrivileged((PrivilegedAction<ClassLoader>) () -> NON_PRIVILEGED.setThreadContextClassLoader(toSet));
             }
         };
     }
@@ -185,29 +173,13 @@ class SecurityActions {
 
         RemotingContextAssociationActions PRIVILEGED = new RemotingContextAssociationActions() {
 
-            private final PrivilegedAction<Boolean> IS_SET_ACTION = new PrivilegedAction<Boolean>() {
+            private final PrivilegedAction<Boolean> IS_SET_ACTION = () -> NON_PRIVILEGED.isSet();
 
-                @Override
-                public Boolean run() {
-                    return NON_PRIVILEGED.isSet();
-                }
-            };
+            private final PrivilegedAction<Connection> GET_CONNECTION_ACTION = () -> NON_PRIVILEGED.getConnection();
 
-            private final PrivilegedAction<Connection> GET_CONNECTION_ACTION = new PrivilegedAction<Connection>() {
-
-                @Override
-                public Connection run() {
-                    return NON_PRIVILEGED.getConnection();
-                }
-            };
-
-            private final PrivilegedAction<Void> CLEAR_ACTION = new PrivilegedAction<Void>() {
-
-                @Override
-                public Void run() {
-                    NON_PRIVILEGED.clear();
-                    return null;
-                }
+            private final PrivilegedAction<Void> CLEAR_ACTION = () -> {
+                NON_PRIVILEGED.clear();
+                return null;
             };
 
             @Override

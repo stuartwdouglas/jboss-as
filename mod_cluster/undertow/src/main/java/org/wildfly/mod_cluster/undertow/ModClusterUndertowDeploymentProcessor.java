@@ -24,8 +24,6 @@ package org.wildfly.mod_cluster.undertow;
 
 import java.util.Set;
 
-import io.undertow.server.HandlerWrapper;
-import io.undertow.server.HttpHandler;
 import org.jboss.as.server.deployment.Attachments;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
@@ -75,42 +73,22 @@ public class ModClusterUndertowDeploymentProcessor implements DeploymentUnitProc
 
         // Request count wrapping
         if (isMetricEnabled(RequestCountLoadMetric.class)) {
-            deploymentUnit.addToAttachmentList(UndertowAttachments.UNDERTOW_INITIAL_HANDLER_CHAIN_WRAPPERS, new HandlerWrapper() {
-                @Override
-                public HttpHandler wrap(final HttpHandler handler) {
-                    return new RequestCountHttpHandler(handler);
-                }
-            });
+            deploymentUnit.addToAttachmentList(UndertowAttachments.UNDERTOW_INITIAL_HANDLER_CHAIN_WRAPPERS, handler -> new RequestCountHttpHandler(handler));
         }
 
         // Bytes Sent wrapping
         if (isMetricEnabled(SendTrafficLoadMetric.class)) {
-            deploymentUnit.addToAttachmentList(UndertowAttachments.UNDERTOW_INITIAL_HANDLER_CHAIN_WRAPPERS, new HandlerWrapper() {
-                @Override
-                public HttpHandler wrap(final HttpHandler handler) {
-                    return new BytesSentHttpHandler(handler);
-                }
-            });
+            deploymentUnit.addToAttachmentList(UndertowAttachments.UNDERTOW_INITIAL_HANDLER_CHAIN_WRAPPERS, handler -> new BytesSentHttpHandler(handler));
         }
 
         // Bytes Received wrapping
         if (isMetricEnabled(ReceiveTrafficLoadMetric.class)) {
-            deploymentUnit.addToAttachmentList(UndertowAttachments.UNDERTOW_INITIAL_HANDLER_CHAIN_WRAPPERS, new HandlerWrapper() {
-                @Override
-                public HttpHandler wrap(final HttpHandler handler) {
-                    return new BytesReceivedHttpHandler(handler);
-                }
-            });
+            deploymentUnit.addToAttachmentList(UndertowAttachments.UNDERTOW_INITIAL_HANDLER_CHAIN_WRAPPERS, handler -> new BytesReceivedHttpHandler(handler));
         }
 
         // Busyness thread setup actions
         if (isMetricEnabled(BusyConnectorsLoadMetric.class)) {
-            deploymentUnit.addToAttachmentList(UndertowAttachments.UNDERTOW_OUTER_HANDLER_CHAIN_WRAPPERS, new HandlerWrapper() {
-                @Override
-                public HttpHandler wrap(final HttpHandler handler) {
-                    return new RunningRequestsHttpHandler(handler);
-                }
-            });
+            deploymentUnit.addToAttachmentList(UndertowAttachments.UNDERTOW_OUTER_HANDLER_CHAIN_WRAPPERS, handler -> new RunningRequestsHttpHandler(handler));
         }
 
     }

@@ -273,13 +273,11 @@ public class SendMessagesTestCase {
 
     // using DRM call for undeployment
     private Callable<Void> undeployTask() {
-        return new Callable<Void>() {
-            public Void call() throws Exception {
-                ServerDeploymentManager deploymentManager = ServerDeploymentManager.Factory.create(managementClient.getControllerClient());
-                final DeploymentPlan plan = deploymentManager.newDeploymentPlan().undeploy(MESSAGE_DRIVEN_BEAN + ".jar").build();
-                deploymentManager.execute(plan).get(UNDEPLOYED_WAIT_S, SECONDS);
-                return null;
-            }
+        return () -> {
+            ServerDeploymentManager deploymentManager = ServerDeploymentManager.Factory.create(managementClient.getControllerClient());
+            final DeploymentPlan plan = deploymentManager.newDeploymentPlan().undeploy(MESSAGE_DRIVEN_BEAN + ".jar").build();
+            deploymentManager.execute(plan).get(UNDEPLOYED_WAIT_S, SECONDS);
+            return null;
         };
     }
 }

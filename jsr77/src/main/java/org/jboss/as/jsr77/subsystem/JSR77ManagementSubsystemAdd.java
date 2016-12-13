@@ -35,7 +35,6 @@ import org.jboss.as.controller.ModelController;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationContext.Stage;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.ProcessType;
 import org.jboss.as.ejb3.deployment.DeploymentRepository;
 import org.jboss.as.ejb3.remote.DefaultEjbClientContextService;
@@ -84,47 +83,44 @@ class JSR77ManagementSubsystemAdd extends AbstractBoottimeAddStepHandler {
         final boolean appclient = context.getProcessType() == ProcessType.APPLICATION_CLIENT;
 
         if(!appclient) {
-            context.addStep(new OperationStepHandler() {
-                @Override
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
+            context.addStep((context1, operation1) -> {
 
-                    ServiceTarget target = context.getServiceTarget();
+                ServiceTarget target = context1.getServiceTarget();
 
-                    ServiceName mbeanServerServiceName = context.getCapabilityServiceName(JSR77ManagementRootResource.JMX_CAPABILITY, MBeanServer.class);
+                ServiceName mbeanServerServiceName = context1.getCapabilityServiceName(JSR77ManagementRootResource.JMX_CAPABILITY, MBeanServer.class);
 
-                    RegisterMBeanServerDelegateService mbeanServerService = new RegisterMBeanServerDelegateService();
-                    target.addService(RegisterMBeanServerDelegateService.SERVICE_NAME, mbeanServerService)
-                            .addDependency(mbeanServerServiceName, PluggableMBeanServer.class, mbeanServerService.injectedMbeanServer)
-                            .addDependency(Services.JBOSS_SERVER_CONTROLLER, ModelController.class, mbeanServerService.injectedController)
-                            .setInitialMode(Mode.ACTIVE)
-                            .install();
+                RegisterMBeanServerDelegateService mbeanServerService = new RegisterMBeanServerDelegateService();
+                target.addService(RegisterMBeanServerDelegateService.SERVICE_NAME, mbeanServerService)
+                        .addDependency(mbeanServerServiceName, PluggableMBeanServer.class, mbeanServerService.injectedMbeanServer)
+                        .addDependency(Services.JBOSS_SERVER_CONTROLLER, ModelController.class, mbeanServerService.injectedController)
+                        .setInitialMode(Mode.ACTIVE)
+                        .install();
 
 
-                    RegisterManagementEJBService managementEjbService = new RegisterManagementEJBService();
-                    target.addService(RegisterManagementEJBService.SERVICE_NAME, managementEjbService)
-                            .addDependency(DeploymentRepository.SERVICE_NAME, DeploymentRepository.class, managementEjbService.deploymentRepositoryValue)
-                            .addDependency(mbeanServerServiceName, MBeanServer.class, managementEjbService.mbeanServerValue)
-                                    //TODO I think these are needed here since we don't go through EjbClientContextSetupProcessor
-                            .addDependency(DefaultEjbClientContextService.DEFAULT_SERVICE_NAME, EJBClientContext.class, managementEjbService.ejbClientContextValue)
-                            .addDependency(TCCLEJBClientContextSelectorService.TCCL_BASED_EJB_CLIENT_CONTEXT_SELECTOR_SERVICE_NAME, TCCLEJBClientContextSelectorService.class, managementEjbService.ejbClientContextSelectorValue)
-                            .setInitialMode(Mode.ACTIVE)
-                            .install();
+                RegisterManagementEJBService managementEjbService = new RegisterManagementEJBService();
+                target.addService(RegisterManagementEJBService.SERVICE_NAME, managementEjbService)
+                        .addDependency(DeploymentRepository.SERVICE_NAME, DeploymentRepository.class, managementEjbService.deploymentRepositoryValue)
+                        .addDependency(mbeanServerServiceName, MBeanServer.class, managementEjbService.mbeanServerValue)
+                                //TODO I think these are needed here since we don't go through EjbClientContextSetupProcessor
+                        .addDependency(DefaultEjbClientContextService.DEFAULT_SERVICE_NAME, EJBClientContext.class, managementEjbService.ejbClientContextValue)
+                        .addDependency(TCCLEJBClientContextSelectorService.TCCL_BASED_EJB_CLIENT_CONTEXT_SELECTOR_SERVICE_NAME, TCCLEJBClientContextSelectorService.class, managementEjbService.ejbClientContextSelectorValue)
+                        .setInitialMode(Mode.ACTIVE)
+                        .install();
 
-                    //TODO null for source ok?
-                    final ContextNames.BindInfo bindInfo = ContextNames.bindInfoFor(JNDI_NAME);
-                    final BinderService binderService = new BinderService(bindInfo.getBindName(), null);
-                    final InjectedValue<ClassLoader> viewClassLoader = new InjectedValue<ClassLoader>();
-                    viewClassLoader.setValue(Values.immediateValue(ManagementHome.class.getClassLoader()));
-                    target.addService(bindInfo.getBinderServiceName(), binderService)
-                            .addInjection(binderService.getManagedObjectInjector(), new RemoteViewManagedReferenceFactory(APP_NAME, MODULE_NAME, DISTINCT_NAME, EJB_NAME, ManagementHome.class.getName(), false, viewClassLoader))
-                            .addDependency(bindInfo.getParentContextServiceName(), ServiceBasedNamingStore.class, binderService.getNamingStoreInjector())
-                            .setInitialMode(Mode.ACTIVE)
-                            .install();
+                //TODO null for source ok?
+                final ContextNames.BindInfo bindInfo = ContextNames.bindInfoFor(JNDI_NAME);
+                final BinderService binderService = new BinderService(bindInfo.getBindName(), null);
+                final InjectedValue<ClassLoader> viewClassLoader = new InjectedValue<ClassLoader>();
+                viewClassLoader.setValue(Values.immediateValue(ManagementHome.class.getClassLoader()));
+                target.addService(bindInfo.getBinderServiceName(), binderService)
+                        .addInjection(binderService.getManagedObjectInjector(), new RemoteViewManagedReferenceFactory(APP_NAME, MODULE_NAME, DISTINCT_NAME, EJB_NAME, ManagementHome.class.getName(), false, viewClassLoader))
+                        .addDependency(bindInfo.getParentContextServiceName(), ServiceBasedNamingStore.class, binderService.getNamingStoreInjector())
+                        .setInitialMode(Mode.ACTIVE)
+                        .install();
 
-                    // Rollback is handled by the parent step
-                    context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
+                // Rollback is handled by the parent step
+                context1.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
 
-                }
             }, Stage.RUNTIME);
         }
     }

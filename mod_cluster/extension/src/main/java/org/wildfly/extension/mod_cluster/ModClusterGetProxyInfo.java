@@ -57,28 +57,25 @@ public class ModClusterGetProxyInfo implements OperationStepHandler {
     public void execute(OperationContext context, ModelNode operation)
             throws OperationFailedException {
         if (context.isNormalServer() && context.getServiceRegistry(false).getService(ContainerEventHandlerService.SERVICE_NAME) != null) {
-            context.addStep(new OperationStepHandler() {
-                @Override
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    ServiceController<?> controller = context.getServiceRegistry(false).getService(ContainerEventHandlerService.SERVICE_NAME);
-                    ModClusterServiceMBean service = (ModClusterServiceMBean) controller.getValue();
-                    Map<InetSocketAddress, String> map = service.getProxyInfo();
-                    ROOT_LOGGER.debugf("Mod_cluster ProxyInfo %s", map);
-                    if (!map.isEmpty()) {
-                        final ModelNode result = new ModelNode();
-                        for (Map.Entry<InetSocketAddress, String> entry : map.entrySet()) {
-                            result.add(entry.getKey().getHostName() + ":" + entry.getKey().getPort());
-                            if (entry.getValue() == null) {
-                                result.add();
-                            } else {
-                                result.add(entry.getValue());
-                            }
+            context.addStep((context1, operation1) -> {
+                ServiceController<?> controller = context1.getServiceRegistry(false).getService(ContainerEventHandlerService.SERVICE_NAME);
+                ModClusterServiceMBean service = (ModClusterServiceMBean) controller.getValue();
+                Map<InetSocketAddress, String> map = service.getProxyInfo();
+                ROOT_LOGGER.debugf("Mod_cluster ProxyInfo %s", map);
+                if (!map.isEmpty()) {
+                    final ModelNode result = new ModelNode();
+                    for (Map.Entry<InetSocketAddress, String> entry : map.entrySet()) {
+                        result.add(entry.getKey().getHostName() + ":" + entry.getKey().getPort());
+                        if (entry.getValue() == null) {
+                            result.add();
+                        } else {
+                            result.add(entry.getValue());
                         }
-                        context.getResult().set(result);
                     }
-
-                    context.stepCompleted();
+                    context1.getResult().set(result);
                 }
+
+                context1.stepCompleted();
             }, OperationContext.Stage.RUNTIME);
         }
 

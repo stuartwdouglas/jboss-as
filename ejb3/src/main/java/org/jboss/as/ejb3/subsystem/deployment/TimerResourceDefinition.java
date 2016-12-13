@@ -157,13 +157,7 @@ public class TimerResourceDefinition<T extends EJBComponent> extends SimpleResou
             void executeRuntime(OperationContext context, ModelNode operation) throws OperationFailedException {
                 final TimerImpl timer = getTimer(context, operation);
                 timer.suspend();
-                context.completeStep(new OperationContext.RollbackHandler() {
-
-                    @Override
-                    public void handleRollback(OperationContext context, ModelNode operation) {
-                        timer.scheduleTimeout(true);
-                    }
-                });
+                context.completeStep((context12, operation12) -> timer.scheduleTimeout(true));
             }
         });
 
@@ -174,13 +168,7 @@ public class TimerResourceDefinition<T extends EJBComponent> extends SimpleResou
                 final TimerImpl timer = getTimer(context, operation);
                 if (!timer.isActive()) {
                     timer.scheduleTimeout(true);
-                    context.completeStep(new OperationContext.RollbackHandler() {
-
-                        @Override
-                        public void handleRollback(OperationContext context, ModelNode operation) {
-                            timer.suspend();
-                        }
-                    });
+                    context.completeStep((context1, operation1) -> timer.suspend());
                 } else {
                     throw EjbLogger.ROOT_LOGGER.timerIsActive(timer);
                 }
@@ -339,12 +327,7 @@ public class TimerResourceDefinition<T extends EJBComponent> extends SimpleResou
         public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
 
             if (context.isNormalServer()) {
-                context.addStep(new OperationStepHandler() {
-                    @Override
-                    public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                        executeRuntime(context, operation);
-                    }
-                }, OperationContext.Stage.RUNTIME);
+                context.addStep((context1, operation1) -> executeRuntime(context1, operation1), OperationContext.Stage.RUNTIME);
             }
             context.stepCompleted();
         }

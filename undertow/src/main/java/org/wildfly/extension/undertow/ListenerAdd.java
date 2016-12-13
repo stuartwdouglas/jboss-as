@@ -22,8 +22,6 @@
 
 package org.wildfly.extension.undertow;
 
-import io.undertow.server.HandlerWrapper;
-import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.DisallowedMethodsHandler;
 import io.undertow.server.handlers.PeerNameResolvingHandler;
 import io.undertow.servlet.handlers.MarkSecureHandler;
@@ -73,12 +71,7 @@ abstract class ListenerAdd extends AbstractAddStepHandler {
         final ServiceName listenerServiceName = UndertowService.listenerName(name);
         final ListenerService service = createService(name, serverName, context, model, listenerOptions,socketOptions);
         if (peerHostLookup) {
-            service.addWrapperHandler(new HandlerWrapper() {
-                @Override
-                public HttpHandler wrap(HttpHandler handler) {
-                    return new PeerNameResolvingHandler(handler);
-                }
-            });
+            service.addWrapperHandler(handler -> new PeerNameResolvingHandler(handler));
         }
         service.setEnabled(enabled);
         if(secure) {
@@ -90,12 +83,7 @@ abstract class ListenerAdd extends AbstractAddStepHandler {
             for(String i : disallowedMethods) {
                 methodSet.add(new HttpString(i.trim()));
             }
-            service.addWrapperHandler(new HandlerWrapper() {
-                @Override
-                public HttpHandler wrap(HttpHandler handler) {
-                    return new DisallowedMethodsHandler(handler, methodSet);
-                }
-            });
+            service.addWrapperHandler(handler -> new DisallowedMethodsHandler(handler, methodSet));
         }
 
         final ServiceName socketBindingServiceName = context.getCapabilityServiceName(ListenerResourceDefinition.SOCKET_CAPABILITY, bindingRef, SocketBinding.class);

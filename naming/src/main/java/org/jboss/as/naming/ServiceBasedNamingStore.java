@@ -132,12 +132,9 @@ public class ServiceBasedNamingStore implements NamingStore {
                 if (dereference && object instanceof ManagedReferenceFactory) {
                     if(WildFlySecurityManager.isChecking()) {
                         //WFLY-3487 JNDI lookups should be executed in a clean access control context
-                        return AccessController.doPrivileged(new PrivilegedAction<Object>() {
-                            @Override
-                            public Object run() {
-                                final ManagedReference managedReference = ManagedReferenceFactory.class.cast(object).getReference();
-                                return managedReference != null ? managedReference.getInstance() : null;
-                            }
+                        return AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+                            final ManagedReference managedReference = ManagedReferenceFactory.class.cast(object).getReference();
+                            return managedReference != null ? managedReference.getInstance() : null;
                         });
                     } else {
                         final ManagedReference managedReference = ManagedReferenceFactory.class.cast(object).getReference();

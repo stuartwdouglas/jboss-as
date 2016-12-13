@@ -57,11 +57,9 @@ public class RaStructureProcessor implements DeploymentUnitProcessor {
 
     private static final SuffixMatchFilter CHILD_ARCHIVE_FILTER = new SuffixMatchFilter(JAR_EXTENSION, VisitorAttributes.RECURSE_LEAVES_ONLY);
 
-     private static Closeable NO_OP_CLOSEABLE = new Closeable() {
-        public void close() throws IOException {
-            // NO-OP
-        }
-    };
+     private static Closeable NO_OP_CLOSEABLE = () -> {
+         // NO-OP
+     };
 
     public void deploy(DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
         final DeploymentUnit deploymentUnit = phaseContext.getDeploymentUnit();

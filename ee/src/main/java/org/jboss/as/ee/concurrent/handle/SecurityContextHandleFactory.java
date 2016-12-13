@@ -78,12 +78,7 @@ public class SecurityContextHandleFactory implements ContextHandleFactory {
 
         private SecuritySetupContextHandle() {
             if (WildFlySecurityManager.isChecking()) {
-                this.securityContext = AccessController.doPrivileged(new PrivilegedAction<SecurityContext>() {
-                    @Override
-                    public SecurityContext run() {
-                        return saveSecurityContext();
-                    }
-                });
+                this.securityContext = AccessController.doPrivileged((PrivilegedAction<SecurityContext>) () -> saveSecurityContext());
             } else {
                 this.securityContext = saveSecurityContext();
             }
@@ -102,12 +97,7 @@ public class SecurityContextHandleFactory implements ContextHandleFactory {
         public ResetContextHandle setup() throws IllegalStateException {
             final SecurityContext previous;
             if (WildFlySecurityManager.isChecking()) {
-                previous = AccessController.doPrivileged(new PrivilegedAction<SecurityContext>() {
-                    @Override
-                    public SecurityContext run() {
-                        return setupSecurityContext();
-                    }
-                });
+                previous = AccessController.doPrivileged((PrivilegedAction<SecurityContext>) () -> setupSecurityContext());
             } else {
                 previous = setupSecurityContext();
             }
@@ -137,12 +127,9 @@ public class SecurityContextHandleFactory implements ContextHandleFactory {
         @Override
         public void reset() {
             if (WildFlySecurityManager.isChecking()) {
-                AccessController.doPrivileged(new PrivilegedAction<Void>() {
-                    @Override
-                    public Void run() {
-                        resetSecurityContext();
-                        return null;
-                    }
+                AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+                    resetSecurityContext();
+                    return null;
                 });
             } else {
                 resetSecurityContext();

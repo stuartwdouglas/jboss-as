@@ -27,7 +27,6 @@ import org.xnio.XnioWorker;
 
 import io.undertow.predicate.Predicate;
 import io.undertow.server.HttpHandler;
-import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.PredicateHandler;
 import io.undertow.server.handlers.proxy.mod_cluster.MCMPConfig;
 import io.undertow.server.handlers.proxy.mod_cluster.ModCluster;
@@ -191,14 +190,11 @@ public class ModClusterService extends FilterService {
         //and then if it has not dispatched or handled the request then we know that we can
         //just pass it on to the next handler
         final HttpHandler proxyHandler = modCluster.createProxyHandler(next);
-        final HttpHandler realNext = new HttpHandler() {
-            @Override
-            public void handleRequest(HttpServerExchange exchange) throws Exception {
-                proxyHandler.handleRequest(exchange);
-                if(!exchange.isDispatched() && !exchange.isComplete()) {
-                    exchange.setStatusCode(200);
-                    next.handleRequest(exchange);
-                }
+        final HttpHandler realNext = exchange -> {
+            proxyHandler.handleRequest(exchange);
+            if(!exchange.isDispatched() && !exchange.isComplete()) {
+                exchange.setStatusCode(200);
+                next.handleRequest(exchange);
             }
         };
         final HttpHandler mcmp = managementAccessPredicate != null  ? Handlers.predicate(managementAccessPredicate, config.create(modCluster, realNext), next)  :  config.create(modCluster, realNext);

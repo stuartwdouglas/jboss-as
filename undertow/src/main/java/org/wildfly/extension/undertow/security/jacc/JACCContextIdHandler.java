@@ -100,12 +100,9 @@ public class JACCContextIdHandler implements HttpHandler {
     }
 
     public static HandlerWrapper wrapper(final String contextId) {
-        return new HandlerWrapper() {
-            @Override
-            public HttpHandler wrap(final HttpHandler handler) {
-                //we only run this on REQUEST or ASYNC invocations
-                return new PredicateHandler(Predicates.or(DispatcherTypePredicate.REQUEST, DispatcherTypePredicate.ASYNC), new JACCContextIdHandler(contextId, handler), handler);
-            }
+        return handler -> {
+            //we only run this on REQUEST or ASYNC invocations
+            return new PredicateHandler(Predicates.or(DispatcherTypePredicate.REQUEST, DispatcherTypePredicate.ASYNC), new JACCContextIdHandler(contextId, handler), handler);
         };
     }
 

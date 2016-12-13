@@ -84,12 +84,7 @@ public class UndertowEngine implements Engine {
             }
         };
 
-        return new Iterable<Host>() {
-            @Override
-            public Iterator<Host> iterator() {
-                return iterator;
-            }
-        };
+        return () -> iterator;
 
     }
 
@@ -119,12 +114,7 @@ public class UndertowEngine implements Engine {
             }
         };
 
-        return new Iterable<Connector>() {
-            @Override
-            public Iterator<Connector> iterator() {
-                return iterator;
-            }
-        };
+        return () -> iterator;
     }
 
     @Override

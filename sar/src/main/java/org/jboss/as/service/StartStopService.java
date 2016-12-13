@@ -54,16 +54,13 @@ final class StartStopService extends AbstractService {
         if (SarLogger.ROOT_LOGGER.isTraceEnabled()) {
             SarLogger.ROOT_LOGGER.tracef("Starting Service: %s", context.getController().getName());
         }
-        final Runnable task = new Runnable() {
-            @Override
-            public void run() {
-            try {
-                invokeLifecycleMethod(startMethod, context);
-                context.complete();
-            } catch (Throwable e) {
-                context.failed(new StartException(SarLogger.ROOT_LOGGER.failedExecutingLegacyMethod("start()"), e));
-            }
-            }
+        final Runnable task = () -> {
+        try {
+            invokeLifecycleMethod(startMethod, context);
+            context.complete();
+        } catch (Throwable e) {
+            context.failed(new StartException(SarLogger.ROOT_LOGGER.failedExecutingLegacyMethod("start()"), e));
+        }
         };
         try {
             executor.getValue().submit(task);
@@ -79,16 +76,13 @@ final class StartStopService extends AbstractService {
         if (SarLogger.ROOT_LOGGER.isTraceEnabled()) {
             SarLogger.ROOT_LOGGER.tracef("Stopping Service: %s", context.getController().getName());
         }
-        final Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    invokeLifecycleMethod(stopMethod, context);
-                } catch (Exception e) {
-                    SarLogger.ROOT_LOGGER.error(SarLogger.ROOT_LOGGER.failedExecutingLegacyMethod("stop()"), e);
-                } finally {
-                    context.complete();
-                }
+        final Runnable task = () -> {
+            try {
+                invokeLifecycleMethod(stopMethod, context);
+            } catch (Exception e) {
+                SarLogger.ROOT_LOGGER.error(SarLogger.ROOT_LOGGER.failedExecutingLegacyMethod("stop()"), e);
+            } finally {
+                context.complete();
             }
         };
         try {

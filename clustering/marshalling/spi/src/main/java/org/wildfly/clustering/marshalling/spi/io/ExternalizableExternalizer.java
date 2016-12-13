@@ -50,12 +50,7 @@ public class ExternalizableExternalizer<T extends Externalizable> implements Ext
 
     @Override
     public T readObject(ObjectInput input) throws IOException, ClassNotFoundException {
-        PrivilegedExceptionAction<T> action = new PrivilegedExceptionAction<T>() {
-            @Override
-            public T run() throws InstantiationException, IllegalAccessException {
-                return ExternalizableExternalizer.this.getTargetClass().newInstance();
-            }
-        };
+        PrivilegedExceptionAction<T> action = () -> ExternalizableExternalizer.this.getTargetClass().newInstance();
         try {
             T object = WildFlySecurityManager.doChecked(action);
             object.readExternal(input);

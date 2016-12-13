@@ -27,11 +27,8 @@ import org.jboss.as.ee.component.ComponentDescription;
 import org.jboss.as.ee.component.EEModuleDescription;
 import org.jboss.as.ee.component.InjectionSource;
 import org.jboss.as.ee.component.ViewConfiguration;
-import org.jboss.as.ee.component.ViewConfigurator;
 import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ejb3.remote.RemoteViewInjectionSource;
-import org.jboss.as.server.deployment.DeploymentPhaseContext;
-import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.invocation.proxy.ProxyFactory;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.msc.value.Value;
@@ -60,12 +57,7 @@ public class EJBViewDescription extends ViewDescription {
         hasJNDIBindings = initHasJNDIBindings(methodIntf);
 
         //add a configurator to attach the MethodIntf for this view
-        getConfigurators().add(new ViewConfigurator() {
-            @Override
-            public void configure(final DeploymentPhaseContext context, final ComponentConfiguration componentConfiguration, final ViewDescription description, final ViewConfiguration configuration) throws DeploymentUnitProcessingException {
-                configuration.putPrivateData(MethodIntf.class, getMethodIntf());
-            }
-        });
+        getConfigurators().add((context, componentConfiguration, description, configuration) -> configuration.putPrivateData(MethodIntf.class, getMethodIntf()));
         // add a view configurator for setting up application specific container interceptors for the EJB view
         getConfigurators().add(EJBContainerInterceptorsViewConfigurator.INSTANCE);
     }

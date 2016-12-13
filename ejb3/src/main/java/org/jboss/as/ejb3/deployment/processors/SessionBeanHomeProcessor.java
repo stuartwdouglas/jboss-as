@@ -27,15 +27,9 @@ import java.util.Map;
 
 import javax.ejb.Handle;
 
-import org.jboss.as.ee.component.ComponentConfiguration;
 import org.jboss.as.ee.component.ComponentDescription;
-import org.jboss.as.ee.component.ComponentStartService;
 import org.jboss.as.ee.component.ComponentView;
-import org.jboss.as.ee.component.DependencyConfigurator;
-import org.jboss.as.ee.component.ViewConfiguration;
-import org.jboss.as.ee.component.ViewConfigurator;
 import org.jboss.as.ee.component.ViewDescription;
-import org.jboss.as.ee.component.ViewService;
 import org.jboss.as.ee.component.deployers.AbstractComponentConfigProcessor;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
 import org.jboss.as.ee.utils.ClassLoadingUtils;
@@ -54,7 +48,6 @@ import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.annotation.CompositeIndex;
 import org.jboss.invocation.ImmediateInterceptorFactory;
-import org.jboss.msc.service.ServiceBuilder;
 
 /**
  * Processor that hooks up home interfaces for session beans
@@ -84,69 +77,54 @@ public class SessionBeanHomeProcessor extends AbstractComponentConfigProcessor {
     }
 
     private void configureHome(final DeploymentPhaseContext phaseContext, final ComponentDescription componentDescription, final SessionBeanComponentDescription ejbComponentDescription, final EJBViewDescription homeView, final EJBViewDescription ejbObjectView) {
-        homeView.getConfigurators().add(new ViewConfigurator() {
+        homeView.getConfigurators().add((context, componentConfiguration, description, configuration) -> {
 
-            @Override
-            public void configure(final DeploymentPhaseContext context, final ComponentConfiguration componentConfiguration, final ViewDescription description, final ViewConfiguration configuration) throws DeploymentUnitProcessingException {
+            configuration.addClientPostConstructInterceptor(org.jboss.invocation.Interceptors.getTerminalInterceptorFactory(), InterceptorOrder.ClientPostConstruct.TERMINAL_INTERCEPTOR);
+            configuration.addClientPreDestroyInterceptor(org.jboss.invocation.Interceptors.getTerminalInterceptorFactory(), InterceptorOrder.ClientPreDestroy.TERMINAL_INTERCEPTOR);
 
-                configuration.addClientPostConstructInterceptor(org.jboss.invocation.Interceptors.getTerminalInterceptorFactory(), InterceptorOrder.ClientPostConstruct.TERMINAL_INTERCEPTOR);
-                configuration.addClientPreDestroyInterceptor(org.jboss.invocation.Interceptors.getTerminalInterceptorFactory(), InterceptorOrder.ClientPreDestroy.TERMINAL_INTERCEPTOR);
-
-                //loop over methods looking for create methods:
-                for (Method method : configuration.getProxyFactory().getCachedMethods()) {
-                    if (method.getName().startsWith("create")) {
-                        //we have a create method
-                        if (ejbObjectView == null) {
-                            throw EjbLogger.ROOT_LOGGER.invalidEjbLocalInterface(componentDescription.getComponentName());
-                        }
-
-                        Method initMethod = resolveInitMethod(ejbComponentDescription, method);
-                        final SessionBeanHomeInterceptorFactory factory = new SessionBeanHomeInterceptorFactory(initMethod);
-                        //add a dependency on the view to create
-
-                        configuration.getDependencies().add(new DependencyConfigurator<ViewService>() {
-                            @Override
-                            public void configureDependency(final ServiceBuilder<?> serviceBuilder, final ViewService service) throws DeploymentUnitProcessingException {
-                                serviceBuilder.addDependency(ejbObjectView.getServiceName(), ComponentView.class, factory.getViewToCreate());
-                            }
-                        });
-
-                        //add the interceptor
-                        configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
-                        configuration.addViewInterceptor(method, factory, InterceptorOrder.View.HOME_METHOD_INTERCEPTOR);
-
-                    } else if (method.getName().equals("getEJBMetaData") && method.getParameterTypes().length == 0) {
-
-                        final Class<?> ejbObjectClass;
-                        try {
-                            ejbObjectClass = ClassLoadingUtils.loadClass(ejbObjectView.getViewClassName(), context.getDeploymentUnit());
-                        } catch (ClassNotFoundException e) {
-                            throw EjbLogger.ROOT_LOGGER.failedToLoadViewClassForComponent(e, componentDescription.getComponentName());
-                        }
-                        final EjbMetadataInterceptor factory = new EjbMetadataInterceptor(ejbObjectClass, configuration.getViewClass(), null, true, componentDescription instanceof StatelessComponentDescription);
-
-                        //add a dependency on the view to create
-                        componentConfiguration.getStartDependencies().add(new DependencyConfigurator<ComponentStartService>() {
-                            @Override
-                            public void configureDependency(final ServiceBuilder<?> serviceBuilder, final ComponentStartService service) throws DeploymentUnitProcessingException {
-                                serviceBuilder.addDependency(configuration.getViewServiceName(), ComponentView.class, factory.getHomeView());
-                            }
-                        });
-                        //add the interceptor
-                        configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
-                        configuration.addViewInterceptor(method, new ImmediateInterceptorFactory(factory), InterceptorOrder.View.HOME_METHOD_INTERCEPTOR);
-
-                    } else if (method.getName().equals("remove") && method.getParameterTypes().length == 1 && method.getParameterTypes()[0] == Object.class) {
-                        configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
-                        configuration.addViewInterceptor(method, InvalidRemoveExceptionMethodInterceptor.FACTORY, InterceptorOrder.View.INVALID_METHOD_EXCEPTION);
-                    } else if (method.getName().equals("remove") && method.getParameterTypes().length == 1 && method.getParameterTypes()[0] == Handle.class) {
-                        configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
-                        configuration.addViewInterceptor(method, HomeRemoveInterceptor.FACTORY, InterceptorOrder.View.HOME_METHOD_INTERCEPTOR);
+            //loop over methods looking for create methods:
+            for (Method method : configuration.getProxyFactory().getCachedMethods()) {
+                if (method.getName().startsWith("create")) {
+                    //we have a create method
+                    if (ejbObjectView == null) {
+                        throw EjbLogger.ROOT_LOGGER.invalidEjbLocalInterface(componentDescription.getComponentName());
                     }
 
-                }
-            }
+                    Method initMethod = resolveInitMethod(ejbComponentDescription, method);
+                    final SessionBeanHomeInterceptorFactory factory = new SessionBeanHomeInterceptorFactory(initMethod);
+                    //add a dependency on the view to create
 
+                    configuration.getDependencies().add((serviceBuilder, service) -> serviceBuilder.addDependency(ejbObjectView.getServiceName(), ComponentView.class, factory.getViewToCreate()));
+
+                    //add the interceptor
+                    configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
+                    configuration.addViewInterceptor(method, factory, InterceptorOrder.View.HOME_METHOD_INTERCEPTOR);
+
+                } else if (method.getName().equals("getEJBMetaData") && method.getParameterTypes().length == 0) {
+
+                    final Class<?> ejbObjectClass;
+                    try {
+                        ejbObjectClass = ClassLoadingUtils.loadClass(ejbObjectView.getViewClassName(), context.getDeploymentUnit());
+                    } catch (ClassNotFoundException e) {
+                        throw EjbLogger.ROOT_LOGGER.failedToLoadViewClassForComponent(e, componentDescription.getComponentName());
+                    }
+                    final EjbMetadataInterceptor factory = new EjbMetadataInterceptor(ejbObjectClass, configuration.getViewClass(), null, true, componentDescription instanceof StatelessComponentDescription);
+
+                    //add a dependency on the view to create
+                    componentConfiguration.getStartDependencies().add((serviceBuilder, service) -> serviceBuilder.addDependency(configuration.getViewServiceName(), ComponentView.class, factory.getHomeView()));
+                    //add the interceptor
+                    configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
+                    configuration.addViewInterceptor(method, new ImmediateInterceptorFactory(factory), InterceptorOrder.View.HOME_METHOD_INTERCEPTOR);
+
+                } else if (method.getName().equals("remove") && method.getParameterTypes().length == 1 && method.getParameterTypes()[0] == Object.class) {
+                    configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
+                    configuration.addViewInterceptor(method, InvalidRemoveExceptionMethodInterceptor.FACTORY, InterceptorOrder.View.INVALID_METHOD_EXCEPTION);
+                } else if (method.getName().equals("remove") && method.getParameterTypes().length == 1 && method.getParameterTypes()[0] == Handle.class) {
+                    configuration.addClientInterceptor(method, ViewDescription.CLIENT_DISPATCHER_INTERCEPTOR_FACTORY, InterceptorOrder.Client.CLIENT_DISPATCHER);
+                    configuration.addViewInterceptor(method, HomeRemoveInterceptor.FACTORY, InterceptorOrder.View.HOME_METHOD_INTERCEPTOR);
+                }
+
+            }
         });
     }
 

@@ -506,13 +506,11 @@ public class Utils extends CoreUtils {
             final LoginContext lc = loginWithKerberos(krb5Configuration, user, pass);
 
             // 2. Perform the work as authenticated Subject.
-            final String responseBody = Subject.doAs(lc.getSubject(), new PrivilegedExceptionAction<String>() {
-                public String run() throws Exception {
-                    final HttpResponse response = httpClient.execute(httpGet);
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    assertEquals("Unexpected status code returned after the authentication.", expectedStatusCode, statusCode);
-                    return EntityUtils.toString(response.getEntity());
-                }
+            final String responseBody = Subject.doAs(lc.getSubject(), (PrivilegedExceptionAction<String>) () -> {
+                final HttpResponse response1 = httpClient.execute(httpGet);
+                int statusCode1 = response1.getStatusLine().getStatusCode();
+                assertEquals("Unexpected status code returned after the authentication.", expectedStatusCode, statusCode1);
+                return EntityUtils.toString(response1.getEntity());
             });
             lc.logout();
             return responseBody;
@@ -579,13 +577,11 @@ public class Utils extends CoreUtils {
             final LoginContext lc = loginWithKerberos(krb5Configuration, user, pass);
 
             // 2. Perform the work as authenticated Subject.
-            final String responseBody = Subject.doAs(lc.getSubject(), new PrivilegedExceptionAction<String>() {
-                public String run() throws Exception {
-                    final HttpResponse response = httpClient.execute(httpGet);
-                    int statusCode = response.getStatusLine().getStatusCode();
-                    assertEquals("Unexpected status code returned after the authentication.", expectedStatusCode, statusCode);
-                    return EntityUtils.toString(response.getEntity());
-                }
+            final String responseBody = Subject.doAs(lc.getSubject(), (PrivilegedExceptionAction<String>) () -> {
+                final HttpResponse response1 = httpClient.execute(httpGet);
+                int statusCode1 = response1.getStatusLine().getStatusCode();
+                assertEquals("Unexpected status code returned after the authentication.", expectedStatusCode, statusCode1);
+                return EntityUtils.toString(response1.getEntity());
             });
             lc.logout();
             return responseBody;
@@ -1049,15 +1045,13 @@ public class Utils extends CoreUtils {
             Configuration.setConfiguration(krb5Configuration);
             final LoginContext lc = loginWithKerberos(krb5Configuration, user, pass);
             try {
-                return Subject.doAs(lc.getSubject(), new PrivilegedExceptionAction<byte[]>() {
-                    public byte[] run() throws Exception {
-                        final GSSManager manager = GSSManager.getInstance();
-                        final Oid oid = new Oid(OID_KERBEROS_V5);
-                        final GSSContext gssContext = manager.createContext(serverName.canonicalize(oid), oid, null, 60);
-                        gssContext.requestMutualAuth(true);
-                        gssContext.requestCredDeleg(true);
-                        return gssContext.initSecContext(new byte[0], 0, 0);
-                    }
+                return Subject.doAs(lc.getSubject(), (PrivilegedExceptionAction<byte[]>) () -> {
+                    final GSSManager manager = GSSManager.getInstance();
+                    final Oid oid = new Oid(OID_KERBEROS_V5);
+                    final GSSContext gssContext = manager.createContext(serverName.canonicalize(oid), oid, null, 60);
+                    gssContext.requestMutualAuth(true);
+                    gssContext.requestCredDeleg(true);
+                    return gssContext.initSecContext(new byte[0], 0, 0);
                 });
             } finally {
                 lc.logout();

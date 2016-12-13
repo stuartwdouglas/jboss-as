@@ -1,8 +1,6 @@
 package org.jboss.as.ejb3.deployment.processors;
 
 import org.jboss.as.ee.component.Attachments;
-import org.jboss.as.ee.component.ComponentConfiguration;
-import org.jboss.as.ee.component.ComponentConfigurator;
 import org.jboss.as.ee.component.ComponentDescription;
 import org.jboss.as.ee.component.EEModuleDescription;
 import org.jboss.as.ee.component.ViewConfiguration;
@@ -36,15 +34,12 @@ public class StartupAwaitDeploymentUnitProcessor implements DeploymentUnitProces
     final EEModuleDescription moduleDescription = deploymentUnit.getAttachment(Attachments.EE_MODULE_DESCRIPTION);
     for (ComponentDescription component : moduleDescription.getComponentDescriptions()) {
       if (component instanceof EJBComponentDescription) {
-        component.getConfigurators().add(new ComponentConfigurator() {
-          @Override
-          public void configure(DeploymentPhaseContext context, ComponentDescription description, ComponentConfiguration configuration) {
-            StartupCountdown countdown = context.getDeploymentUnit().getAttachment(Attachments.STARTUP_COUNTDOWN);
-            for (ViewConfiguration view : configuration.getViews()) {
-              EJBViewConfiguration ejbView = (EJBViewConfiguration) view;
-              if (INTFS.contains(ejbView.getMethodIntf())) {
-                ejbView.addViewInterceptor(new ImmediateInterceptorFactory(new StartupAwaitInterceptor(countdown)), InterceptorOrder.View.STARTUP_AWAIT_INTERCEPTOR);
-              }
+        component.getConfigurators().add((context1, description, configuration) -> {
+          StartupCountdown countdown = context1.getDeploymentUnit().getAttachment(Attachments.STARTUP_COUNTDOWN);
+          for (ViewConfiguration view : configuration.getViews()) {
+            EJBViewConfiguration ejbView = (EJBViewConfiguration) view;
+            if (INTFS.contains(ejbView.getMethodIntf())) {
+              ejbView.addViewInterceptor(new ImmediateInterceptorFactory(new StartupAwaitInterceptor(countdown)), InterceptorOrder.View.STARTUP_AWAIT_INTERCEPTOR);
             }
           }
         });

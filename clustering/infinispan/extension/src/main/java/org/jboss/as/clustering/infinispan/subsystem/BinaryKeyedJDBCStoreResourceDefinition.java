@@ -36,8 +36,6 @@ import org.jboss.as.clustering.controller.transform.LegacyPropertyResourceTransf
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.ObjectTypeAttributeDefinition;
-import org.jboss.as.controller.OperationContext;
-import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
@@ -47,7 +45,6 @@ import org.jboss.as.controller.operations.global.ReadResourceHandler;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.controller.transform.ResourceTransformationContext;
-import org.jboss.as.controller.transform.ResourceTransformer;
 import org.jboss.as.controller.transform.description.ResourceTransformationDescriptionBuilder;
 import org.jboss.dmr.ModelNode;
 
@@ -96,23 +93,20 @@ public class BinaryKeyedJDBCStoreResourceDefinition extends JDBCStoreResourceDef
         ResourceTransformationDescriptionBuilder builder = InfinispanModel.VERSION_4_0_0.requiresTransformation(version) ? parent.addChildRedirection(PATH, LEGACY_PATH) : parent.addChildResource(PATH);
 
         if (InfinispanModel.VERSION_4_0_0.requiresTransformation(version)) {
-            builder.setCustomResourceTransformer(new ResourceTransformer() {
-                @Override
-                public void transformResource(ResourceTransformationContext context, PathAddress address, Resource resource) throws OperationFailedException {
-                    final ModelNode model = resource.getModel();
+            builder.setCustomResourceTransformer((context, address, resource) -> {
+                final ModelNode model = resource.getModel();
 
-                    final ModelNode binaryTableModel = Resource.Tools.readModel(resource.removeChild(BinaryTableResourceDefinition.PATH));
-                    if (binaryTableModel != null && binaryTableModel.isDefined()) {
-                        model.get(DeprecatedAttribute.TABLE.getName()).set(binaryTableModel);
-                    }
-
-                    final ModelNode properties = model.remove(StoreResourceDefinition.Attribute.PROPERTIES.getName());
-                    final ResourceTransformationContext childContext = context.addTransformedResource(PathAddress.EMPTY_ADDRESS, resource);
-
-                    LegacyPropertyResourceTransformer.transformPropertiesToChildrenResources(properties, address, childContext);
-
-                    context.processChildren(resource);
+                final ModelNode binaryTableModel = Resource.Tools.readModel(resource.removeChild(BinaryTableResourceDefinition.PATH));
+                if (binaryTableModel != null && binaryTableModel.isDefined()) {
+                    model.get(DeprecatedAttribute.TABLE.getName()).set(binaryTableModel);
                 }
+
+                final ModelNode properties = model.remove(StoreResourceDefinition.Attribute.PROPERTIES.getName());
+                final ResourceTransformationContext childContext = context.addTransformedResource(PathAddress.EMPTY_ADDRESS, resource);
+
+                LegacyPropertyResourceTransformer.transformPropertiesToChildrenResources(properties, address, childContext);
+
+                context.processChildren(resource);
             });
         }
 
@@ -125,26 +119,20 @@ public class BinaryKeyedJDBCStoreResourceDefinition extends JDBCStoreResourceDef
         super(PATH, new InfinispanResourceDescriptionResolver(PATH, pathElement("jdbc"), WILDCARD_PATH), allowRuntimeOnlyRegistration);
     }
 
-    static final OperationStepHandler LEGACY_READ_TABLE_HANDLER = new OperationStepHandler() {
-        @Override
-        public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-            PathAddress address = context.getCurrentAddress().append(BinaryTableResourceDefinition.PATH);
-            ModelNode readResourceOperation = Util.createOperation(ModelDescriptionConstants.READ_RESOURCE_OPERATION, address);
-            operation.get(ModelDescriptionConstants.ATTRIBUTES_ONLY).set(true);
-            context.addStep(readResourceOperation, new ReadResourceHandler(), context.getCurrentStage());
-        }
+    static final OperationStepHandler LEGACY_READ_TABLE_HANDLER = (context, operation) -> {
+        PathAddress address = context.getCurrentAddress().append(BinaryTableResourceDefinition.PATH);
+        ModelNode readResourceOperation = Util.createOperation(ModelDescriptionConstants.READ_RESOURCE_OPERATION, address);
+        operation.get(ModelDescriptionConstants.ATTRIBUTES_ONLY).set(true);
+        context.addStep(readResourceOperation, new ReadResourceHandler(), context.getCurrentStage());
     };
 
-    static final OperationStepHandler LEGACY_WRITE_TABLE_HANDLER = new OperationStepHandler() {
-        @Override
-        public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-            PathAddress address = context.getCurrentAddress().append(BinaryTableResourceDefinition.PATH);
-            ModelNode table = Operations.getAttributeValue(operation);
-            for (Class<? extends org.jboss.as.clustering.controller.Attribute> attributeClass : Arrays.asList(BinaryTableResourceDefinition.Attribute.class, TableResourceDefinition.Attribute.class)) {
-                for (org.jboss.as.clustering.controller.Attribute attribute : attributeClass.getEnumConstants()) {
-                    ModelNode writeAttributeOperation = Operations.createWriteAttributeOperation(address, attribute, table.get(attribute.getName()));
-                    context.addStep(writeAttributeOperation, context.getResourceRegistration().getAttributeAccess(PathAddress.pathAddress(BinaryTableResourceDefinition.PATH), attribute.getName()).getWriteHandler(), context.getCurrentStage());
-                }
+    static final OperationStepHandler LEGACY_WRITE_TABLE_HANDLER = (context, operation) -> {
+        PathAddress address = context.getCurrentAddress().append(BinaryTableResourceDefinition.PATH);
+        ModelNode table = Operations.getAttributeValue(operation);
+        for (Class<? extends org.jboss.as.clustering.controller.Attribute> attributeClass : Arrays.asList(BinaryTableResourceDefinition.Attribute.class, TableResourceDefinition.Attribute.class)) {
+            for (org.jboss.as.clustering.controller.Attribute attribute : attributeClass.getEnumConstants()) {
+                ModelNode writeAttributeOperation = Operations.createWriteAttributeOperation(address, attribute, table.get(attribute.getName()));
+                context.addStep(writeAttributeOperation, context.getResourceRegistration().getAttributeAccess(PathAddress.pathAddress(BinaryTableResourceDefinition.PATH), attribute.getName()).getWriteHandler(), context.getCurrentStage());
             }
         }
     };

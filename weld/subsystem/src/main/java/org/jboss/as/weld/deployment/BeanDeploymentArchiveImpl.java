@@ -182,12 +182,7 @@ public class BeanDeploymentArchiveImpl implements WildFlyBeanDeploymentArchive {
     public ClassLoader getClassLoader() {
         if (module != null) {
             if(WildFlySecurityManager.isChecking()) {
-                return WildFlySecurityManager.doUnchecked(new PrivilegedAction<ClassLoader>() {
-                    @Override
-                    public ClassLoader run() {
-                        return module.getClassLoader();
-                    }
-                });
+                return WildFlySecurityManager.doUnchecked((PrivilegedAction<ClassLoader>) () -> module.getClassLoader());
             } else {
                 return module.getClassLoader();
             }

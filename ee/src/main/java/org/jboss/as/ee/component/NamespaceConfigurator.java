@@ -31,7 +31,6 @@ import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.invocation.ImmediateInterceptorFactory;
 import org.jboss.invocation.InterceptorFactory;
 import org.jboss.msc.inject.Injector;
-import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceName;
 
 /**
@@ -59,19 +58,17 @@ public final class NamespaceConfigurator implements ComponentConfigurator {
         final Injector<NamingStore> globalInjector = selector.getGlobalContextInjector();
         final Injector<NamingStore> exportedInjector = selector.getExportedContextInjector();
 
-        configuration.getStartDependencies().add(new DependencyConfigurator<ComponentStartService>() {
-            public void configureDependency(final ServiceBuilder<?> serviceBuilder, ComponentStartService service) {
-                serviceBuilder.addDependency(appContextServiceName, NamingStore.class, appInjector);
-                serviceBuilder.addDependency(moduleContextServiceName, NamingStore.class, moduleInjector);
-                if (namingMode == ComponentNamingMode.CREATE) {
-                    serviceBuilder.addDependency(compContextServiceName, NamingStore.class, compInjector);
-                } else if(namingMode == ComponentNamingMode.USE_MODULE) {
-                    serviceBuilder.addDependency(moduleContextServiceName, NamingStore.class, compInjector);
-                }
-                serviceBuilder.addDependency(ContextNames.GLOBAL_CONTEXT_SERVICE_NAME, NamingStore.class, globalInjector);
-                serviceBuilder.addDependency(ContextNames.JBOSS_CONTEXT_SERVICE_NAME, NamingStore.class, jbossInjector);
-                serviceBuilder.addDependency(ContextNames.EXPORTED_CONTEXT_SERVICE_NAME, NamingStore.class, exportedInjector);
+        configuration.getStartDependencies().add((serviceBuilder, service) -> {
+            serviceBuilder.addDependency(appContextServiceName, NamingStore.class, appInjector);
+            serviceBuilder.addDependency(moduleContextServiceName, NamingStore.class, moduleInjector);
+            if (namingMode == ComponentNamingMode.CREATE) {
+                serviceBuilder.addDependency(compContextServiceName, NamingStore.class, compInjector);
+            } else if(namingMode == ComponentNamingMode.USE_MODULE) {
+                serviceBuilder.addDependency(moduleContextServiceName, NamingStore.class, compInjector);
             }
+            serviceBuilder.addDependency(ContextNames.GLOBAL_CONTEXT_SERVICE_NAME, NamingStore.class, globalInjector);
+            serviceBuilder.addDependency(ContextNames.JBOSS_CONTEXT_SERVICE_NAME, NamingStore.class, jbossInjector);
+            serviceBuilder.addDependency(ContextNames.EXPORTED_CONTEXT_SERVICE_NAME, NamingStore.class, exportedInjector);
         });
         final InterceptorFactory interceptorFactory = new ImmediateInterceptorFactory(new NamespaceContextInterceptor(selector, context.getDeploymentUnit().getServiceName()));
         configuration.addPostConstructInterceptor(interceptorFactory, InterceptorOrder.ComponentPostConstruct.JNDI_NAMESPACE_INTERCEPTOR);

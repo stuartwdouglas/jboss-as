@@ -25,7 +25,6 @@ package org.wildfly.extension.picketlink.idm.model;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.RestartParentWriteAttributeHandler;
 import org.jboss.as.controller.registry.Resource;
@@ -47,17 +46,14 @@ public class IDMConfigWriteAttributeHandler extends RestartParentWriteAttributeH
 
     @Override
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-        context.addStep(new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                final PathAddress address = getParentAddress(PathAddress.pathAddress(operation.require(OP_ADDR)));
-                Resource resource = context.readResourceFromRoot(address);
-                final ModelNode parentModel = Resource.Tools.readModel(resource);
+        context.addStep((context1, operation1) -> {
+            final PathAddress address = getParentAddress(PathAddress.pathAddress(operation1.require(OP_ADDR)));
+            Resource resource = context1.readResourceFromRoot(address);
+            final ModelNode parentModel = Resource.Tools.readModel(resource);
 
-                PartitionManagerAddHandler.INSTANCE.validateModel(context, address.getLastElement().getValue(), parentModel);
+            PartitionManagerAddHandler.INSTANCE.validateModel(context1, address.getLastElement().getValue(), parentModel);
 
-                context.stepCompleted();
-            }
+            context1.stepCompleted();
         }, OperationContext.Stage.MODEL);
         super.execute(context, operation);
     }

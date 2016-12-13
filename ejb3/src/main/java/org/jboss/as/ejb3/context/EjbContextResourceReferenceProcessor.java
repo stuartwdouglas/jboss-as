@@ -65,11 +65,7 @@ public class EjbContextResourceReferenceProcessor implements EEResourceReference
         }
     };
 
-    private static final ManagedReferenceFactory ejbContextManagedReferenceFactory = new ManagedReferenceFactory() {
-        public ManagedReference getReference() {
-            return ejbContextManagedReference;
-        }
-    };
+    private static final ManagedReferenceFactory ejbContextManagedReferenceFactory = () -> ejbContextManagedReference;
 
     private static class EjbContextInjectionSource extends InjectionSource {
 

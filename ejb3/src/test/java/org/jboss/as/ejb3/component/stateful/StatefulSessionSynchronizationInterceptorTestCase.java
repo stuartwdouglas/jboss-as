@@ -39,8 +39,6 @@ import org.jboss.ejb.client.SessionID;
 import org.jboss.invocation.Interceptor;
 import org.jboss.invocation.InterceptorContext;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -56,12 +54,7 @@ public class StatefulSessionSynchronizationInterceptorTestCase {
     }
 
     private static Interceptor noop() {
-        return new Interceptor() {
-            @Override
-            public Object processInvocation(InterceptorContext context) throws Exception {
-                return null;
-            }
-        };
+        return context -> null;
     }
 
 
@@ -83,13 +76,10 @@ public class StatefulSessionSynchronizationInterceptorTestCase {
         when(component.getTransactionSynchronizationRegistry()).thenReturn(transactionSynchronizationRegistry);
         when(transactionSynchronizationRegistry.getTransactionKey()).thenReturn("TX1");
         final List<Synchronization> synchronizations = new LinkedList<Synchronization>();
-        doAnswer(new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) throws Throwable {
-                Synchronization synchronization = (Synchronization) invocation.getArguments()[0];
-                synchronizations.add(synchronization);
-                return null;
-            }
+        doAnswer(invocation -> {
+            Synchronization synchronization = (Synchronization) invocation.getArguments()[0];
+            synchronizations.add(synchronization);
+            return null;
         }).when(transactionSynchronizationRegistry).registerInterposedSynchronization((Synchronization) any());
         final StatefulSessionComponentInstance instance = new StatefulSessionComponentInstance(component, org.jboss.invocation.Interceptors.getTerminalInterceptor(), Collections.EMPTY_MAP, Collections.emptyMap());
         context.putPrivateData(ComponentInstance.class, instance);

@@ -77,16 +77,13 @@ public class IDMConfigAddStepHandler extends RestartParentResourceAddHandler {
             this.modelValidators.addAll(Arrays.asList(modelValidators));
         }
 
-        this.modelValidators.add(new ModelValidationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                final PathAddress address = getParentAddress(PathAddress.pathAddress(operation.require(OP_ADDR)));
-                Resource resource = context.readResourceFromRoot(address);
-                final ModelNode parentModel = Resource.Tools.readModel(resource);
+        this.modelValidators.add((context, operation) -> {
+            final PathAddress address = getParentAddress(PathAddress.pathAddress(operation.require(OP_ADDR)));
+            Resource resource = context.readResourceFromRoot(address);
+            final ModelNode parentModel = Resource.Tools.readModel(resource);
 
-                PartitionManagerAddHandler.INSTANCE.validateModel(context, address.getLastElement().getValue(), parentModel);
-                context.stepCompleted();
-            }
+            PartitionManagerAddHandler.INSTANCE.validateModel(context, address.getLastElement().getValue(), parentModel);
+            context.stepCompleted();
         });
     }
 

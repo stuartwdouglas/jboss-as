@@ -130,26 +130,23 @@ public abstract class AbstractResourceInjectionServices {
     }
 
     protected ResourceReferenceFactory<Object> createLazyResourceReferenceFactory(final ContextNames.BindInfo ejbBindInfo) {
-        return new ResourceReferenceFactory<Object>() {
-            @Override
-            public ResourceReference<Object> createResource() {
-                final ManagedReferenceFactory factory = getManagedReferenceFactory(ejbBindInfo);
-                if (factory == null) {
-                    return new SimpleResourceReference<>(null);
-                }
-                final ManagedReference instance = factory.getReference();
-                return new ResourceReference<Object>() {
-                    @Override
-                    public Object getInstance() {
-                        return instance.getInstance();
-                    }
-
-                    @Override
-                    public void release() {
-                        instance.release();
-                    }
-                };
+        return () -> {
+            final ManagedReferenceFactory factory = getManagedReferenceFactory(ejbBindInfo);
+            if (factory == null) {
+                return new SimpleResourceReference<>(null);
             }
+            final ManagedReference instance = factory.getReference();
+            return new ResourceReference<Object>() {
+                @Override
+                public Object getInstance() {
+                    return instance.getInstance();
+                }
+
+                @Override
+                public void release() {
+                    instance.release();
+                }
+            };
         };
     }
 }

@@ -26,15 +26,11 @@ import java.lang.reflect.Method;
 
 import javax.ejb.SessionBean;
 
-import org.jboss.as.ee.component.ComponentConfiguration;
-import org.jboss.as.ee.component.ComponentConfigurator;
-import org.jboss.as.ee.component.ComponentDescription;
 import org.jboss.as.ee.component.EEApplicationClasses;
 import org.jboss.as.ee.component.interceptors.InterceptorClassDescription;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
 import org.jboss.as.ejb3.component.session.SessionBeanComponentDescription;
 import org.jboss.as.ejb3.component.session.SessionBeanSetSessionContextMethodInvocationInterceptor;
-import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.reflect.ClassReflectionIndex;
@@ -62,12 +58,9 @@ public class SessionBeanMergingProcessor extends AbstractMergingProcessor<Sessio
         if (SessionBean.class.isAssignableFrom(componentClass)) {
             // add the setSessionContext(SessionContext) method invocation interceptor for session bean implementing the javax.ejb.SessionContext
             // interface
-            description.getConfigurators().add(new ComponentConfigurator() {
-                @Override
-                public void configure(DeploymentPhaseContext context, ComponentDescription description, ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                    if (SessionBean.class.isAssignableFrom(configuration.getComponentClass())) {
-                        configuration.addPostConstructInterceptor(SessionBeanSetSessionContextMethodInvocationInterceptor.FACTORY, InterceptorOrder.ComponentPostConstruct.EJB_SET_CONTEXT_METHOD_INVOCATION_INTERCEPTOR);
-                    }
+            description.getConfigurators().add((context, description1, configuration) -> {
+                if (SessionBean.class.isAssignableFrom(configuration.getComponentClass())) {
+                    configuration.addPostConstructInterceptor(SessionBeanSetSessionContextMethodInvocationInterceptor.FACTORY, InterceptorOrder.ComponentPostConstruct.EJB_SET_CONTEXT_METHOD_INVOCATION_INTERCEPTOR);
                 }
             });
 

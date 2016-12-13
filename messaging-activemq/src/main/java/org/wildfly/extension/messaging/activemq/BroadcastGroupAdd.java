@@ -40,7 +40,6 @@ import org.apache.activemq.artemis.core.config.Configuration;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.capability.RuntimeCapability;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
@@ -85,12 +84,7 @@ public class BroadcastGroupAdd extends AbstractAddStepHandler {
 
         final ModelNode connectorRefs = resource.getModel().get(CONNECTOR_REFS.getName());
         if (connectorRefs.isDefined()) {
-            context.addStep(new OperationStepHandler() {
-                @Override
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    validateConnectors(context, operation, connectorRefs);
-                }
-            }, OperationContext.Stage.MODEL);
+            context.addStep((context1, operation1) -> validateConnectors(context1, operation1, connectorRefs), OperationContext.Stage.MODEL);
         }
     }
 

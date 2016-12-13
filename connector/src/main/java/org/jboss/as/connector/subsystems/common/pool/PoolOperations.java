@@ -72,33 +72,31 @@ public abstract class PoolOperations implements OperationStepHandler {
         }
         final Object[] parameters = getParameters(context, operation);
         if (context.isNormalServer()) {
-            context.addStep(new OperationStepHandler() {
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    final ServiceController<?> managementRepoService = context.getServiceRegistry(disallowMonitor).getService(
-                            ConnectorServices.MANAGEMENT_REPOSITORY_SERVICE);
-                    if (managementRepoService != null) {
-                        ModelNode operationResult = null;
-                        try {
-                            final ManagementRepository repository = (ManagementRepository) managementRepoService.getValue();
-                            final List<Pool> pools = matcher.match(jndiName, repository);
+            context.addStep((context1, operation1) -> {
+                final ServiceController<?> managementRepoService = context1.getServiceRegistry(disallowMonitor).getService(
+                        ConnectorServices.MANAGEMENT_REPOSITORY_SERVICE);
+                if (managementRepoService != null) {
+                    ModelNode operationResult = null;
+                    try {
+                        final ManagementRepository repository = (ManagementRepository) managementRepoService.getValue();
+                        final List<Pool> pools = matcher.match(jndiName, repository);
 
-                            if (pools.isEmpty()) {
-                                throw ConnectorLogger.ROOT_LOGGER.failedToMatchPool(jndiName);
-                            }
-
-                            for (Pool pool : pools) {
-                                operationResult = invokeCommandOn(pool, parameters);
-                            }
-
-                        } catch (Exception e) {
-                            throw new OperationFailedException(ConnectorLogger.ROOT_LOGGER.failedToInvokeOperation(e.getLocalizedMessage()));
+                        if (pools.isEmpty()) {
+                            throw ConnectorLogger.ROOT_LOGGER.failedToMatchPool(jndiName);
                         }
-                        if (operationResult != null) {
-                            context.getResult().set(operationResult);
+
+                        for (Pool pool : pools) {
+                            operationResult = invokeCommandOn(pool, parameters);
                         }
+
+                    } catch (Exception e) {
+                        throw new OperationFailedException(ConnectorLogger.ROOT_LOGGER.failedToInvokeOperation(e.getLocalizedMessage()));
                     }
-                    context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
+                    if (operationResult != null) {
+                        context1.getResult().set(operationResult);
+                    }
                 }
+                context1.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
             }, OperationContext.Stage.RUNTIME);
         }
         context.stepCompleted();

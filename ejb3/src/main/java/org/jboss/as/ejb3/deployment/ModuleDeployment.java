@@ -73,24 +73,14 @@ public class ModuleDeployment implements Service<ModuleDeployment> {
 
     @Override
     public void start(StartContext context) throws StartException {
-        Runnable action = new Runnable() {
-            @Override
-            public void run() {
-                deploymentRepository.getValue().add(identifier, ModuleDeployment.this);
-            }
-        };
+        Runnable action = () -> deploymentRepository.getValue().add(identifier, ModuleDeployment.this);
         if (startupCountdown == null) action.run();
         else startupCountdown.addCallback(action);
     }
 
     @Override
     public void stop(StopContext context) {
-        Runnable action = new Runnable() {
-            @Override
-            public void run() {
-                deploymentRepository.getValue().remove(identifier);
-            }
-        };
+        Runnable action = () -> deploymentRepository.getValue().remove(identifier);
         if (startupCountdown == null) action.run();
         else startupCountdown.addCallback(action);
 
@@ -117,12 +107,7 @@ public class ModuleDeployment implements Service<ModuleDeployment> {
 
         @Override
         public void start(StartContext startContext) throws StartException {
-            Runnable action = new Runnable() {
-                @Override
-                public void run() {
-                    deploymentRepository.getValue().startDeployment(identifier);
-                }
-            };
+            Runnable action = () -> deploymentRepository.getValue().startDeployment(identifier);
             if (countdown == null) action.run();
             else countdown.addCallback(action);
         }

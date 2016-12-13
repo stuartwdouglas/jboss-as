@@ -70,15 +70,12 @@ public class GateHandlerWrapper implements HandlerWrapper {
                 if(open) {
                     next.handleRequest(exchange);
                 } else {
-                    exchange.dispatch(SameThreadExecutor.INSTANCE, new Runnable() {
-                        @Override
-                        public void run() {
-                            synchronized (GateHandlerWrapper.this) {
-                                if(open) {
-                                    exchange.dispatch(next);
-                                } else {
-                                    held.add(new Holder(next, exchange));
-                                }
+                    exchange.dispatch(SameThreadExecutor.INSTANCE, () -> {
+                        synchronized (GateHandlerWrapper.this) {
+                            if(open) {
+                                exchange.dispatch(next);
+                            } else {
+                                held.add(new Holder(next, exchange));
                             }
                         }
                     });

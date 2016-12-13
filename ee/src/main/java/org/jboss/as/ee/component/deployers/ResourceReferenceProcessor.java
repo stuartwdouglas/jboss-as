@@ -33,8 +33,6 @@ import org.jboss.as.ee.component.InjectionSource;
 import org.jboss.as.ee.component.LookupInjectionSource;
 import org.jboss.as.ee.component.ResourceInjectionTarget;
 import org.jboss.as.naming.ImmediateManagedReference;
-import org.jboss.as.naming.ManagedReference;
-import org.jboss.as.naming.ManagedReferenceFactory;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.reflect.DeploymentReflectionIndex;
@@ -163,14 +161,11 @@ public class ResourceReferenceProcessor extends AbstractDeploymentDescriptorBind
                 if (classType != null && classType.equals(URI.class)) {
                     try {
                         //we need a newURI every time
-                        injectionSource = new FixedInjectionSource(new ManagedReferenceFactory() {
-                            @Override
-                            public ManagedReference getReference() {
-                                try {
-                                    return new ImmediateManagedReference(new URI(url));
-                                } catch (URISyntaxException e) {
-                                    throw new RuntimeException(e);
-                                }
+                        injectionSource = new FixedInjectionSource(() -> {
+                            try {
+                                return new ImmediateManagedReference(new URI(url));
+                            } catch (URISyntaxException e) {
+                                throw new RuntimeException(e);
                             }
                         }, new URI(url));
                     } catch (URISyntaxException e) {
@@ -178,14 +173,11 @@ public class ResourceReferenceProcessor extends AbstractDeploymentDescriptorBind
                     }
                 } else {
                     try {
-                        injectionSource = new FixedInjectionSource(new ManagedReferenceFactory() {
-                            @Override
-                            public ManagedReference getReference() {
-                                try {
-                                    return new ImmediateManagedReference(new URL(url));
-                                } catch (MalformedURLException e) {
-                                    throw new RuntimeException(e);
-                                }
+                        injectionSource = new FixedInjectionSource(() -> {
+                            try {
+                                return new ImmediateManagedReference(new URL(url));
+                            } catch (MalformedURLException e) {
+                                throw new RuntimeException(e);
                             }
                         }, new URL(url));
                     } catch (MalformedURLException e) {

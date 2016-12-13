@@ -200,12 +200,7 @@ public abstract class EJBComponent extends BasicComponent implements ServerActiv
         final ManagedReference instance;
         try {
             if(WildFlySecurityManager.isChecking()) {
-                instance = WildFlySecurityManager.doUnchecked(new PrivilegedExceptionAction<ManagedReference>() {
-                    @Override
-                    public ManagedReference run() throws Exception {
-                        return view.createInstance(contextData);
-                    }
-                });
+                instance = WildFlySecurityManager.doUnchecked((PrivilegedExceptionAction<ManagedReference>) () -> view.createInstance(contextData));
             } else {
                 instance = view.createInstance(contextData);
             }
@@ -421,11 +416,7 @@ public abstract class EJBComponent extends BasicComponent implements ServerActiv
             final SecurityIdentity identity = (incomingRunAsIdentity == null) ? securityDomain.getCurrentSecurityIdentity() : incomingRunAsIdentity;
             return "**".equals(roleName) ? ! (identity.getPrincipal() instanceof AnonymousPrincipal) : identity.getRoles("ejb", true).contains(roleName);
         } else if (WildFlySecurityManager.isChecking()) {
-            return WildFlySecurityManager.doUnchecked(new PrivilegedAction<Boolean>() {
-                public Boolean run() {
-                    return serverSecurityManager.isCallerInRole(getComponentName(), policyContextID, securityMetaData.getSecurityRoles(), securityMetaData.getSecurityRoleLinks(), roleName);
-                }
-            });
+            return WildFlySecurityManager.doUnchecked((PrivilegedAction<Boolean>) () -> serverSecurityManager.isCallerInRole(getComponentName(), policyContextID, securityMetaData.getSecurityRoles(), securityMetaData.getSecurityRoleLinks(), roleName));
         } else {
             return this.serverSecurityManager.isCallerInRole(getComponentName(), policyContextID, securityMetaData.getSecurityRoles(), securityMetaData.getSecurityRoleLinks(), roleName);
         }

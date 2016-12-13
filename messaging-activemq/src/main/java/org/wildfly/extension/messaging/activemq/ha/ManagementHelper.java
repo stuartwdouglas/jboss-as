@@ -63,15 +63,12 @@ public class ManagementHelper {
     }
 
     static OperationStepHandler checkNoOtherSibling(final String childType) {
-        return new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                PathAddress parentAddress = context.getCurrentAddress().getParent();
-                Resource parent = context.readResourceFromRoot(parentAddress, false);
-                Set<String> children = parent.getChildrenNames(childType);
-                if (children.size() > 1) {
-                    throw MessagingLogger.ROOT_LOGGER.onlyOneChildIsAllowed(childType, children);
-                }
+        return (context, operation) -> {
+            PathAddress parentAddress = context.getCurrentAddress().getParent();
+            Resource parent = context.readResourceFromRoot(parentAddress, false);
+            Set<String> children = parent.getChildrenNames(childType);
+            if (children.size() > 1) {
+                throw MessagingLogger.ROOT_LOGGER.onlyOneChildIsAllowed(childType, children);
             }
         };
     }

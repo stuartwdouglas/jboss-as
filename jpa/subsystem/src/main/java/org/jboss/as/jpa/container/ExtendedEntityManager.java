@@ -273,13 +273,10 @@ public class ExtendedEntityManager extends AbstractEntityManager implements Seri
     private void readObject(java.io.ObjectInputStream in) throws IOException, ClassNotFoundException {
         in.defaultReadObject();
         if(WildFlySecurityManager.isChecking()) {
-            AccessController.doPrivileged(new PrivilegedAction<Object>() {
-                @Override
-                public Object run() {
-                    transactionManager = (TransactionManager) CurrentServiceContainer.getServiceContainer().getService(TransactionManagerService.SERVICE_NAME).getValue();
-                    transactionSynchronizationRegistry = (TransactionSynchronizationRegistry) CurrentServiceContainer.getServiceContainer().getService(TransactionSynchronizationRegistryService.SERVICE_NAME).getValue();
-                    return null;
-                }
+            AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+                transactionManager = (TransactionManager) CurrentServiceContainer.getServiceContainer().getService(TransactionManagerService.SERVICE_NAME).getValue();
+                transactionSynchronizationRegistry = (TransactionSynchronizationRegistry) CurrentServiceContainer.getServiceContainer().getService(TransactionSynchronizationRegistryService.SERVICE_NAME).getValue();
+                return null;
             });
         } else {
             transactionManager = (TransactionManager) CurrentServiceContainer.getServiceContainer().getService(TransactionManagerService.SERVICE_NAME).getValue();

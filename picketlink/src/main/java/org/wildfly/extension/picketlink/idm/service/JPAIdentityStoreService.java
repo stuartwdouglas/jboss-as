@@ -31,9 +31,6 @@ import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
 import org.picketlink.idm.jpa.internal.JPAIdentityStore;
-import org.picketlink.idm.spi.ContextInitializer;
-import org.picketlink.idm.spi.IdentityContext;
-import org.picketlink.idm.spi.IdentityStore;
 import org.wildfly.extension.picketlink.idm.config.JPAStoreSubsystemConfiguration;
 import org.wildfly.extension.picketlink.idm.config.JPAStoreSubsystemConfigurationBuilder;
 import org.wildfly.extension.picketlink.idm.jpa.transaction.TransactionalEntityManagerHelper;
@@ -93,15 +90,12 @@ public class JPAIdentityStoreService implements Service<JPAIdentityStoreService>
             throw ROOT_LOGGER.idmJpaStartFailed(e);
         }
 
-        this.configurationBuilder.addContextInitializer(new ContextInitializer() {
-            @Override
-            public void initContextForStore(IdentityContext context, IdentityStore<?> store) {
-                if (store instanceof JPAIdentityStore) {
-                    EntityManager entityManager = context.getParameter(JPAIdentityStore.INVOCATION_CTX_ENTITY_MANAGER);
+        this.configurationBuilder.addContextInitializer((context, store) -> {
+            if (store instanceof JPAIdentityStore) {
+                EntityManager entityManager = context.getParameter(JPAIdentityStore.INVOCATION_CTX_ENTITY_MANAGER);
 
-                    if (entityManager == null || !entityManager.isOpen()) {
-                        context.setParameter(JPAIdentityStore.INVOCATION_CTX_ENTITY_MANAGER, getEntityManager(getTransactionManager().getValue()));
-                    }
+                if (entityManager == null || !entityManager.isOpen()) {
+                    context.setParameter(JPAIdentityStore.INVOCATION_CTX_ENTITY_MANAGER, getEntityManager(getTransactionManager().getValue()));
                 }
             }
         });

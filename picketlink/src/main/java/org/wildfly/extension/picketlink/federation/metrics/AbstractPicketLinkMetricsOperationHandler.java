@@ -80,25 +80,22 @@ public abstract class AbstractPicketLinkMetricsOperationHandler implements Opera
 
     @Override
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-        context.addStep(new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
-                final String name = address.getLastElement().getValue();
-                final String attributeName = operation.require(NAME).asString();
-                final ServiceController<?> controller = context.getServiceRegistry(false)
-                    .getRequiredService(createServiceName(name));
+        context.addStep((context1, operation1) -> {
+            final PathAddress address = PathAddress.pathAddress(operation1.require(OP_ADDR));
+            final String name = address.getLastElement().getValue();
+            final String attributeName = operation1.require(NAME).asString();
+            final ServiceController<?> controller = context1.getServiceRegistry(false)
+                .getRequiredService(createServiceName(name));
 
-                try {
-                    PicketLinkFederationService<?> service = (PicketLinkFederationService<?>) controller.getValue();
+            try {
+                PicketLinkFederationService<?> service = (PicketLinkFederationService<?>) controller.getValue();
 
-                    doPopulateResult(service.getMetrics(), context.getResult(), attributeName);
-                } catch (Exception e) {
-                    throw PicketLinkLogger.ROOT_LOGGER.failedToGetMetrics(e.getMessage());
-                }
-
-                context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
+                doPopulateResult(service.getMetrics(), context1.getResult(), attributeName);
+            } catch (Exception e) {
+                throw PicketLinkLogger.ROOT_LOGGER.failedToGetMetrics(e.getMessage());
             }
+
+            context1.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
         }, OperationContext.Stage.RUNTIME);
 
         context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);

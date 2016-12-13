@@ -224,12 +224,7 @@ public class ParsedServiceDeploymentProcessor implements DeploymentUnitProcessor
         final String propertyName = injectConfig.getPropertyName();
         Value<?> valueToInject = Values.injectedValue();
         if (propertyName != null) {
-            final Value<Method> methodValue = new InjectedBeanMethodValue(Values.injectedValue(), new InjectedBeanMethodValue.MethodFinder() {
-                @Override
-                public Method find(Class<?> clazz) {
-                    return ReflectionUtils.getGetter(clazz, propertyName);
-                }
-            });
+            final Value<Method> methodValue = new InjectedBeanMethodValue(Values.injectedValue(), clazz -> ReflectionUtils.getGetter(clazz, propertyName));
             valueToInject = cached(new MethodValue<Object>(methodValue, valueToInject, Values.<Object>emptyList()));
         }
         return valueToInject;
@@ -245,12 +240,7 @@ public class ParsedServiceDeploymentProcessor implements DeploymentUnitProcessor
             paramTypes.add(attributeTypeValue);
             paramValues.add(new ImmediateValue<Object>(newValue(attributeTypeValue, parameter.getValue())));
         }
-        final Value<Method> methodValue = new InjectedBeanMethodValue(Values.injectedValue(), new InjectedBeanMethodValue.MethodFinder() {
-            @Override
-            public Method find(Class<?> clazz) {
-                return ReflectionUtils.getMethod(clazz, methodName, paramTypes.toArray(new Class<?>[0]));
-            }
-        });
+        final Value<Method> methodValue = new InjectedBeanMethodValue(Values.injectedValue(), clazz -> ReflectionUtils.getMethod(clazz, methodName, paramTypes.toArray(new Class<?>[0])));
         return cached(new MethodValue<Object>(methodValue, Values.injectedValue(), paramValues));
     }
 

@@ -25,15 +25,11 @@ public class MockRuntimeVaultReader extends RuntimeVaultReader {
     Map<String, Object> vaultOptions = new HashMap<String, Object>(options);
     SecurityVault vault = null;
     try {
-      vault = AccessController.doPrivileged(new PrivilegedExceptionAction<SecurityVault>() {
-
-        @Override
-        public SecurityVault run() throws Exception {
-          if (fqn == null || fqn.isEmpty()) {
-            return SecurityVaultFactory.get();
-          } else {
-            return SecurityVaultFactory.get(fqn);
-          }
+      vault = AccessController.doPrivileged((PrivilegedExceptionAction<SecurityVault>) () -> {
+        if (fqn == null || fqn.isEmpty()) {
+          return SecurityVaultFactory.get();
+        } else {
+          return SecurityVaultFactory.get(fqn);
         }
       });
     } catch (PrivilegedActionException e) {

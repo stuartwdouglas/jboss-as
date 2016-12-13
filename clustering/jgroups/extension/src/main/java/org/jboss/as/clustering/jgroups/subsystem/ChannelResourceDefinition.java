@@ -38,9 +38,6 @@ import org.jboss.as.clustering.controller.validation.ParameterValidatorBuilder;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.CapabilityReferenceRecorder;
 import org.jboss.as.controller.ModelVersion;
-import org.jboss.as.controller.OperationContext;
-import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
@@ -159,53 +156,50 @@ public class ChannelResourceDefinition extends ChildResourceDefinition {
     static void buildTransformation(ModelVersion version, ResourceTransformationDescriptionBuilder parent) {
 
         if (JGroupsModel.VERSION_3_0_0.requiresTransformation(version)) {
-            DynamicDiscardPolicy channelDiscardRejectPolicy = new DynamicDiscardPolicy() {
-                @Override
-                public DiscardPolicy checkResource(TransformationContext context, PathAddress address) {
-                    // Check whether all channel resources are used by the infinispan subsystem, and transformed
-                    // by its corresponding transformers; reject otherwise
+            DynamicDiscardPolicy channelDiscardRejectPolicy = (context, address) -> {
+                // Check whether all channel resources are used by the infinispan subsystem, and transformed
+                // by its corresponding transformers; reject otherwise
 
-                    // n.b. we need to hard-code the values because otherwise we would end up with cyclical dependency
+                // n.b. we need to hard-code the values because otherwise we would end up with cyclical dependency
 
-                    String channelName = address.getLastElement().getValue();
+                String channelName = address.getLastElement().getValue();
 
-                    PathAddress rootAddress = address.subAddress(0, address.size() - 2);
-                    PathAddress subsystemAddress = rootAddress.append(PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM, "infinispan"));
+                PathAddress rootAddress = address.subAddress(0, address.size() - 2);
+                PathAddress subsystemAddress = rootAddress.append(PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM, "infinispan"));
 
-                    Resource infinispanResource;
-                    try {
-                        infinispanResource = context.readResourceFromRoot(subsystemAddress);
-                    } catch (Resource.NoSuchResourceException ex) {
-                        return DiscardPolicy.REJECT_AND_WARN;
-                    }
-                    ModelNode infinispanModel = Resource.Tools.readModel(infinispanResource);
+                Resource infinispanResource;
+                try {
+                    infinispanResource = context.readResourceFromRoot(subsystemAddress);
+                } catch (Resource.NoSuchResourceException ex) {
+                    return DiscardPolicy.REJECT_AND_WARN;
+                }
+                ModelNode infinispanModel = Resource.Tools.readModel(infinispanResource);
 
-                    if (infinispanModel.hasDefined("cache-container")) {
-                        for (ModelNode container : infinispanModel.get("cache-container").asList()) {
-                            ModelNode cacheContainer = container.get(0);
-                            if (cacheContainer.hasDefined("transport")) {
-                                ModelNode transport = cacheContainer.get("transport").get("jgroups");
-                                if (transport.hasDefined("channel")) {
-                                    String channel = transport.get("channel").asString();
-                                    if (channel.equals(channelName)) {
+                if (infinispanModel.hasDefined("cache-container")) {
+                    for (ModelNode container : infinispanModel.get("cache-container").asList()) {
+                        ModelNode cacheContainer = container.get(0);
+                        if (cacheContainer.hasDefined("transport")) {
+                            ModelNode transport = cacheContainer.get("transport").get("jgroups");
+                            if (transport.hasDefined("channel")) {
+                                String channel = transport.get("channel").asString();
+                                if (channel.equals(channelName)) {
+                                    return DiscardPolicy.SILENT;
+                                }
+                            } else {
+                                // In that case, if this were the default channel, it can be discarded too
+                                ModelNode subsystem = context.readResourceFromRoot(address.subAddress(0, address.size() - 1)).getModel();
+                                if (subsystem.hasDefined(JGroupsSubsystemResourceDefinition.Attribute.DEFAULT_CHANNEL.getName())) {
+                                    if (subsystem.get(JGroupsSubsystemResourceDefinition.Attribute.DEFAULT_CHANNEL.getName()).asString().equals(channelName)) {
                                         return DiscardPolicy.SILENT;
-                                    }
-                                } else {
-                                    // In that case, if this were the default channel, it can be discarded too
-                                    ModelNode subsystem = context.readResourceFromRoot(address.subAddress(0, address.size() - 1)).getModel();
-                                    if (subsystem.hasDefined(JGroupsSubsystemResourceDefinition.Attribute.DEFAULT_CHANNEL.getName())) {
-                                        if (subsystem.get(JGroupsSubsystemResourceDefinition.Attribute.DEFAULT_CHANNEL.getName()).asString().equals(channelName)) {
-                                            return DiscardPolicy.SILENT;
-                                        }
                                     }
                                 }
                             }
                         }
                     }
-
-                    // No references to this channel, we need to reject it.
-                    return DiscardPolicy.REJECT_AND_WARN;
                 }
+
+                // No references to this channel, we need to reject it.
+                return DiscardPolicy.REJECT_AND_WARN;
             };
             parent.addChildResource(WILDCARD_PATH, channelDiscardRejectPolicy);
         } else {
@@ -244,17 +238,13 @@ public class ChannelResourceDefinition extends ChildResourceDefinition {
                 .addCapabilities(Capability.class)
                 .addCapabilities(CLUSTERING_CAPABILITIES.values())
                 .addAlias(DeprecatedAttribute.STATS_ENABLED, Attribute.STATISTICS_ENABLED)
-                .addOperationTranslator(new OperationStepHandler() {
-                    @SuppressWarnings("deprecation")
-                    @Override
-                    public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                        // Handle recipe for version < 4.0 where stack was not required and the stack attribute would use default-stack for a default value
-                        if (!operation.hasDefined(Attribute.STACK.getName())) {
-                            ModelNode parentModel = context.readResourceFromRoot(context.getCurrentAddress().getParent()).getModel();
-                            // If default-stack is not defined either, then recipe must be for version >= 4.0 and so this really is an invalid operation
-                            if (parentModel.hasDefined(JGroupsSubsystemResourceDefinition.Attribute.DEFAULT_STACK.getName())) {
-                                operation.get(Attribute.STACK.getName()).set(parentModel.get(JGroupsSubsystemResourceDefinition.Attribute.DEFAULT_STACK.getName()));
-                            }
+                .addOperationTranslator((context, operation) -> {
+                    // Handle recipe for version < 4.0 where stack was not required and the stack attribute would use default-stack for a default value
+                    if (!operation.hasDefined(Attribute.STACK.getName())) {
+                        ModelNode parentModel = context.readResourceFromRoot(context.getCurrentAddress().getParent()).getModel();
+                        // If default-stack is not defined either, then recipe must be for version >= 4.0 and so this really is an invalid operation
+                        if (parentModel.hasDefined(JGroupsSubsystemResourceDefinition.Attribute.DEFAULT_STACK.getName())) {
+                            operation.get(Attribute.STACK.getName()).set(parentModel.get(JGroupsSubsystemResourceDefinition.Attribute.DEFAULT_STACK.getName()));
                         }
                     }
                 })

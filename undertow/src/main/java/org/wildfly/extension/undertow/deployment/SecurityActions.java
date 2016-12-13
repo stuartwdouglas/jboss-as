@@ -39,11 +39,7 @@ class SecurityActions {
 
     static SecurityContext getSecurityContext() {
         if (WildFlySecurityManager.isChecking()) {
-            return doPrivileged(new PrivilegedAction<SecurityContext>() {
-                public SecurityContext run() {
-                    return SecurityContextAssociation.getSecurityContext();
-                }
-            });
+            return doPrivileged((PrivilegedAction<SecurityContext>) () -> SecurityContextAssociation.getSecurityContext());
         } else {
             return SecurityContextAssociation.getSecurityContext();
         }
@@ -51,15 +47,13 @@ class SecurityActions {
 
     static Subject getSubject() {
         if (WildFlySecurityManager.isChecking()) {
-            return doPrivileged(new PrivilegedAction<Subject>() {
-                public Subject run() {
-                    Subject subject = null;
-                    SecurityContext sc = getSecurityContext();
-                    if (sc != null) {
-                        subject = sc.getUtil().getSubject();
-                    }
-                    return subject;
+            return doPrivileged((PrivilegedAction<Subject>) () -> {
+                Subject subject = null;
+                SecurityContext sc = getSecurityContext();
+                if (sc != null) {
+                    subject = sc.getUtil().getSubject();
                 }
+                return subject;
             });
         } else {
             Subject subject = null;

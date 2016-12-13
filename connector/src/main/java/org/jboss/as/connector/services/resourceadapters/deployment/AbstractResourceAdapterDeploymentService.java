@@ -287,11 +287,7 @@ public abstract class AbstractResourceAdapterDeploymentService {
             // add-on projects don't know to inject it....
             final ThreadGroup threadGroup = new ThreadGroup("ResourceAdapterDeploymentService ThreadGroup");
             final String namePattern = "ResourceAdapterDeploymentService Thread Pool -- %t";
-            final ThreadFactory threadFactory = doPrivileged(new PrivilegedAction<JBossThreadFactory>() {
-                public JBossThreadFactory run() {
-                    return new JBossThreadFactory(threadGroup, Boolean.FALSE, null, namePattern, null, null);
-                }
-            });
+            final ThreadFactory threadFactory = doPrivileged((PrivilegedAction<JBossThreadFactory>) () -> new JBossThreadFactory(threadGroup, Boolean.FALSE, null, namePattern, null, null));
             result = Executors.newSingleThreadExecutor(threadFactory);
         }
         return result;
@@ -311,19 +307,16 @@ public abstract class AbstractResourceAdapterDeploymentService {
     protected final void cleanupStartAsync(final StartContext context, final String deploymentName,
                 final ServiceName serviceName, final Throwable cause) {
         ExecutorService executorService = getLifecycleExecutorService();
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    // TODO -- one of the 3 previous synchronous calls to this method don't had the TCCL set,
-                    // but the other two don't. I (BES 2013/10/21) intepret from that that setting the TCCL
-                    // was not necessary and in caller that had it set it was an artifact of
-                    WritableServiceBasedNamingStore.pushOwner(serviceName);
-                    unregisterAll(deploymentName);
-                } finally {
-                    WritableServiceBasedNamingStore.popOwner();
-                    context.failed(ConnectorLogger.ROOT_LOGGER.failedToStartRaDeployment(cause, deploymentName));
-                }
+        Runnable r = () -> {
+            try {
+                // TODO -- one of the 3 previous synchronous calls to this method don't had the TCCL set,
+                // but the other two don't. I (BES 2013/10/21) intepret from that that setting the TCCL
+                // was not necessary and in caller that had it set it was an artifact of
+                WritableServiceBasedNamingStore.pushOwner(serviceName);
+                unregisterAll(deploymentName);
+            } finally {
+                WritableServiceBasedNamingStore.popOwner();
+                context.failed(ConnectorLogger.ROOT_LOGGER.failedToStartRaDeployment(cause, deploymentName));
             }
         };
         try {
@@ -337,17 +330,14 @@ public abstract class AbstractResourceAdapterDeploymentService {
 
     protected void stopAsync(final StopContext context, final String deploymentName, final ServiceName serviceName) {
         ExecutorService executorService = getLifecycleExecutorService();
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    DEPLOYMENT_CONNECTOR_LOGGER.debugf("Stopping service %s", serviceName);
-                    WritableServiceBasedNamingStore.pushOwner(serviceName);
-                    unregisterAll(deploymentName);
-                } finally {
-                    WritableServiceBasedNamingStore.popOwner();
-                    context.complete();
-                }
+        Runnable r = () -> {
+            try {
+                DEPLOYMENT_CONNECTOR_LOGGER.debugf("Stopping service %s", serviceName);
+                WritableServiceBasedNamingStore.pushOwner(serviceName);
+                unregisterAll(deploymentName);
+            } finally {
+                WritableServiceBasedNamingStore.popOwner();
+                context.complete();
             }
         };
         try {

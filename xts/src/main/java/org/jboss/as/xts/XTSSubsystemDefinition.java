@@ -24,9 +24,6 @@ package org.jboss.as.xts;
 
 import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.ObjectTypeAttributeDefinition;
-import org.jboss.as.controller.OperationContext;
-import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -100,13 +97,10 @@ public class XTSSubsystemDefinition extends SimpleResourceDefinition {
         resourceRegistration.registerReadWriteAttribute(ENVIRONMENT_URL, null, new ReloadRequiredWriteAttributeHandler(ENVIRONMENT_URL));
         resourceRegistration.registerReadWriteAttribute(DEFAULT_CONTEXT_PROPAGATION, null, new ReloadRequiredWriteAttributeHandler(DEFAULT_CONTEXT_PROPAGATION));
         //this here just for legacy support!
-        resourceRegistration.registerReadOnlyAttribute(ENVIRONMENT, new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                ModelNode url = context.readResource(PathAddress.EMPTY_ADDRESS).getModel().get(ModelDescriptionConstants.URL);
-                context.getResult().get(ModelDescriptionConstants.URL).set(url);
-                context.stepCompleted();
-            }
+        resourceRegistration.registerReadOnlyAttribute(ENVIRONMENT, (context, operation) -> {
+            ModelNode url = context.readResource(PathAddress.EMPTY_ADDRESS).getModel().get(ModelDescriptionConstants.URL);
+            context.getResult().get(ModelDescriptionConstants.URL).set(url);
+            context.stepCompleted();
         });
     }
 }

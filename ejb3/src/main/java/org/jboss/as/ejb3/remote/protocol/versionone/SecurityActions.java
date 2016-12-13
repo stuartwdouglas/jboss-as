@@ -76,21 +76,15 @@ final class SecurityActions {
 
         RemotingContextAssociationActions PRIVILEGED = new RemotingContextAssociationActions() {
 
-            private PrivilegedAction<Void> CLEAR_ACTION = new PrivilegedAction<Void>() {
-
-                public Void run() {
-                    NON_PRIVILEGED.clear();
-                    return null;
-                }
+            private PrivilegedAction<Void> CLEAR_ACTION = () -> {
+                NON_PRIVILEGED.clear();
+                return null;
             };
 
             public void setConnection(final Connection connection) {
-                doPrivileged(new PrivilegedAction<Void>() {
-
-                    public Void run() {
-                        NON_PRIVILEGED.setConnection(connection);
-                        return null;
-                    }
+                doPrivileged((PrivilegedAction<Void>) () -> {
+                    NON_PRIVILEGED.setConnection(connection);
+                    return null;
                 });
 
             }

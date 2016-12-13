@@ -128,27 +128,23 @@ public abstract class AbstractFederationSubsystemReader implements XMLStreamCons
         ModelNode federationNode = parseConfig(reader, FEDERATION, COMMON_NAME.getName(), subsystemNode,
             Arrays.asList(FederationResourceDefinition.ATTRIBUTE_DEFINITIONS), addOperations);
 
-        parseElement(new ElementParser() {
-            @Override
-            public void parse(final XMLExtendedStreamReader reader, final ModelElement element, final ModelNode parentNode,
-                List<ModelNode> addOperations) throws XMLStreamException {
-                switch (element) {
-                    case KEY_STORE:
-                        parseKeyStore(reader, parentNode, addOperations);
-                        break;
-                    case SAML:
-                        parseConfig(reader, SAML, null, parentNode, SAMLResourceDefinition.INSTANCE.getAttributes(),
-                            addOperations);
-                        break;
-                    case IDENTITY_PROVIDER:
-                        parseIdentityProviderConfig(reader, parentNode, addOperations);
-                        break;
-                    case SERVICE_PROVIDER:
-                        parseServiceProviderConfig(reader, parentNode, addOperations);
-                        break;
-                    default:
-                        throw unexpectedElement(reader);
-                }
+        parseElement((reader1, element, parentNode, addOperations1) -> {
+            switch (element) {
+                case KEY_STORE:
+                    parseKeyStore(reader1, parentNode, addOperations1);
+                    break;
+                case SAML:
+                    parseConfig(reader1, SAML, null, parentNode, SAMLResourceDefinition.INSTANCE.getAttributes(),
+                            addOperations1);
+                    break;
+                case IDENTITY_PROVIDER:
+                    parseIdentityProviderConfig(reader1, parentNode, addOperations1);
+                    break;
+                case SERVICE_PROVIDER:
+                    parseServiceProviderConfig(reader1, parentNode, addOperations1);
+                    break;
+                default:
+                    throw unexpectedElement(reader1);
             }
         }, FEDERATION, federationNode, reader, addOperations);
     }
@@ -157,12 +153,8 @@ public abstract class AbstractFederationSubsystemReader implements XMLStreamCons
         ModelNode identityProviderNode = parseConfig(reader, KEY_STORE, null, parentNode,
             KeyStoreProviderResourceDefinition.INSTANCE.getAttributes(), addOperations);
 
-        parseElement(new ElementParser() {
-            @Override
-            public void parse(final XMLExtendedStreamReader reader, final ModelElement element, final ModelNode parentNode,
-                List<ModelNode> addOperations) throws XMLStreamException {
-                throw unexpectedElement(reader);
-            }
+        parseElement((reader1, element, parentNode1, addOperations1) -> {
+            throw unexpectedElement(reader1);
         }, KEY_STORE, identityProviderNode, reader, addOperations);
     }
 
@@ -171,15 +163,11 @@ public abstract class AbstractFederationSubsystemReader implements XMLStreamCons
         ModelNode serviceProviderNode = parseConfig(reader, SERVICE_PROVIDER,
             COMMON_NAME.getName(), federationNode, Arrays.asList(ServiceProviderResourceDefinition.ATTRIBUTE_DEFINITIONS), addOperations);
 
-        parseElement(new ElementParser() {
-            @Override
-            public void parse(final XMLExtendedStreamReader reader, final ModelElement element, final ModelNode parentNode,
-                List<ModelNode> addOperations) throws XMLStreamException {
-                switch (element) {
-                    case COMMON_HANDLER:
-                        parseHandlerConfig(reader, parentNode, addOperations);
-                        break;
-                }
+        parseElement((reader1, element, parentNode, addOperations1) -> {
+            switch (element) {
+                case COMMON_HANDLER:
+                    parseHandlerConfig(reader1, parentNode, addOperations1);
+                    break;
             }
         }, SERVICE_PROVIDER, serviceProviderNode, reader, addOperations);
     }
@@ -188,18 +176,14 @@ public abstract class AbstractFederationSubsystemReader implements XMLStreamCons
         ModelNode handlerNode = parseConfig(reader, COMMON_HANDLER, COMMON_NAME.getName(), entityProviderNode, HandlerResourceDefinition.INSTANCE
             .getAttributes(), addOperations);
 
-        parseElement(new ElementParser() {
-            @Override
-            public void parse(final XMLExtendedStreamReader reader, final ModelElement element, final ModelNode parentNode,
-                List<ModelNode> addOperations) throws XMLStreamException {
-                switch (element) {
-                    case COMMON_HANDLER_PARAMETER:
-                        parseConfig(reader, COMMON_HANDLER_PARAMETER, COMMON_NAME.getName(), parentNode,
-                            HandlerParameterResourceDefinition.INSTANCE.getAttributes(), addOperations);
-                        break;
-                    default:
-                        throw unexpectedElement(reader);
-                }
+        parseElement((reader1, element, parentNode, addOperations1) -> {
+            switch (element) {
+                case COMMON_HANDLER_PARAMETER:
+                    parseConfig(reader1, COMMON_HANDLER_PARAMETER, COMMON_NAME.getName(), parentNode,
+                        HandlerParameterResourceDefinition.INSTANCE.getAttributes(), addOperations1);
+                    break;
+                default:
+                    throw unexpectedElement(reader1);
             }
         }, COMMON_HANDLER, handlerNode, reader, addOperations);
     }
@@ -210,29 +194,25 @@ public abstract class AbstractFederationSubsystemReader implements XMLStreamCons
             COMMON_NAME.getName(), federationNode,
             Arrays.asList(IdentityProviderResourceDefinition.ATTRIBUTE_DEFINITIONS), addOperations);
 
-        parseElement(new ElementParser() {
-            @Override
-            public void parse(final XMLExtendedStreamReader reader, final ModelElement element, final ModelNode parentNode,
-                List<ModelNode> addOperations) throws XMLStreamException {
-                switch (element) {
-                    case IDENTITY_PROVIDER_TRUST_DOMAIN:
-                        parseConfig(reader, IDENTITY_PROVIDER_TRUST_DOMAIN, COMMON_NAME.getName(), parentNode,
-                            TrustDomainResourceDefinition.INSTANCE.getAttributes(), addOperations);
-                        break;
-                    case IDENTITY_PROVIDER_ROLE_GENERATOR:
-                        parseConfig(reader, IDENTITY_PROVIDER_ROLE_GENERATOR, COMMON_NAME.getName(), parentNode,
-                            RoleGeneratorResourceDefinition.INSTANCE.getAttributes(), addOperations);
-                        break;
-                    case IDENTITY_PROVIDER_ATTRIBUTE_MANAGER:
-                        parseConfig(reader, IDENTITY_PROVIDER_ATTRIBUTE_MANAGER, COMMON_NAME.getName(), parentNode,
-                            AttributeManagerResourceDefinition.INSTANCE.getAttributes(), addOperations);
-                        break;
-                    case COMMON_HANDLER:
-                        parseHandlerConfig(reader, parentNode, addOperations);
-                        break;
-                    default:
-                        throw unexpectedElement(reader);
-                }
+        parseElement((reader1, element, parentNode, addOperations1) -> {
+            switch (element) {
+                case IDENTITY_PROVIDER_TRUST_DOMAIN:
+                    parseConfig(reader1, IDENTITY_PROVIDER_TRUST_DOMAIN, COMMON_NAME.getName(), parentNode,
+                        TrustDomainResourceDefinition.INSTANCE.getAttributes(), addOperations1);
+                    break;
+                case IDENTITY_PROVIDER_ROLE_GENERATOR:
+                    parseConfig(reader1, IDENTITY_PROVIDER_ROLE_GENERATOR, COMMON_NAME.getName(), parentNode,
+                        RoleGeneratorResourceDefinition.INSTANCE.getAttributes(), addOperations1);
+                    break;
+                case IDENTITY_PROVIDER_ATTRIBUTE_MANAGER:
+                    parseConfig(reader1, IDENTITY_PROVIDER_ATTRIBUTE_MANAGER, COMMON_NAME.getName(), parentNode,
+                        AttributeManagerResourceDefinition.INSTANCE.getAttributes(), addOperations1);
+                    break;
+                case COMMON_HANDLER:
+                    parseHandlerConfig(reader1, parentNode, addOperations1);
+                    break;
+                default:
+                    throw unexpectedElement(reader1);
             }
         }, IDENTITY_PROVIDER, identityProviderNode, reader, addOperations);
     }

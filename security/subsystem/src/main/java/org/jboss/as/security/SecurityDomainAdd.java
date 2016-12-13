@@ -73,7 +73,6 @@ import javax.security.auth.login.Configuration;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.security.logging.SecurityLogger;
@@ -138,14 +137,11 @@ class SecurityDomainAdd extends AbstractAddStepHandler {
         final String securityDomain = address.getLastElement().getValue();
 
         // This needs to run after all child resources so that they can detect a fresh state
-        context.addStep(new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                final Resource resource = context.readResource(PathAddress.EMPTY_ADDRESS);
-                launchServices(context, securityDomain, Resource.Tools.readModel(resource));
-                // Rollback handled by the parent step
-                context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
-            }
+        context.addStep((context1, operation1) -> {
+            final Resource resource = context1.readResource(PathAddress.EMPTY_ADDRESS);
+            launchServices(context1, securityDomain, Resource.Tools.readModel(resource));
+            // Rollback handled by the parent step
+            context1.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
         }, OperationContext.Stage.RUNTIME);
     }
 
@@ -346,11 +342,7 @@ class SecurityDomainAdd extends AbstractAddStepHandler {
                 holders.put(name, holder);
                 authenticationInfo.add(holder);
                 if (stackNode.hasDefined(LOGIN_MODULE)) {
-                    processLoginModules(context, stackNode.get(LOGIN_MODULE), authenticationInfo, new LoginModuleContainer() {
-                        public void addAppConfigurationEntry(AppConfigurationEntry entry) {
-                            holder.addAppConfigurationEntry(entry);
-                        }
-                    });
+                    processLoginModules(context, stackNode.get(LOGIN_MODULE), authenticationInfo, entry -> holder.addAppConfigurationEntry(entry));
                 }
             }
         }
@@ -407,11 +399,7 @@ class SecurityDomainAdd extends AbstractAddStepHandler {
 
         final AuthenticationInfo authenticationInfo = new AuthenticationInfo(securityDomain);
         if (node.hasDefined(Constants.LOGIN_MODULE)) {
-            processLoginModules(context, node.get(LOGIN_MODULE), authenticationInfo, new LoginModuleContainer() {
-                public void addAppConfigurationEntry(AppConfigurationEntry entry) {
-                    authenticationInfo.add(entry);
-                }
-            });
+            processLoginModules(context, node.get(LOGIN_MODULE), authenticationInfo, entry -> authenticationInfo.add(entry));
         }
         //Check for module
         applicationPolicy.setAuthenticationInfo(authenticationInfo);

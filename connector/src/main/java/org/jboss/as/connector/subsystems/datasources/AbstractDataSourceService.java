@@ -51,7 +51,6 @@ import org.jboss.as.naming.deployment.ContextNames;
 import org.jboss.jca.adapters.jdbc.BaseWrapperManagedConnectionFactory;
 import org.jboss.jca.adapters.jdbc.JDBCResourceAdapter;
 import org.jboss.jca.adapters.jdbc.local.LocalManagedConnectionFactory;
-import org.jboss.jca.adapters.jdbc.spi.ClassLoaderPlugin;
 import org.jboss.jca.adapters.jdbc.xa.XAManagedConnectionFactory;
 import org.jboss.jca.common.api.metadata.common.Extension;
 import org.jboss.jca.common.api.metadata.ds.CommonDataSource;
@@ -172,14 +171,11 @@ public abstract class AbstractDataSourceService implements Service<DataSource> {
             serviceController.setMode(ServiceController.Mode.REMOVE);
         }
         ExecutorService executorService = executor.getValue();
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    stopService();
-                } finally {
-                    stopContext.complete();
-                }
+        Runnable r = () -> {
+            try {
+                stopService();
+            } finally {
+                stopContext.complete();
             }
         };
         try {
@@ -465,13 +461,7 @@ public abstract class AbstractDataSourceService implements Service<DataSource> {
         @Override
         protected void initAndInjectClassLoaderPlugin(ManagedConnectionFactory mcf, CommonDataSource dsMetadata)
                 throws DeployException {
-            ((BaseWrapperManagedConnectionFactory) mcf).setClassLoaderPlugin(new ClassLoaderPlugin() {
-
-                @Override
-                public ClassLoader getClassLoader() {
-                    return driverClassLoader();
-                }
-            });
+            ((BaseWrapperManagedConnectionFactory) mcf).setClassLoaderPlugin(() -> driverClassLoader());
         }
 
         @Override

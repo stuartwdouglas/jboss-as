@@ -44,7 +44,6 @@ import org.jboss.as.controller.services.path.PathManager;
 import org.jboss.as.controller.transform.CombinedTransformer;
 import org.jboss.as.controller.transform.OperationRejectionPolicy;
 import org.jboss.as.controller.transform.OperationResultTransformer;
-import org.jboss.as.controller.transform.PathAddressTransformer;
 import org.jboss.as.controller.transform.ResourceTransformationContext;
 import org.jboss.as.controller.transform.TransformationContext;
 import org.jboss.as.controller.transform.TransformationTarget;
@@ -122,12 +121,7 @@ public class TimerServiceResourceDefinition extends SimpleResourceDefinition {
         timerService.discardOperations(ModelDescriptionConstants.ADD);
         timerService.setCustomResourceTransformer(dataStoreTransformer);
         timerService.rejectChildResource(EJB3SubsystemModel.DATABASE_DATA_STORE_PATH);
-        ResourceTransformationDescriptionBuilder fileDataStore = timerService.addChildRedirection(EJB3SubsystemModel.FILE_DATA_STORE_PATH, new PathAddressTransformer() {
-            @Override
-            public PathAddress transform(PathElement current, Builder builder) {
-                return builder.getCurrent();
-            }
-        });
+        ResourceTransformationDescriptionBuilder fileDataStore = timerService.addChildRedirection(EJB3SubsystemModel.FILE_DATA_STORE_PATH, (current, builder) -> builder.getCurrent());
 
         fileDataStore.addOperationTransformationOverride(ModelDescriptionConstants.ADD)
             .inheritResourceAttributeDefinitions()

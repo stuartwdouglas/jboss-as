@@ -70,16 +70,13 @@ public class JMSQueueService implements Service<Queue> {
     @Override
     public synchronized void start(final StartContext context) throws StartException {
         final JMSServerManager jmsManager = jmsServer.getValue();
-        final Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    jmsManager.createQueue(false, queueName, selectorString, durable, jndi);
-                    queue = new ActiveMQQueue(queueName);
-                    context.complete();
-                } catch (Throwable e) {
-                    context.failed(MessagingLogger.ROOT_LOGGER.failedToCreate(e, "queue"));
-                }
+        final Runnable task = () -> {
+            try {
+                jmsManager.createQueue(false, queueName, selectorString, durable, jndi);
+                queue = new ActiveMQQueue(queueName);
+                context.complete();
+            } catch (Throwable e) {
+                context.failed(MessagingLogger.ROOT_LOGGER.failedToCreate(e, "queue"));
             }
         };
         try {
@@ -94,17 +91,14 @@ public class JMSQueueService implements Service<Queue> {
     @Override
     public synchronized void stop(final StopContext context) {
         final JMSServerManager jmsManager = jmsServer.getValue();
-        final Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    jmsManager.removeQueueFromBindingRegistry(queueName);
-                    queue = null;
-                } catch (Throwable e) {
-                    MessagingLogger.ROOT_LOGGER.failedToDestroy(e, "queue", queueName);
-                }
-                context.complete();
+        final Runnable task = () -> {
+            try {
+                jmsManager.removeQueueFromBindingRegistry(queueName);
+                queue = null;
+            } catch (Throwable e) {
+                MessagingLogger.ROOT_LOGGER.failedToDestroy(e, "queue", queueName);
             }
+            context.complete();
         };
         // JMS Server Manager uses locking which waits on service completion, use async to prevent starvation
         try {

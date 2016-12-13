@@ -37,7 +37,6 @@ import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.model.test.FailedOperationTransformationConfig;
 import org.jboss.as.model.test.FailedOperationTransformationConfig.AttributesPathAddressConfig;
-import org.jboss.as.model.test.ModelFixer;
 import org.jboss.as.model.test.ModelTestControllerVersion;
 import org.jboss.as.model.test.ModelTestUtils;
 import org.jboss.as.subsystem.test.AbstractSubsystemBaseTest;
@@ -233,29 +232,26 @@ public class EeSubsystemTestCase extends AbstractSubsystemBaseTest {
                 .setSubsystemXml(subsystemXml);
 
         // Add legacy subsystems
+        // The regular model will have the new attributes because they are in the xml,
+// but the reverse controller model will not because transformation strips them
         builder.createLegacyKernelServicesBuilder(null, controllerVersion, modelVersion)
                 .addMavenResourceURL("org.jboss.as:jboss-as-ee:" + controllerVersion.getMavenGavVersion())
-                .configureReverseControllerCheck(AdditionalInitialization.MANAGEMENT, new ModelFixer() {
-                    // The regular model will have the new attributes because they are in the xml,
-                    // but the reverse controller model will not because transformation strips them
-                    @Override
-                    public ModelNode fixModel(ModelNode modelNode) {
-                        for(ModelNode node : modelNode.get(GLOBAL_MODULES).asList()) {
-                            if ("org.apache.log4j".equals(node.get(NAME).asString())) {
-                                if (!node.has(ANNOTATIONS)) {
-                                    node.get(ANNOTATIONS).set(false);
-                                }
-                                if (!node.has(META_INF)) {
-                                    node.get(META_INF).set(false);
-                                }
-                                if (!node.has(SERVICES)) {
-                                    node.get(SERVICES).set(true);
-                                }
+                .configureReverseControllerCheck(AdditionalInitialization.MANAGEMENT, modelNode -> {
+                    for(ModelNode node : modelNode.get(GLOBAL_MODULES).asList()) {
+                        if ("org.apache.log4j".equals(node.get(NAME).asString())) {
+                            if (!node.has(ANNOTATIONS)) {
+                                node.get(ANNOTATIONS).set(false);
+                            }
+                            if (!node.has(META_INF)) {
+                                node.get(META_INF).set(false);
+                            }
+                            if (!node.has(SERVICES)) {
+                                node.get(SERVICES).set(true);
                             }
                         }
-
-                        return modelNode;
                     }
+
+                    return modelNode;
                 });
 
         KernelServices mainServices = builder.build();

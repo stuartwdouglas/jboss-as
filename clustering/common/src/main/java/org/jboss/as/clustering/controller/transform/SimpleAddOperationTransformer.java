@@ -46,12 +46,7 @@ public class SimpleAddOperationTransformer implements org.jboss.as.controller.tr
     private final List<Attribute> attributes = new LinkedList<>();
 
     public SimpleAddOperationTransformer(final PathAddressTransformer transformer) {
-        this.transformer = new OperationTransformer() {
-            @Override
-            public ModelNode transformOperation(ModelNode operation) {
-                return Util.createAddOperation(transformer.transform(Operations.getPathAddress(operation)));
-            }
-        };
+        this.transformer = operation -> Util.createAddOperation(transformer.transform(Operations.getPathAddress(operation)));
     }
 
     public SimpleAddOperationTransformer(OperationTransformer transformer) {

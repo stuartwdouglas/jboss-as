@@ -24,14 +24,11 @@ package org.jboss.as.configadmin.parser;
 import org.jboss.as.controller.ModelOnlyRemoveStepHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationDefinition;
-import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.PropertiesAttributeDefinition;
 import org.jboss.as.controller.SimpleOperationDefinitionBuilder;
 import org.jboss.as.controller.SimpleResourceDefinition;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.dmr.ModelNode;
 
 import static org.jboss.as.configadmin.parser.ModelConstants.UPDATE;
 
@@ -65,12 +62,7 @@ public class ConfigurationResource extends SimpleResourceDefinition {
     @Override
     public void registerOperations(ManagementResourceRegistration resourceRegistration) {
         super.registerOperations(resourceRegistration);
-        resourceRegistration.registerOperationHandler(UPDATE_DEFINITION, new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                context.completeStep(OperationContext.ResultHandler.NOOP_RESULT_HANDLER);
-            }
-        });
+        resourceRegistration.registerOperationHandler(UPDATE_DEFINITION, (context, operation) -> context.completeStep(OperationContext.ResultHandler.NOOP_RESULT_HANDLER));
     }
 
 }

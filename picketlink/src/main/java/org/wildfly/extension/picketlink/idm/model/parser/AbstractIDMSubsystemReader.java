@@ -127,15 +127,11 @@ public abstract class AbstractIDMSubsystemReader implements XMLStreamConstants, 
         ModelNode identityManagementNode = parseConfig(reader, PARTITION_MANAGER, COMMON_NAME.getName(), parentNode,
                                                               PartitionManagerResourceDefinition.INSTANCE.getAttributes(), addOperations);
 
-        parseElement(new ElementParser() {
-            @Override
-            public void parse(final XMLExtendedStreamReader reader, final ModelElement element, final ModelNode parentNode,
-                                     List<ModelNode> addOperations) throws XMLStreamException {
-                switch (element) {
-                    case IDENTITY_CONFIGURATION:
-                        parseIdentityConfigurationConfig(reader, parentNode, addOperations);
-                        break;
-                }
+        parseElement((reader1, element, parentNode1, addOperations1) -> {
+            switch (element) {
+                case IDENTITY_CONFIGURATION:
+                    parseIdentityConfigurationConfig(reader1, parentNode1, addOperations1);
+                    break;
             }
         }, PARTITION_MANAGER, identityManagementNode, reader, addOperations);
     }
@@ -145,21 +141,17 @@ public abstract class AbstractIDMSubsystemReader implements XMLStreamConstants, 
         ModelNode identityConfigurationNode = parseConfig(reader, IDENTITY_CONFIGURATION, COMMON_NAME.getName(), parentNode,
                                                                  IdentityConfigurationResourceDefinition.INSTANCE.getAttributes(), addOperations);
 
-        parseElement(new ElementParser() {
-            @Override
-            public void parse(final XMLExtendedStreamReader reader, final ModelElement element, final ModelNode parentNode,
-                                     List<ModelNode> addOperations) throws XMLStreamException {
-                switch (element) {
-                    case JPA_STORE:
-                        parseJPAStoreConfig(reader, parentNode, addOperations);
-                        break;
-                    case FILE_STORE:
-                        parseFileStoreConfig(reader, parentNode, addOperations);
-                        break;
-                    case LDAP_STORE:
-                        parseLDAPStoreConfig(reader, addOperations, parentNode);
-                        break;
-                }
+        parseElement((reader1, element, parentNode1, addOperations1) -> {
+            switch (element) {
+                case JPA_STORE:
+                    parseJPAStoreConfig(reader1, parentNode1, addOperations1);
+                    break;
+                case FILE_STORE:
+                    parseFileStoreConfig(reader1, parentNode1, addOperations1);
+                    break;
+                case LDAP_STORE:
+                    parseLDAPStoreConfig(reader1, addOperations1, parentNode1);
+                    break;
             }
         }, IDENTITY_CONFIGURATION, identityConfigurationNode, reader, addOperations);
     }
@@ -169,18 +161,14 @@ public abstract class AbstractIDMSubsystemReader implements XMLStreamConstants, 
         ModelNode jpaStoreNode = parseConfig(reader, JPA_STORE, null, identityConfigurationNode,
                                                     JPAStoreResourceDefinition.INSTANCE.getAttributes(), addOperations);
 
-        parseElement(new ElementParser() {
-            @Override
-            public void parse(final XMLExtendedStreamReader reader, final ModelElement element, final ModelNode parentNode,
-                                     List<ModelNode> addOperations) throws XMLStreamException {
-                switch (element) {
-                    case IDENTITY_STORE_CREDENTIAL_HANDLER:
-                        parseCredentialHandlerConfig(reader, parentNode, addOperations);
-                        break;
-                    case SUPPORTED_TYPES:
-                        parseSupportedTypesConfig(reader, parentNode, addOperations);
-                        break;
-                }
+        parseElement((reader1, element, parentNode, addOperations1) -> {
+            switch (element) {
+                case IDENTITY_STORE_CREDENTIAL_HANDLER:
+                    parseCredentialHandlerConfig(reader1, parentNode, addOperations1);
+                    break;
+                case SUPPORTED_TYPES:
+                    parseSupportedTypesConfig(reader1, parentNode, addOperations1);
+                    break;
             }
         }, JPA_STORE, jpaStoreNode, reader, addOperations);
     }
@@ -190,18 +178,14 @@ public abstract class AbstractIDMSubsystemReader implements XMLStreamConstants, 
         ModelNode fileStoreNode = parseConfig(reader, FILE_STORE, null, identityManagementNode,
                                                      FileStoreResourceDefinition.INSTANCE.getAttributes(), addOperations);
 
-        parseElement(new ElementParser() {
-            @Override
-            public void parse(final XMLExtendedStreamReader reader, final ModelElement element, final ModelNode parentNode,
-                                     List<ModelNode> addOperations) throws XMLStreamException {
-                switch (element) {
-                    case IDENTITY_STORE_CREDENTIAL_HANDLER:
-                        parseCredentialHandlerConfig(reader, parentNode, addOperations);
-                        break;
-                    case SUPPORTED_TYPES:
-                        parseSupportedTypesConfig(reader, parentNode, addOperations);
-                        break;
-                }
+        parseElement((reader1, element, parentNode, addOperations1) -> {
+            switch (element) {
+                case IDENTITY_STORE_CREDENTIAL_HANDLER:
+                    parseCredentialHandlerConfig(reader1, parentNode, addOperations1);
+                    break;
+                case SUPPORTED_TYPES:
+                    parseSupportedTypesConfig(reader1, parentNode, addOperations1);
+                    break;
             }
         }, FILE_STORE, fileStoreNode, reader, addOperations);
     }
@@ -211,21 +195,17 @@ public abstract class AbstractIDMSubsystemReader implements XMLStreamConstants, 
         ModelNode ldapStoreNode = parseConfig(reader, LDAP_STORE, null, identityManagementNode,
                                                      LDAPStoreResourceDefinition.INSTANCE.getAttributes(), addOperations);
 
-        parseElement(new ElementParser() {
-            @Override
-            public void parse(final XMLExtendedStreamReader reader, final ModelElement element, final ModelNode parentNode,
-                                     List<ModelNode> addOperations) throws XMLStreamException {
-                switch (element) {
-                    case IDENTITY_STORE_CREDENTIAL_HANDLER:
-                        parseCredentialHandlerConfig(reader, parentNode, addOperations);
-                        break;
-                    case LDAP_STORE_MAPPING:
-                        parseLDAPMappingConfig(reader, parentNode, addOperations);
-                        break;
-                    case SUPPORTED_TYPES:
-                        parseSupportedTypesConfig(reader, parentNode, addOperations);
-                        break;
-                }
+        parseElement((reader1, element, parentNode, addOperations1) -> {
+            switch (element) {
+                case IDENTITY_STORE_CREDENTIAL_HANDLER:
+                    parseCredentialHandlerConfig(reader1, parentNode, addOperations1);
+                    break;
+                case LDAP_STORE_MAPPING:
+                    parseLDAPMappingConfig(reader1, parentNode, addOperations1);
+                    break;
+                case SUPPORTED_TYPES:
+                    parseSupportedTypesConfig(reader1, parentNode, addOperations1);
+                    break;
             }
         }, LDAP_STORE, ldapStoreNode, reader, addOperations);
     }
@@ -236,16 +216,12 @@ public abstract class AbstractIDMSubsystemReader implements XMLStreamConstants, 
                                                          COMMON_NAME.getName(), identityProviderNode,
                                                          LDAPStoreMappingResourceDefinition.INSTANCE.getAttributes(), addOperations);
 
-        parseElement(new ElementParser() {
-            @Override
-            public void parse(final XMLExtendedStreamReader reader, final ModelElement element, final ModelNode parentNode,
-                                     List<ModelNode> addOperations) throws XMLStreamException {
-                switch (element) {
-                    case LDAP_STORE_ATTRIBUTE:
-                        parseConfig(reader, LDAP_STORE_ATTRIBUTE, LDAPStoreAttributeResourceDefinition.NAME.getName(),
-                                       parentNode, LDAPStoreAttributeResourceDefinition.INSTANCE.getAttributes(), addOperations);
-                        break;
-                }
+        parseElement((reader1, element, parentNode, addOperations1) -> {
+            switch (element) {
+                case LDAP_STORE_ATTRIBUTE:
+                    parseConfig(reader1, LDAP_STORE_ATTRIBUTE, LDAPStoreAttributeResourceDefinition.NAME.getName(),
+                                   parentNode, LDAPStoreAttributeResourceDefinition.INSTANCE.getAttributes(), addOperations1);
+                    break;
             }
         }, LDAP_STORE_MAPPING, ldapMappingConfig, reader, addOperations);
     }
@@ -261,15 +237,11 @@ public abstract class AbstractIDMSubsystemReader implements XMLStreamConstants, 
         ModelNode supportedTypesNode = parseConfig(reader, SUPPORTED_TYPES, null, identityStoreNode,
                                                           SupportedTypesResourceDefinition.INSTANCE.getAttributes(), addOperations);
 
-        parseElement(new ElementParser() {
-            @Override
-            public void parse(final XMLExtendedStreamReader reader, final ModelElement element, final ModelNode parentNode,
-                                     List<ModelNode> addOperations) throws XMLStreamException {
-                switch (element) {
-                    case SUPPORTED_TYPE:
-                        parseSupportedTypeConfig(reader, parentNode, addOperations);
-                        break;
-                }
+        parseElement((reader1, element, parentNode, addOperations1) -> {
+            switch (element) {
+                case SUPPORTED_TYPE:
+                    parseSupportedTypeConfig(reader1, parentNode, addOperations1);
+                    break;
             }
         }, SUPPORTED_TYPES, supportedTypesNode, reader, addOperations);
 

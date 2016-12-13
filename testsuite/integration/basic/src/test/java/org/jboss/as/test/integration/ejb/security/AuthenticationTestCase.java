@@ -376,18 +376,15 @@ public class AuthenticationTestCase {
 
     public static String get(final String spec, final String username, final String password, final long timeout, final TimeUnit unit) throws IOException, TimeoutException {
         final URL url = new URL(spec);
-        Callable<String> task = new Callable<String>() {
-            @Override
-            public String call() throws IOException {
-                final HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                if (username != null) {
-                    final String userpassword = username + ":" + password;
-                    final String basicAuthorization = java.util.Base64.getEncoder().encodeToString(userpassword.getBytes());
-                    conn.setRequestProperty("Authorization", "Basic " + basicAuthorization);
-                }
-                conn.setDoInput(true);
-                return processResponse(conn);
+        Callable<String> task = () -> {
+            final HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            if (username != null) {
+                final String userpassword = username + ":" + password;
+                final String basicAuthorization = java.util.Base64.getEncoder().encodeToString(userpassword.getBytes());
+                conn.setRequestProperty("Authorization", "Basic " + basicAuthorization);
             }
+            conn.setDoInput(true);
+            return processResponse(conn);
         };
         return execute(task, timeout, unit);
     }

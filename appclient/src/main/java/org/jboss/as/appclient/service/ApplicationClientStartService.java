@@ -95,66 +95,59 @@ public class ApplicationClientStartService implements Service<ApplicationClientS
     public synchronized void start(final StartContext context) throws StartException {
         final ServiceContainer serviceContainer = context.getController().getServiceContainer();
 
-        thread = new Thread(new Runnable() {
-
-            @Override
-            public void run() {
-                final ClassLoader oldTccl = WildFlySecurityManager.getCurrentContextClassLoaderPrivileged();
+        thread = new Thread(() -> {
+            final ClassLoader oldTccl = WildFlySecurityManager.getCurrentContextClassLoaderPrivileged();
+            try {
                 try {
                     try {
+                        WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(classLoader);
+                        AccessController.doPrivileged(new SetSelectorAction(contextSelector));
+                        applicationClientDeploymentServiceInjectedValue.getValue().getDeploymentCompleteLatch().await();
+                        NamespaceContextSelector.setDefault(namespaceContextSelectorInjectedValue);
+
                         try {
-                            WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(classLoader);
-                            AccessController.doPrivileged(new SetSelectorAction(contextSelector));
-                            applicationClientDeploymentServiceInjectedValue.getValue().getDeploymentCompleteLatch().await();
-                            NamespaceContextSelector.setDefault(namespaceContextSelectorInjectedValue);
+                            //perform any additional setup that may be needed
+                            for (SetupAction action : setupActions) {
+                                action.setup(Collections.<String, Object>emptyMap());
+                            }
 
-                            try {
-                                //perform any additional setup that may be needed
-                                for (SetupAction action : setupActions) {
-                                    action.setup(Collections.<String, Object>emptyMap());
-                                }
+                            //do static injection etc
+                            instance = applicationClientComponent.getValue().createInstance();
 
-                                //do static injection etc
-                                instance = applicationClientComponent.getValue().createInstance();
-
-                                mainMethod.invoke(null, new Object[]{parameters});
-                            } finally {
-                                final ListIterator<SetupAction> iterator = setupActions.listIterator(setupActions.size());
-                                Throwable error = null;
-                                while (iterator.hasPrevious()) {
-                                    SetupAction action = iterator.previous();
-                                    try {
-                                        action.teardown(Collections.<String, Object>emptyMap());
-                                    } catch (Throwable e) {
-                                        error = e;
-                                    }
-                                }
-                                if (error != null) {
-                                    throw new RuntimeException(error);
+                            mainMethod.invoke(null, new Object[]{parameters});
+                        } finally {
+                            final ListIterator<SetupAction> iterator = setupActions.listIterator(setupActions.size());
+                            Throwable error = null;
+                            while (iterator.hasPrevious()) {
+                                SetupAction action = iterator.previous();
+                                try {
+                                    action.teardown(Collections.<String, Object>emptyMap());
+                                } catch (Throwable e) {
+                                    error = e;
                                 }
                             }
-                        } catch (Exception e) {
-                            ROOT_LOGGER.exceptionRunningAppClient(e, e.getClass().getSimpleName());
-                        } finally {
-                            WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(oldTccl);
+                            if (error != null) {
+                                throw new RuntimeException(error);
+                            }
                         }
+                    } catch (Exception e) {
+                        ROOT_LOGGER.exceptionRunningAppClient(e, e.getClass().getSimpleName());
                     } finally {
-                        if(contextSelector instanceof LazyConnectionContextSelector) {
-                            ((LazyConnectionContextSelector)contextSelector).close();
-                        }
+                        WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(oldTccl);
                     }
                 } finally {
-                    serviceContainer.shutdown();
+                    if(contextSelector instanceof LazyConnectionContextSelector) {
+                        ((LazyConnectionContextSelector)contextSelector).close();
+                    }
                 }
+            } finally {
+                serviceContainer.shutdown();
             }
         });
         thread.start();
-        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if(serviceContainer != null) {
-                    serviceContainer.shutdown();
-                }
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if(serviceContainer != null) {
+                serviceContainer.shutdown();
             }
         }));
 

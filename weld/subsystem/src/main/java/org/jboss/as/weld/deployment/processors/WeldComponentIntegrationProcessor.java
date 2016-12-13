@@ -33,11 +33,8 @@ import javax.enterprise.inject.spi.InterceptionType;
 
 import org.jboss.as.ee.component.BasicComponentInstance;
 import org.jboss.as.ee.component.ComponentConfiguration;
-import org.jboss.as.ee.component.ComponentConfigurator;
 import org.jboss.as.ee.component.ComponentDescription;
 import org.jboss.as.ee.component.ComponentInstance;
-import org.jboss.as.ee.component.ComponentStartService;
-import org.jboss.as.ee.component.DependencyConfigurator;
 import org.jboss.as.ee.component.EEModuleDescription;
 import org.jboss.as.ee.component.InterceptorDescription;
 import org.jboss.as.ee.component.ViewConfiguration;
@@ -128,27 +125,24 @@ public class WeldComponentIntegrationProcessor implements DeploymentUnitProcesso
                 }
                 configuration.addTimeoutViewInterceptor(requestFactory, InterceptorOrder.View.CDI_REQUEST_SCOPE);
             });
-            component.getConfigurators().addFirst(new ComponentConfigurator() {
-                @Override
-                public void configure(final DeploymentPhaseContext context, final ComponentDescription description, final ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                    final Class<?> componentClass = configuration.getComponentClass();
-                    final DeploymentUnit deploymentUnit = context.getDeploymentUnit();
-                    final Module module = deploymentUnit.getAttachment(Attachments.MODULE);
-                    final ModuleClassLoader classLoader = module.getClassLoader();
+            component.getConfigurators().addFirst((context, description, configuration) -> {
+                final Class<?> componentClass = configuration.getComponentClass();
+                final DeploymentUnit deploymentUnit1 = context.getDeploymentUnit();
+                final Module module = deploymentUnit1.getAttachment(Attachments.MODULE);
+                final ModuleClassLoader classLoader = module.getClassLoader();
 
-                    //get the interceptors so they can be injected as well
-                    final Set<Class<?>> interceptorClasses = new HashSet<Class<?>>();
-                    for (InterceptorDescription interceptorDescription : description.getAllInterceptors()) {
-                        try {
-                            interceptorClasses.add(ClassLoadingUtils.loadClass(interceptorDescription.getInterceptorClassName(), module));
-                        } catch (ClassNotFoundException e) {
-                            throw WeldLogger.ROOT_LOGGER.couldNotLoadInterceptorClass(interceptorDescription.getInterceptorClassName(), e);
-                        }
+                //get the interceptors so they can be injected as well
+                final Set<Class<?>> interceptorClasses = new HashSet<Class<?>>();
+                for (InterceptorDescription interceptorDescription : description.getAllInterceptors()) {
+                    try {
+                        interceptorClasses.add(ClassLoadingUtils.loadClass(interceptorDescription.getInterceptorClassName(), module));
+                    } catch (ClassNotFoundException e) {
+                        throw WeldLogger.ROOT_LOGGER.couldNotLoadInterceptorClass(interceptorDescription.getInterceptorClassName(), e);
                     }
-                    addWeldIntegration(componentIntegrators, componentInterceptorSupport, context.getServiceTarget(), configuration, description,
-                            componentClass, beanName, weldBootstrapService, weldStartService, beanManagerService,
-                            interceptorClasses, classLoader, description.getBeanDeploymentArchiveId());
                 }
+                addWeldIntegration(componentIntegrators, componentInterceptorSupport, context.getServiceTarget(), configuration, description,
+                        componentClass, beanName, weldBootstrapService, weldStartService, beanManagerService,
+                        interceptorClasses, classLoader, description.getBeanDeploymentArchiveId());
             });
         }
 
@@ -185,12 +179,7 @@ public class WeldComponentIntegrationProcessor implements DeploymentUnitProcesso
                 .addDependency(weldServiceName, WeldBootstrapService.class, weldComponentService.getWeldContainer()).addDependency(weldStartService);
 
         configuration.setInstanceFactory(WeldManagedReferenceFactory.INSTANCE);
-        configuration.getStartDependencies().add(new DependencyConfigurator<ComponentStartService>() {
-            @Override
-            public void configureDependency(final ServiceBuilder<?> serviceBuilder, ComponentStartService service) throws DeploymentUnitProcessingException {
-                serviceBuilder.addDependency(serviceName);
-            }
-        });
+        configuration.getStartDependencies().add((serviceBuilder, service) -> serviceBuilder.addDependency(serviceName));
 
         boolean isComponentIntegrationPerformed = false;
         for (ComponentIntegrator componentIntegrator : componentIntegrators) {

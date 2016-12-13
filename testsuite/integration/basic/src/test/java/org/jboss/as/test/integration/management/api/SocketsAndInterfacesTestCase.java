@@ -29,7 +29,6 @@ import java.net.SocketException;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
-import java.util.concurrent.Callable;
 
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
@@ -159,12 +158,10 @@ public class SocketsAndInterfacesTestCase extends ContainerResourceMgmtTestBase 
         // wait until the connector is available on the new port
         final String testUrl = new URL("http", testHost, TEST_PORT + 1, "/").toString();
         RetryTaskExecutor<Boolean> rte = new RetryTaskExecutor<Boolean>();
-        rte.retryTask(new Callable<Boolean>(){
-            public Boolean call() throws Exception {
-                boolean available = WebUtil.testHttpURL(testUrl);
-                if (!available) throw new Exception("Connector not available.");
-                return available;
-            }
+        rte.retryTask(() -> {
+            boolean available = WebUtil.testHttpURL(testUrl);
+            if (!available) throw new Exception("Connector not available.");
+            return available;
         });
 
         logger.trace("Server is up.");

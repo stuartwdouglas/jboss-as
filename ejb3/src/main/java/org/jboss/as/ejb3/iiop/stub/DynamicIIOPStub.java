@@ -128,11 +128,7 @@ public abstract class DynamicIIOPStub
                     if (stubStrategy.isNonVoid()) {
                         trace("received reply");
                         final InputStream finalIn = in;
-                        return doPrivileged(new PrivilegedAction<Object>() {
-                            public Object run() {
-                                return stubStrategy.readRetval(finalIn);
-                            }
-                        });
+                        return doPrivileged((PrivilegedAction<Object>) () -> stubStrategy.readRetval(finalIn));
                     } else {
                         return null;
                     }
@@ -140,11 +136,7 @@ public abstract class DynamicIIOPStub
                     trace("got application exception");
                     in = (InputStream) ex.getInputStream();
                     final InputStream finalIn1 = in;
-                    throw doPrivileged(new PrivilegedAction<Exception>() {
-                        public Exception run() {
-                            return stubStrategy.readException(ex.getId(), finalIn1);
-                        }
-                    });
+                    throw doPrivileged((PrivilegedAction<Exception>) () -> stubStrategy.readException(ex.getId(), finalIn1));
                 } catch (RemarshalException ex) {
                     trace("got remarshal exception");
                     return invoke(operationName, stubStrategy, params);

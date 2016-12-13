@@ -29,7 +29,6 @@ import java.util.ServiceLoader;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.ObjectTable;
 import org.jboss.marshalling.Unmarshaller;
 import org.wildfly.clustering.marshalling.Externalizer;
@@ -67,12 +66,9 @@ public class ExternalizerObjectTable implements ObjectTable {
             final int index = i;
             Class<?> targetClass = externalizer.getTargetClass();
             if (!this.writers.containsKey(targetClass)) {
-                Writer writer = new Writer() {
-                    @Override
-                    public void writeObject(Marshaller marshaller, Object object) throws IOException {
-                        indexExternalizer.writeObject(marshaller, index);
-                        externalizer.writeObject(marshaller, object);
-                    }
+                Writer writer = (marshaller, object) -> {
+                    indexExternalizer.writeObject(marshaller, index);
+                    externalizer.writeObject(marshaller, object);
                 };
                 this.writers.put(targetClass, writer);
             }

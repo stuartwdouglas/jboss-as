@@ -67,38 +67,34 @@ public class GetInstalledDriverOperationHandler implements OperationStepHandler 
 
         final String name = operation.require(DRIVER_NAME.getName()).asString();
         if (context.isNormalServer()) {
-            context.addStep(new OperationStepHandler() {
+            context.addStep((context1, operation1) -> {
 
-                @Override
-                public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {
+                ServiceController<?> sc = context1.getServiceRegistry(false).getRequiredService(
+                        ConnectorServices.JDBC_DRIVER_REGISTRY_SERVICE);
+                DriverRegistry driverRegistry = DriverRegistry.class.cast(sc.getValue());
+                ModelNode result = new ModelNode();
+                InstalledDriver driver = driverRegistry.getInstalledDriver(name);
+                ModelNode driverNode = new ModelNode();
+                driverNode.get(DRIVER_NAME.getName()).set(driver.getDriverName());
+                if (driver.isFromDeployment()) {
+                    driverNode.get(DEPLOYMENT_NAME.getName()).set(driver.getDriverName());
+                    driverNode.get(DRIVER_MODULE_NAME.getName());
+                    driverNode.get(MODULE_SLOT.getName());
+                    driverNode.get(DRIVER_XA_DATASOURCE_CLASS_NAME.getName());
+                } else {
+                    driverNode.get(DEPLOYMENT_NAME.getName());
+                    driverNode.get(DRIVER_MODULE_NAME.getName()).set(driver.getModuleName().getName());
+                    driverNode.get(MODULE_SLOT.getName()).set(driver.getModuleName() != null ? driver.getModuleName().getSlot() : "");
+                    driverNode.get(DRIVER_XA_DATASOURCE_CLASS_NAME.getName()).set(driver.getXaDataSourceClassName());
 
-                    ServiceController<?> sc = context.getServiceRegistry(false).getRequiredService(
-                            ConnectorServices.JDBC_DRIVER_REGISTRY_SERVICE);
-                    DriverRegistry driverRegistry = DriverRegistry.class.cast(sc.getValue());
-                    ModelNode result = new ModelNode();
-                    InstalledDriver driver = driverRegistry.getInstalledDriver(name);
-                    ModelNode driverNode = new ModelNode();
-                    driverNode.get(DRIVER_NAME.getName()).set(driver.getDriverName());
-                    if (driver.isFromDeployment()) {
-                        driverNode.get(DEPLOYMENT_NAME.getName()).set(driver.getDriverName());
-                        driverNode.get(DRIVER_MODULE_NAME.getName());
-                        driverNode.get(MODULE_SLOT.getName());
-                        driverNode.get(DRIVER_XA_DATASOURCE_CLASS_NAME.getName());
-                    } else {
-                        driverNode.get(DEPLOYMENT_NAME.getName());
-                        driverNode.get(DRIVER_MODULE_NAME.getName()).set(driver.getModuleName().getName());
-                        driverNode.get(MODULE_SLOT.getName()).set(driver.getModuleName() != null ? driver.getModuleName().getSlot() : "");
-                        driverNode.get(DRIVER_XA_DATASOURCE_CLASS_NAME.getName()).set(driver.getXaDataSourceClassName());
-
-                    }
-                    driverNode.get(DRIVER_CLASS_NAME.getName()).set(driver.getDriverClassName());
-                    driverNode.get(DRIVER_MAJOR_VERSION.getName()).set(driver.getMajorVersion());
-                    driverNode.get(DRIVER_MINOR_VERSION.getName()).set(driver.getMinorVersion());
-                    driverNode.get(JDBC_COMPLIANT.getName()).set(driver.isJdbcCompliant());
-                    result.add(driverNode);
-
-                    context.getResult().set(result);
                 }
+                driverNode.get(DRIVER_CLASS_NAME.getName()).set(driver.getDriverClassName());
+                driverNode.get(DRIVER_MAJOR_VERSION.getName()).set(driver.getMajorVersion());
+                driverNode.get(DRIVER_MINOR_VERSION.getName()).set(driver.getMinorVersion());
+                driverNode.get(JDBC_COMPLIANT.getName()).set(driver.isJdbcCompliant());
+                result.add(driverNode);
+
+                context1.getResult().set(result);
             }, OperationContext.Stage.RUNTIME);
         }
     }

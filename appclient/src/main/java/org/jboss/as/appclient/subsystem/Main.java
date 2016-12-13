@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ExecutorService;
 
 import javax.xml.namespace.QName;
 
@@ -39,7 +38,6 @@ import org.jboss.as.appclient.logging.AppClientLogger;
 import org.jboss.as.appclient.subsystem.parsing.AppClientXml;
 import org.jboss.as.controller.extension.ExtensionRegistry;
 import org.jboss.as.controller.parsing.Namespace;
-import org.jboss.as.controller.persistence.ExtensibleConfigurationPersister;
 import org.jboss.as.process.CommandLineConstants;
 import org.jboss.as.server.Bootstrap;
 import org.jboss.as.server.ServerEnvironment;
@@ -138,20 +136,16 @@ public final class Main {
                 configuration.setModuleLoader(Module.getBootModuleLoader());
                 final ExtensionRegistry extensionRegistry = configuration.getExtensionRegistry();
                 final AppClientXml parser = new AppClientXml(Module.getBootModuleLoader(), extensionRegistry);
-                final Bootstrap.ConfigurationPersisterFactory configurationPersisterFactory = new Bootstrap.ConfigurationPersisterFactory() {
-
-                    @Override
-                    public ExtensibleConfigurationPersister createConfigurationPersister(ServerEnvironment serverEnvironment, ExecutorService executorService) {
-                        ApplicationClientConfigurationPersister persister = new ApplicationClientConfigurationPersister(earPath, deploymentName, options.hostUrl,options.propertiesFile, params,
-                                serverEnvironment.getServerConfigurationFile().getBootFile(), rootElement, parser);
-                        for (Namespace namespace : Namespace.domainValues()) {
-                            if (!namespace.equals(Namespace.CURRENT)) {
-                                persister.registerAdditionalRootElement(new QName(namespace.getUriString(), "server"), parser);
-                            }
+                final Bootstrap.ConfigurationPersisterFactory configurationPersisterFactory = (serverEnvironment1, executorService) -> {
+                    ApplicationClientConfigurationPersister persister = new ApplicationClientConfigurationPersister(earPath, deploymentName, options.hostUrl,options.propertiesFile, params,
+                            serverEnvironment1.getServerConfigurationFile().getBootFile(), rootElement, parser);
+                    for (Namespace namespace : Namespace.domainValues()) {
+                        if (!namespace.equals(Namespace.CURRENT)) {
+                            persister.registerAdditionalRootElement(new QName(namespace.getUriString(), "server"), parser);
                         }
-                        extensionRegistry.setWriterRegistry(persister);
-                        return persister;
                     }
+                    extensionRegistry.setWriterRegistry(persister);
+                    return persister;
                 };
                 configuration.setConfigurationPersisterFactory(configurationPersisterFactory);
                 bootstrap.bootstrap(configuration, Collections.<ServiceActivator>emptyList()).get();

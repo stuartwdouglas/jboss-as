@@ -86,19 +86,17 @@ public class StrictMaxUnitTestCase {
 
 
 
-        Callable<Void> task = new Callable<Void>() {
-            public Void call() throws Exception {
-                MockBean bean = pool.get();
-                ready.countDown();
-                in.await();
-                pool.release(bean);
+        Callable<Void> task = () -> {
+            MockBean bean = pool.get();
+            ready.countDown();
+            in.await();
+            pool.release(bean);
 
-                bean = null;
+            bean = null;
 
-                used.incrementAndGet();
+            used.incrementAndGet();
 
-                return null;
-            }
+            return null;
         };
 
         ExecutorService service = Executors.newFixedThreadPool(20);

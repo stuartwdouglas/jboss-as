@@ -65,70 +65,20 @@ public class ServerConfigImplTestCase {
 
     @Test
     public void testSingleAttributeUpdate() throws Exception {
-        internalTestSingleAttributeUpdate(new Callback() {
-            @Override
-            public void setAttribute(ServerConfig sc) throws Exception {
-                sc.setModifySOAPAddress(true);
-            }
-        });
-        internalTestSingleAttributeUpdate(new Callback() {
-            @Override
-            public void setAttribute(ServerConfig sc) throws Exception {
-                sc.setWebServiceHost("foo");
-            }
-        });
-        internalTestSingleAttributeUpdate(new Callback() {
-            @Override
-            public void setAttribute(ServerConfig sc) throws Exception {
-                sc.setWebServicePort(976);
-            }
-        });
-        internalTestSingleAttributeUpdate(new Callback() {
-            @Override
-            public void setAttribute(ServerConfig sc) throws Exception {
-                sc.setWebServiceSecurePort(5435);
-            }
-        });
-        internalTestSingleAttributeUpdate(new Callback() {
-            @Override
-            public void setAttribute(ServerConfig sc) throws Exception {
-                sc.setWebServicePathRewriteRule("MY/TEST/PATH");
-            }
-        });
+        internalTestSingleAttributeUpdate(sc -> sc.setModifySOAPAddress(true));
+        internalTestSingleAttributeUpdate(sc -> sc.setWebServiceHost("foo"));
+        internalTestSingleAttributeUpdate(sc -> sc.setWebServicePort(976));
+        internalTestSingleAttributeUpdate(sc -> sc.setWebServiceSecurePort(5435));
+        internalTestSingleAttributeUpdate(sc -> sc.setWebServicePathRewriteRule("MY/TEST/PATH"));
     }
 
     @Test
     public void testMultipleAttributesUpdate() throws Exception {
-        Callback cbA = new Callback() {
-            @Override
-            public void setAttribute(ServerConfig sc) throws Exception {
-                sc.setModifySOAPAddress(true);
-            }
-        };
-        Callback cbB = new Callback() {
-            @Override
-            public void setAttribute(ServerConfig sc) throws Exception {
-                sc.setWebServiceHost("foo");
-            }
-        };
-        Callback cbC = new Callback() {
-            @Override
-            public void setAttribute(ServerConfig sc) throws Exception {
-                sc.setWebServicePort(976);
-            }
-        };
-        Callback cbD = new Callback() {
-            @Override
-            public void setAttribute(ServerConfig sc) throws Exception {
-                sc.setWebServiceSecurePort(5435);
-            }
-        };
-        Callback cbE = new Callback() {
-            @Override
-            public void setAttribute(ServerConfig sc) throws Exception {
-                sc.setWebServicePathRewriteRule("MY/TEST/PATH");
-            }
-        };
+        Callback cbA = sc -> sc.setModifySOAPAddress(true);
+        Callback cbB = sc -> sc.setWebServiceHost("foo");
+        Callback cbC = sc -> sc.setWebServicePort(976);
+        Callback cbD = sc -> sc.setWebServiceSecurePort(5435);
+        Callback cbE = sc -> sc.setWebServicePathRewriteRule("MY/TEST/PATH");
         internalTestMultipleAttributeUpdate(cbA, new Callback[]{cbB, cbC, cbD, cbE});
         internalTestMultipleAttributeUpdate(cbB, new Callback[]{cbA, cbC, cbD, cbE});
         internalTestMultipleAttributeUpdate(cbC, new Callback[]{cbA, cbB, cbD, cbE});

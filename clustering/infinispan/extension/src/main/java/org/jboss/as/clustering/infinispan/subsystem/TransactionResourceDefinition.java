@@ -44,7 +44,6 @@ import org.jboss.as.clustering.controller.validation.EnumValidatorBuilder;
 import org.jboss.as.clustering.controller.validation.ParameterValidatorBuilder;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.ModelVersion;
-import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinition;
@@ -53,9 +52,7 @@ import org.jboss.as.controller.client.helpers.MeasurementUnit;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.controller.transform.OperationResultTransformer;
-import org.jboss.as.controller.transform.ResourceTransformationContext;
 import org.jboss.as.controller.transform.ResourceTransformer;
 import org.jboss.as.controller.transform.description.AttributeConverter.DefaultValueAttributeConverter;
 import org.jboss.as.controller.transform.description.ResourceTransformationDescriptionBuilder;
@@ -121,87 +118,66 @@ public class TransactionResourceDefinition extends ComponentResourceDefinition {
 
         if (InfinispanModel.VERSION_3_0_0.requiresTransformation(version)) {
             // Convert BATCH -> NONE, and include write-attribute:name=batching
-            OperationTransformer addTransformer = new OperationTransformer() {
-                @Override
-                public ModelNode transformOperation(ModelNode operation) {
-                    if (operation.hasDefined(Attribute.MODE.getName())) {
-                        ModelNode mode = operation.get(Attribute.MODE.getName());
-                        if ((mode.getType() == ModelType.STRING) && (TransactionMode.valueOf(mode.asString()) == TransactionMode.BATCH)) {
-                            mode.set(TransactionMode.NONE.name());
-                            PathAddress address = Operations.getPathAddress(operation);
-                            return Operations.createCompositeOperation(operation, Operations.createWriteAttributeOperation(cacheAddress(address), CacheResourceDefinition.DeprecatedAttribute.BATCHING, new ModelNode(true)));
-                        }
+            OperationTransformer addTransformer = operation -> {
+                if (operation.hasDefined(Attribute.MODE.getName())) {
+                    ModelNode mode = operation.get(Attribute.MODE.getName());
+                    if ((mode.getType() == ModelType.STRING) && (TransactionMode.valueOf(mode.asString()) == TransactionMode.BATCH)) {
+                        mode.set(TransactionMode.NONE.name());
+                        PathAddress address = Operations.getPathAddress(operation);
+                        return Operations.createCompositeOperation(operation, Operations.createWriteAttributeOperation(cacheAddress(address), CacheResourceDefinition.DeprecatedAttribute.BATCHING, new ModelNode(true)));
                     }
-                    return operation;
                 }
+                return operation;
             };
             addOperationTransformers.add(new SimpleOperationTransformer(addTransformer));
 
             // Additionally include undefine-attribute:name=batching
-            OperationTransformer removeTransformer = new OperationTransformer() {
-                @Override
-                public ModelNode transformOperation(ModelNode operation) {
-                    PathAddress address = Operations.getPathAddress(operation);
-                    return Operations.createCompositeOperation(operation, Operations.createUndefineAttributeOperation(cacheAddress(address), CacheResourceDefinition.DeprecatedAttribute.BATCHING));
-                }
+            OperationTransformer removeTransformer = operation -> {
+                PathAddress address = Operations.getPathAddress(operation);
+                return Operations.createCompositeOperation(operation, Operations.createUndefineAttributeOperation(cacheAddress(address), CacheResourceDefinition.DeprecatedAttribute.BATCHING));
             };
             removeOperationTransformers.add(new SimpleOperationTransformer(removeTransformer));
 
             // If read-attribute:name=batching is true, return BATCH, otherwise use result from read-attribute:name=mode
-            OperationTransformer readAttributeOperationTransformer = new OperationTransformer() {
-                @Override
-                public ModelNode transformOperation(ModelNode operation) {
-                    PathAddress address = Operations.getPathAddress(operation);
-                    return Operations.createCompositeOperation(Operations.createReadAttributeOperation(cacheAddress(address), CacheResourceDefinition.DeprecatedAttribute.BATCHING), operation);
-                }
+            OperationTransformer readAttributeOperationTransformer = operation -> {
+                PathAddress address = Operations.getPathAddress(operation);
+                return Operations.createCompositeOperation(Operations.createReadAttributeOperation(cacheAddress(address), CacheResourceDefinition.DeprecatedAttribute.BATCHING), operation);
             };
-            OperationResultTransformer readAttributeResultTransformer = new OperationResultTransformer() {
-                @Override
-                public ModelNode transformResult(ModelNode result) {
-                    ModelNode readBatchingResult = result.get(0);
-                    return readBatchingResult.asBoolean() ? new ModelNode(TransactionMode.BATCH.name()) : result.get(1);
-                }
+            OperationResultTransformer readAttributeResultTransformer = result -> {
+                ModelNode readBatchingResult = result.get(0);
+                return readBatchingResult.asBoolean() ? new ModelNode(TransactionMode.BATCH.name()) : result.get(1);
             };
             readAttributeTransformers.put(Attribute.MODE.getName(), new SimpleOperationTransformer(readAttributeOperationTransformer, readAttributeResultTransformer));
 
             // Convert BATCH -> NONE, and include write-attribute:name=batching
-            OperationTransformer writeAttributeTransformer = new OperationTransformer() {
-                @Override
-                public ModelNode transformOperation(ModelNode operation) {
-                    ModelNode mode = Operations.getAttributeValue(operation);
-                    boolean batching = (mode.isDefined() && (mode.getType() == ModelType.STRING)) ? (TransactionMode.valueOf(mode.asString()) == TransactionMode.BATCH) : false;
-                    if (batching) {
-                        mode.set(TransactionMode.NONE.name());
-                    }
-                    PathAddress address = Operations.getPathAddress(operation);
-                    return Operations.createCompositeOperation(operation, Operations.createWriteAttributeOperation(cacheAddress(address), CacheResourceDefinition.DeprecatedAttribute.BATCHING, new ModelNode(batching)));
+            OperationTransformer writeAttributeTransformer = operation -> {
+                ModelNode mode = Operations.getAttributeValue(operation);
+                boolean batching = (mode.isDefined() && (mode.getType() == ModelType.STRING)) ? (TransactionMode.valueOf(mode.asString()) == TransactionMode.BATCH) : false;
+                if (batching) {
+                    mode.set(TransactionMode.NONE.name());
                 }
+                PathAddress address = Operations.getPathAddress(operation);
+                return Operations.createCompositeOperation(operation, Operations.createWriteAttributeOperation(cacheAddress(address), CacheResourceDefinition.DeprecatedAttribute.BATCHING, new ModelNode(batching)));
             };
             writeAttributeTransformers.put(Attribute.MODE.getName(), new SimpleOperationTransformer(writeAttributeTransformer));
 
             // Include undefine-attribute:name=batching
-            OperationTransformer undefineAttributeTransformer = new OperationTransformer() {
-                @Override
-                public ModelNode transformOperation(ModelNode operation) {
-                    PathAddress address = Operations.getPathAddress(operation);
-                    return Operations.createCompositeOperation(operation, Operations.createUndefineAttributeOperation(cacheAddress(address), CacheResourceDefinition.DeprecatedAttribute.BATCHING));
-                }
+            OperationTransformer undefineAttributeTransformer = operation -> {
+                PathAddress address = Operations.getPathAddress(operation);
+                return Operations.createCompositeOperation(operation, Operations.createUndefineAttributeOperation(cacheAddress(address), CacheResourceDefinition.DeprecatedAttribute.BATCHING));
             };
             undefineAttributeTransformers.put(Attribute.MODE.getName(), new SimpleOperationTransformer(undefineAttributeTransformer));
 
             // Convert BATCH -> NONE
-            ResourceTransformer modeTransformer = new ResourceTransformer() {
-                @Override
-                public void transformResource(ResourceTransformationContext context, PathAddress address, Resource resource) throws OperationFailedException {
-                    ModelNode model = resource.getModel();
-                    if (model.hasDefined(Attribute.MODE.getName())) {
-                        ModelNode value = model.get(Attribute.MODE.getName());
-                        if ((value.getType() == ModelType.STRING) && (TransactionMode.valueOf(value.asString()) == TransactionMode.BATCH)) {
-                            value.set(TransactionMode.NONE.name());
-                        }
+            ResourceTransformer modeTransformer = (context, address, resource) -> {
+                ModelNode model = resource.getModel();
+                if (model.hasDefined(Attribute.MODE.getName())) {
+                    ModelNode value = model.get(Attribute.MODE.getName());
+                    if ((value.getType() == ModelType.STRING) && (TransactionMode.valueOf(value.asString()) == TransactionMode.BATCH)) {
+                        value.set(TransactionMode.NONE.name());
                     }
-                    context.addTransformedResource(PathAddress.EMPTY_ADDRESS, resource).processChildren(resource);
                 }
+                context.addTransformedResource(PathAddress.EMPTY_ADDRESS, resource).processChildren(resource);
             };
             builder.setCustomResourceTransformer(modeTransformer);
 

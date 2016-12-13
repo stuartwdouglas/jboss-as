@@ -51,12 +51,10 @@ import org.jboss.as.controller.capability.CapabilityServiceSupport;
 import org.jboss.as.core.security.ServerSecurityManager;
 import org.jboss.as.ee.component.Attachments;
 import org.jboss.as.ee.component.BindingConfiguration;
-import org.jboss.as.ee.component.Component;
 import org.jboss.as.ee.component.ComponentConfiguration;
 import org.jboss.as.ee.component.ComponentConfigurator;
 import org.jboss.as.ee.component.ComponentDescription;
 import org.jboss.as.ee.component.ComponentNamingMode;
-import org.jboss.as.ee.component.ComponentStartService;
 import org.jboss.as.ee.component.ComponentView;
 import org.jboss.as.ee.component.DependencyConfigurator;
 import org.jboss.as.ee.component.InterceptorDescription;
@@ -65,7 +63,6 @@ import org.jboss.as.ee.component.NamespaceViewConfigurator;
 import org.jboss.as.ee.component.ViewConfiguration;
 import org.jboss.as.ee.component.ViewConfigurator;
 import org.jboss.as.ee.component.ViewDescription;
-import org.jboss.as.ee.component.ViewService;
 import org.jboss.as.ee.component.interceptors.ComponentDispatcherInterceptor;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
 import org.jboss.as.ee.naming.ContextInjectionSource;
@@ -116,7 +113,6 @@ import org.jboss.invocation.PrivilegedWithCombinerInterceptor;
 import org.jboss.invocation.proxy.MethodIdentifier;
 import org.jboss.metadata.ejb.spec.EnterpriseBeanMetaData;
 import org.jboss.metadata.javaee.spec.SecurityRolesMetaData;
-import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceName;
 import org.jboss.security.SecurityConstants;
@@ -318,65 +314,54 @@ public abstract class EJBComponentDescription extends ComponentDescription {
         addDependency(deploymentUnitServiceName.append(ModuleDeployment.SERVICE_NAME), ServiceBuilder.DependencyType.REQUIRED);
 
         getConfigurators().addFirst(EJBValidationConfigurator.INSTANCE);
-        getConfigurators().add(new ComponentConfigurator() {
-            @Override
-            public void configure(final DeploymentPhaseContext context, final ComponentDescription description, final ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
+        getConfigurators().add((context, description, configuration) -> {
 
-                final DeploymentUnit deploymentUnit = context.getDeploymentUnit();
-                String contextID = deploymentUnit.getName();
-                if (deploymentUnit.getParent() != null) {
-                    contextID = deploymentUnit.getParent().getName() + "!" + contextID;
-                }
-                policyContextID = contextID;
-                //make sure java:comp/env is always available, even if nothing is bound there
-                if (description.getNamingMode() == ComponentNamingMode.CREATE) {
-                    description.getBindingConfigurations().add(new BindingConfiguration("java:comp/env", new ContextInjectionSource("env", "java:comp/env")));
-                }
-                final List<SetupAction> ejbSetupActions = deploymentUnit.getAttachmentList(Attachments.OTHER_EE_SETUP_ACTIONS);
+            final DeploymentUnit deploymentUnit = context.getDeploymentUnit();
+            String contextID = deploymentUnit.getName();
+            if (deploymentUnit.getParent() != null) {
+                contextID = deploymentUnit.getParent().getName() + "!" + contextID;
+            }
+            policyContextID = contextID;
+            //make sure java:comp/env is always available, even if nothing is bound there
+            if (description.getNamingMode() == ComponentNamingMode.CREATE) {
+                description.getBindingConfigurations().add(new BindingConfiguration("java:comp/env", new ContextInjectionSource("env", "java:comp/env")));
+            }
+            final List<SetupAction> ejbSetupActions = deploymentUnit.getAttachmentList(Attachments.OTHER_EE_SETUP_ACTIONS);
 
-                if (description.isTimerServiceRequired()) {
+            if (description.isTimerServiceRequired()) {
 
-                    if (!ejbSetupActions.isEmpty()) {
-                        configuration.addTimeoutViewInterceptor(AdditionalSetupInterceptor.factory(ejbSetupActions), InterceptorOrder.View.EE_SETUP);
-                    }
-                    configuration.addTimeoutViewInterceptor(shutDownInterceptorFactory, InterceptorOrder.View.SHUTDOWN_INTERCEPTOR);
-
-                    final ClassLoader classLoader = configuration.getModuleClassLoader();
-                    configuration.addTimeoutViewInterceptor(PrivilegedWithCombinerInterceptor.getFactory(), InterceptorOrder.View.PRIVILEGED_INTERCEPTOR);
-                    configuration.addTimeoutViewInterceptor(AccessCheckingInterceptor.getFactory(), InterceptorOrder.View.CHECKING_INTERCEPTOR);
-                    configuration.addTimeoutViewInterceptor(new ImmediateInterceptorFactory(new ContextClassLoaderInterceptor(classLoader)), InterceptorOrder.View.TCCL_INTERCEPTOR);
-                    configuration.addTimeoutViewInterceptor(configuration.getNamespaceContextInterceptorFactory(), InterceptorOrder.View.JNDI_NAMESPACE_INTERCEPTOR);
-                    configuration.addTimeoutViewInterceptor(CurrentInvocationContextInterceptor.FACTORY, InterceptorOrder.View.INVOCATION_CONTEXT_INTERCEPTOR);
-                    if (((EJBComponentDescription) description).isSecurityDomainKnown()) {
-                        final HashMap<Integer, InterceptorFactory> elytronInterceptorFactories = getElytronInterceptorFactories(policyContextID);
-                        elytronInterceptorFactories.forEach((priority, elytronInterceptorFactory) -> configuration.addTimeoutViewInterceptor(elytronInterceptorFactory, priority));
-                    } else if (deploymentUnit.hasAttachment(SecurityAttachments.SECURITY_ENABLED)) {
-                        configuration.addTimeoutViewInterceptor(new SecurityContextInterceptorFactory(hasBeanLevelSecurityMetadata(), policyContextID), InterceptorOrder.View.SECURITY_CONTEXT);
-                    }
-                    final Set<Method> classMethods = configuration.getClassIndex().getClassMethods();
-                    for (final Method method : classMethods) {
-                        configuration.addTimeoutViewInterceptor(method, new ImmediateInterceptorFactory(new ComponentDispatcherInterceptor(method)), InterceptorOrder.View.COMPONENT_DISPATCHER);
-                    }
-                }
                 if (!ejbSetupActions.isEmpty()) {
-                    configuration.getStartDependencies().add(new DependencyConfigurator<ComponentStartService>() {
-                        @Override
-                        public void configureDependency(final ServiceBuilder<?> serviceBuilder, final ComponentStartService service) throws DeploymentUnitProcessingException {
-                            for (final SetupAction setupAction : ejbSetupActions) {
-                                serviceBuilder.addDependencies(setupAction.dependencies());
-                            }
-                        }
-                    });
+                    configuration.addTimeoutViewInterceptor(AdditionalSetupInterceptor.factory(ejbSetupActions), InterceptorOrder.View.EE_SETUP);
                 }
+                configuration.addTimeoutViewInterceptor(shutDownInterceptorFactory, InterceptorOrder.View.SHUTDOWN_INTERCEPTOR);
 
-                configuration.addComponentInterceptor(ExecutionTimeInterceptor.FACTORY, InterceptorOrder.Component.EJB_EXECUTION_TIME_INTERCEPTOR, true);
-                configuration.getCreateDependencies().add(new DependencyConfigurator<EJBComponentCreateService>() {
-                    @Override
-                    public void configureDependency(ServiceBuilder<?> serviceBuilder, EJBComponentCreateService service) throws DeploymentUnitProcessingException {
-                        serviceBuilder.addDependency(LoggingInterceptor.LOGGING_ENABLED_SERVICE_NAME, AtomicBoolean.class, service.getExceptionLoggingEnabledInjector());
+                final ClassLoader classLoader = configuration.getModuleClassLoader();
+                configuration.addTimeoutViewInterceptor(PrivilegedWithCombinerInterceptor.getFactory(), InterceptorOrder.View.PRIVILEGED_INTERCEPTOR);
+                configuration.addTimeoutViewInterceptor(AccessCheckingInterceptor.getFactory(), InterceptorOrder.View.CHECKING_INTERCEPTOR);
+                configuration.addTimeoutViewInterceptor(new ImmediateInterceptorFactory(new ContextClassLoaderInterceptor(classLoader)), InterceptorOrder.View.TCCL_INTERCEPTOR);
+                configuration.addTimeoutViewInterceptor(configuration.getNamespaceContextInterceptorFactory(), InterceptorOrder.View.JNDI_NAMESPACE_INTERCEPTOR);
+                configuration.addTimeoutViewInterceptor(CurrentInvocationContextInterceptor.FACTORY, InterceptorOrder.View.INVOCATION_CONTEXT_INTERCEPTOR);
+                if (((EJBComponentDescription) description).isSecurityDomainKnown()) {
+                    final HashMap<Integer, InterceptorFactory> elytronInterceptorFactories = getElytronInterceptorFactories(policyContextID);
+                    elytronInterceptorFactories.forEach((priority, elytronInterceptorFactory) -> configuration.addTimeoutViewInterceptor(elytronInterceptorFactory, priority));
+                } else if (deploymentUnit.hasAttachment(SecurityAttachments.SECURITY_ENABLED)) {
+                    configuration.addTimeoutViewInterceptor(new SecurityContextInterceptorFactory(hasBeanLevelSecurityMetadata(), policyContextID), InterceptorOrder.View.SECURITY_CONTEXT);
+                }
+                final Set<Method> classMethods = configuration.getClassIndex().getClassMethods();
+                for (final Method method : classMethods) {
+                    configuration.addTimeoutViewInterceptor(method, new ImmediateInterceptorFactory(new ComponentDispatcherInterceptor(method)), InterceptorOrder.View.COMPONENT_DISPATCHER);
+                }
+            }
+            if (!ejbSetupActions.isEmpty()) {
+                configuration.getStartDependencies().add((serviceBuilder, service) -> {
+                    for (final SetupAction setupAction : ejbSetupActions) {
+                        serviceBuilder.addDependencies(setupAction.dependencies());
                     }
                 });
             }
+
+            configuration.addComponentInterceptor(ExecutionTimeInterceptor.FACTORY, InterceptorOrder.Component.EJB_EXECUTION_TIME_INTERCEPTOR, true);
+            configuration.getCreateDependencies().add((DependencyConfigurator<EJBComponentCreateService>)(serviceBuilder, service) -> serviceBuilder.addDependency(LoggingInterceptor.LOGGING_ENABLED_SERVICE_NAME, AtomicBoolean.class, service.getExceptionLoggingEnabledInjector()));
         });
 
         // setup dependencies on the transaction manager services
@@ -442,31 +427,28 @@ public abstract class EJBComponentDescription extends ComponentDescription {
 
     protected void setupViewInterceptors(final EJBViewDescription view) {
         // add a logging interceptor (to take care of EJB3 spec, section 14.3 logging requirements)
-        view.getConfigurators().add(new ViewConfigurator() {
-            @Override
-            public void configure(DeploymentPhaseContext context, ComponentConfiguration componentConfiguration, ViewDescription description, ViewConfiguration viewConfiguration) throws DeploymentUnitProcessingException {
-                viewConfiguration.addViewInterceptor(LoggingInterceptor.FACTORY, InterceptorOrder.View.EJB_EXCEPTION_LOGGING_INTERCEPTOR);
-                final ClassLoader classLoader = componentConfiguration.getModuleClassLoader();
-                viewConfiguration.addViewInterceptor(PrivilegedWithCombinerInterceptor.getFactory(), InterceptorOrder.View.PRIVILEGED_INTERCEPTOR);
-                viewConfiguration.addViewInterceptor(AccessCheckingInterceptor.getFactory(), InterceptorOrder.View.CHECKING_INTERCEPTOR);
-                viewConfiguration.addViewInterceptor(new ImmediateInterceptorFactory(new ContextClassLoaderInterceptor(classLoader)), InterceptorOrder.View.TCCL_INTERCEPTOR);
+        view.getConfigurators().add((context, componentConfiguration, description, viewConfiguration) -> {
+            viewConfiguration.addViewInterceptor(LoggingInterceptor.FACTORY, InterceptorOrder.View.EJB_EXCEPTION_LOGGING_INTERCEPTOR);
+            final ClassLoader classLoader = componentConfiguration.getModuleClassLoader();
+            viewConfiguration.addViewInterceptor(PrivilegedWithCombinerInterceptor.getFactory(), InterceptorOrder.View.PRIVILEGED_INTERCEPTOR);
+            viewConfiguration.addViewInterceptor(AccessCheckingInterceptor.getFactory(), InterceptorOrder.View.CHECKING_INTERCEPTOR);
+            viewConfiguration.addViewInterceptor(new ImmediateInterceptorFactory(new ContextClassLoaderInterceptor(classLoader)), InterceptorOrder.View.TCCL_INTERCEPTOR);
 
-                //If this is the EJB 2.x local or home view add the exception transformer interceptor
-                if (view.getMethodIntf() == MethodIntf.LOCAL && EJBLocalObject.class.isAssignableFrom(viewConfiguration.getViewClass())) {
-                    viewConfiguration.addViewInterceptor(EjbExceptionTransformingInterceptorFactories.LOCAL_INSTANCE, InterceptorOrder.View.REMOTE_EXCEPTION_TRANSFORMER);
-                } else if (view.getMethodIntf() == MethodIntf.LOCAL_HOME) {
-                    viewConfiguration.addViewInterceptor(EjbExceptionTransformingInterceptorFactories.LOCAL_INSTANCE, InterceptorOrder.View.REMOTE_EXCEPTION_TRANSFORMER);
-                }
-
-                final List<SetupAction> ejbSetupActions = context.getDeploymentUnit().getAttachmentList(Attachments.OTHER_EE_SETUP_ACTIONS);
-                if (!ejbSetupActions.isEmpty()) {
-                    viewConfiguration.addViewInterceptor(AdditionalSetupInterceptor.factory(ejbSetupActions), InterceptorOrder.View.EE_SETUP);
-                }
-                viewConfiguration.addViewInterceptor(WaitTimeInterceptor.FACTORY, InterceptorOrder.View.EJB_WAIT_TIME_INTERCEPTOR);
-                viewConfiguration.addViewInterceptor(shutDownInterceptorFactory, InterceptorOrder.View.SHUTDOWN_INTERCEPTOR);
-
-
+            //If this is the EJB 2.x local or home view add the exception transformer interceptor
+            if (view.getMethodIntf() == MethodIntf.LOCAL && EJBLocalObject.class.isAssignableFrom(viewConfiguration.getViewClass())) {
+                viewConfiguration.addViewInterceptor(EjbExceptionTransformingInterceptorFactories.LOCAL_INSTANCE, InterceptorOrder.View.REMOTE_EXCEPTION_TRANSFORMER);
+            } else if (view.getMethodIntf() == MethodIntf.LOCAL_HOME) {
+                viewConfiguration.addViewInterceptor(EjbExceptionTransformingInterceptorFactories.LOCAL_INSTANCE, InterceptorOrder.View.REMOTE_EXCEPTION_TRANSFORMER);
             }
+
+            final List<SetupAction> ejbSetupActions = context.getDeploymentUnit().getAttachmentList(Attachments.OTHER_EE_SETUP_ACTIONS);
+            if (!ejbSetupActions.isEmpty()) {
+                viewConfiguration.addViewInterceptor(AdditionalSetupInterceptor.factory(ejbSetupActions), InterceptorOrder.View.EE_SETUP);
+            }
+            viewConfiguration.addViewInterceptor(WaitTimeInterceptor.FACTORY, InterceptorOrder.View.EJB_WAIT_TIME_INTERCEPTOR);
+            viewConfiguration.addViewInterceptor(shutDownInterceptorFactory, InterceptorOrder.View.SHUTDOWN_INTERCEPTOR);
+
+
         });
         view.getConfigurators().add(CompressionHintViewConfigurator.INSTANCE);
         this.addCurrentInvocationContextFactory(view);
@@ -479,22 +461,16 @@ public abstract class EJBComponentDescription extends ComponentDescription {
 
     private void setupRemoteViewInterceptors(final EJBViewDescription view) {
         if (view.getMethodIntf() == MethodIntf.REMOTE || view.getMethodIntf() == MethodIntf.HOME) {
-            view.getConfigurators().add(new ViewConfigurator() {
-                @Override
-                public void configure(final DeploymentPhaseContext context, final ComponentConfiguration componentConfiguration, final ViewDescription description, final ViewConfiguration configuration) throws DeploymentUnitProcessingException {
-                    if (Remote.class.isAssignableFrom(configuration.getViewClass())) {
-                        configuration.addViewInterceptor(EjbExceptionTransformingInterceptorFactories.REMOTE_INSTANCE, InterceptorOrder.View.REMOTE_EXCEPTION_TRANSFORMER);
-                    }
+            view.getConfigurators().add((context, componentConfiguration, description, configuration) -> {
+                if (Remote.class.isAssignableFrom(configuration.getViewClass())) {
+                    configuration.addViewInterceptor(EjbExceptionTransformingInterceptorFactories.REMOTE_INSTANCE, InterceptorOrder.View.REMOTE_EXCEPTION_TRANSFORMER);
                 }
             });
             if (view.getMethodIntf() == MethodIntf.HOME) {
-                view.getConfigurators().add(new ViewConfigurator() {
-                    @Override
-                    public void configure(final DeploymentPhaseContext context, final ComponentConfiguration componentConfiguration, final ViewDescription description, final ViewConfiguration configuration) throws DeploymentUnitProcessingException {
-                        if (Remote.class.isAssignableFrom(configuration.getViewClass())) {
-                            final String earApplicationName = componentConfiguration.getComponentDescription().getModuleDescription().getEarApplicationName();
-                            configuration.setViewInstanceFactory(new RemoteHomeViewInstanceFactory(earApplicationName, componentConfiguration.getModuleName(), componentConfiguration.getComponentDescription().getModuleDescription().getDistinctName(), componentConfiguration.getComponentName()));
-                        }
+                view.getConfigurators().add((context, componentConfiguration, description, configuration) -> {
+                    if (Remote.class.isAssignableFrom(configuration.getViewClass())) {
+                        final String earApplicationName = componentConfiguration.getComponentDescription().getModuleDescription().getEarApplicationName();
+                        configuration.setViewInstanceFactory(new RemoteHomeViewInstanceFactory(earApplicationName, componentConfiguration.getModuleName(), componentConfiguration.getComponentDescription().getModuleDescription().getDistinctName(), componentConfiguration.getComponentName()));
                     }
                 });
             }
@@ -532,12 +508,7 @@ public abstract class EJBComponentDescription extends ComponentDescription {
             public void configure(DeploymentPhaseContext context, ComponentDescription description, ComponentConfiguration componentConfiguration) throws DeploymentUnitProcessingException {
                 if (this.hasRemoteView((EJBComponentDescription) description)) {
                     // add a dependency on EJBRemoteTransactionsRepository service
-                    componentConfiguration.getCreateDependencies().add(new DependencyConfigurator<EJBComponentCreateService>() {
-                        @Override
-                        public void configureDependency(ServiceBuilder<?> serviceBuilder, EJBComponentCreateService ejbComponentCreateService) throws DeploymentUnitProcessingException {
-                            serviceBuilder.addDependency(EJBRemoteTransactionsRepository.SERVICE_NAME, EJBRemoteTransactionsRepository.class, ejbComponentCreateService.getEJBRemoteTransactionsRepositoryInjector());
-                        }
-                    });
+                    componentConfiguration.getCreateDependencies().add((DependencyConfigurator<EJBComponentCreateService>)(serviceBuilder, ejbComponentCreateService) -> serviceBuilder.addDependency(EJBRemoteTransactionsRepository.SERVICE_NAME, EJBRemoteTransactionsRepository.class, ejbComponentCreateService.getEJBRemoteTransactionsRepositoryInjector()));
                 }
             }
 
@@ -566,40 +537,23 @@ public abstract class EJBComponentDescription extends ComponentDescription {
      * Sets up a {@link ComponentConfigurator} which then sets up the relevant dependencies on the transaction manager services for the {@link EJBComponentCreateService}
      */
     protected void addTransactionManagerDependencies() {
-        this.getConfigurators().add(new ComponentConfigurator() {
-            @Override
-            public void configure(final DeploymentPhaseContext context, final ComponentDescription description, final ComponentConfiguration componentConfiguration) throws DeploymentUnitProcessingException {
-                componentConfiguration.getCreateDependencies().add(new DependencyConfigurator<EJBComponentCreateService>() {
-                    @Override
-                    public void configureDependency(final ServiceBuilder<?> serviceBuilder, final EJBComponentCreateService ejbComponentCreateService) throws DeploymentUnitProcessingException {
-                        // add dependency on transaction manager
-                        serviceBuilder.addDependency(TxnServices.JBOSS_TXN_TRANSACTION_MANAGER, TransactionManager.class, ejbComponentCreateService.getTransactionManagerInjector());
-                        // add dependency on UserTransaction
-                        serviceBuilder.addDependency(TxnServices.JBOSS_TXN_USER_TRANSACTION, UserTransaction.class, ejbComponentCreateService.getUserTransactionInjector());
-                        // add dependency on TransactionSynchronizationRegistry
-                        serviceBuilder.addDependency(TxnServices.JBOSS_TXN_SYNCHRONIZATION_REGISTRY, TransactionSynchronizationRegistry.class, ejbComponentCreateService.getTransactionSynchronizationRegistryInjector());
-                    }
-                });
-
-            }
-        });
+        this.getConfigurators().add((context, description, componentConfiguration) -> componentConfiguration.getCreateDependencies().add((DependencyConfigurator<EJBComponentCreateService>)(serviceBuilder, ejbComponentCreateService) -> {
+            // add dependency on transaction manager
+            serviceBuilder.addDependency(TxnServices.JBOSS_TXN_TRANSACTION_MANAGER, TransactionManager.class, ejbComponentCreateService.getTransactionManagerInjector());
+            // add dependency on UserTransaction
+            serviceBuilder.addDependency(TxnServices.JBOSS_TXN_USER_TRANSACTION, UserTransaction.class, ejbComponentCreateService.getUserTransactionInjector());
+            // add dependency on TransactionSynchronizationRegistry
+            serviceBuilder.addDependency(TxnServices.JBOSS_TXN_SYNCHRONIZATION_REGISTRY, TransactionSynchronizationRegistry.class, ejbComponentCreateService.getTransactionSynchronizationRegistryInjector());
+        }));
     }
 
     /**
      * Sets up a {@link ComponentConfigurator} which then sets up the dependency on the ServerSecurityManager service for the {@link EJBComponentCreateService}
      */
     protected void addServerSecurityManagerDependency() {
-        getConfigurators().add(new ComponentConfigurator() {
-            @Override
-            public void configure(final DeploymentPhaseContext context, final ComponentDescription description, final ComponentConfiguration componentConfiguration) throws DeploymentUnitProcessingException {
-                if (! ((EJBComponentDescription) description).isSecurityDomainKnown()) {
-                    componentConfiguration.getCreateDependencies().add(new DependencyConfigurator<EJBComponentCreateService>() {
-                        @Override
-                        public void configureDependency(final ServiceBuilder<?> serviceBuilder, final EJBComponentCreateService ejbComponentCreateService) throws DeploymentUnitProcessingException {
-                            serviceBuilder.addDependency(SimpleSecurityManagerService.SERVICE_NAME, ServerSecurityManager.class, ejbComponentCreateService.getServerSecurityManagerInjector());
-                        }
-                    });
-                }
+        getConfigurators().add((context, description, componentConfiguration) -> {
+            if (! ((EJBComponentDescription) description).isSecurityDomainKnown()) {
+                componentConfiguration.getCreateDependencies().add((DependencyConfigurator<EJBComponentCreateService>)(serviceBuilder, ejbComponentCreateService) -> serviceBuilder.addDependency(SimpleSecurityManagerService.SERVICE_NAME, ServerSecurityManager.class, ejbComponentCreateService.getServerSecurityManagerInjector()));
             }
         });
     }
@@ -610,21 +564,18 @@ public abstract class EJBComponentDescription extends ComponentDescription {
     }
 
     private void addToStringMethodInterceptor(final ViewDescription view) {
-        view.getConfigurators().add(new ViewConfigurator() {
-            @Override
-            public void configure(DeploymentPhaseContext context, ComponentConfiguration componentConfiguration, ViewDescription description, ViewConfiguration configuration) throws DeploymentUnitProcessingException {
-                final Method TO_STRING_METHOD;
-                try {
-                    TO_STRING_METHOD = Object.class.getMethod("toString");
-                } catch (NoSuchMethodException nsme) {
-                    throw new DeploymentUnitProcessingException(nsme);
-                }
-                List<Method> methods = configuration.getProxyFactory().getCachedMethods();
-                for (Method method : methods) {
-                    if (TO_STRING_METHOD.equals(method)) {
-                        configuration.addClientInterceptor(method, new ImmediateInterceptorFactory(new ToStringMethodInterceptor(EJBComponentDescription.this.getComponentName())), InterceptorOrder.Client.TO_STRING);
-                        return;
-                    }
+        view.getConfigurators().add((context, componentConfiguration, description, configuration) -> {
+            final Method TO_STRING_METHOD;
+            try {
+                TO_STRING_METHOD = Object.class.getMethod("toString");
+            } catch (NoSuchMethodException nsme) {
+                throw new DeploymentUnitProcessingException(nsme);
+            }
+            List<Method> methods = configuration.getProxyFactory().getCachedMethods();
+            for (Method method : methods) {
+                if (TO_STRING_METHOD.equals(method)) {
+                    configuration.addClientInterceptor(method, new ImmediateInterceptorFactory(new ToStringMethodInterceptor(EJBComponentDescription.this.getComponentName())), InterceptorOrder.Client.TO_STRING);
+                    return;
                 }
             }
         });
@@ -790,17 +741,7 @@ public abstract class EJBComponentDescription extends ComponentDescription {
     }
 
     protected void setupRemoteView(final EJBViewDescription viewDescription) {
-        viewDescription.getConfigurators().add(new ViewConfigurator() {
-            @Override
-            public void configure(final DeploymentPhaseContext context, final ComponentConfiguration componentConfiguration, final ViewDescription description, final ViewConfiguration configuration) throws DeploymentUnitProcessingException {
-                configuration.getDependencies().add(new DependencyConfigurator<ViewService>() {
-                    @Override
-                    public void configureDependency(final ServiceBuilder<?> serviceBuilder, final ViewService service) throws DeploymentUnitProcessingException {
-                        serviceBuilder.addDependency(EJBRemoteConnectorService.SERVICE_NAME);
-                    }
-                });
-            }
-        });
+        viewDescription.getConfigurators().add((context, componentConfiguration, description, configuration) -> configuration.getDependencies().add((serviceBuilder, service) -> serviceBuilder.addDependency(EJBRemoteConnectorService.SERVICE_NAME)));
     }
 
     public Map<String, Collection<String>> getSecurityRoleLinks() {
@@ -893,28 +834,25 @@ public abstract class EJBComponentDescription extends ComponentDescription {
 
         @Override
         public void configure(DeploymentPhaseContext context, ComponentDescription description, ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-            configuration.getCreateDependencies().add(new DependencyConfigurator<Service<Component>>() {
-                @Override
-                public void configureDependency(ServiceBuilder<?> serviceBuilder, Service<Component> service) throws DeploymentUnitProcessingException {
-                    final EJBComponentCreateService ejbComponentCreateService = (EJBComponentCreateService) service;
-                    final String securityDomainName = SecurityDomainDependencyConfigurator.this.ejbComponentDescription.getSecurityDomain();
-                    if (SecurityDomainDependencyConfigurator.this.ejbComponentDescription.isSecurityDomainKnown()) {
-                        final DeploymentUnit deploymentUnit = context.getDeploymentUnit();
-                        final CapabilityServiceSupport support = deploymentUnit.getAttachment(org.jboss.as.server.deployment.Attachments.CAPABILITY_SERVICE_SUPPORT);
-                        if (securityDomainName != null && ! securityDomainName.isEmpty()) {
-                            serviceBuilder.addDependency(support.getCapabilityServiceName(ApplicationSecurityDomainDefinition.APPLICATION_SECURITY_DOMAIN_CAPABILITY, securityDomainName),
-                                    ApplicationSecurityDomain.class, ejbComponentCreateService.getApplicationSecurityDomainInjector());
-                        }
-                        if (SecurityDomainDependencyConfigurator.this.ejbComponentDescription.isOutflowSecurityDomainsConfigured()) {
-                            serviceBuilder.addDependency(support.getCapabilityServiceName(IDENTITY_CAPABILITY), Function.class, ejbComponentCreateService.getIdentityOutflowFunctionInjector());
-                        }
-                    } else {
-                        if (securityDomainName != null && !securityDomainName.isEmpty()) {
-                            final ServiceName securityDomainServiceName = SecurityDomainService.SERVICE_NAME.append(securityDomainName);
-                            serviceBuilder.addDependency(securityDomainServiceName);
-                        }
-                        serviceBuilder.addDependency(SecurityDomainService.SERVICE_NAME.append(SecurityConstants.DEFAULT_EJB_APPLICATION_POLICY));
+            configuration.getCreateDependencies().add((serviceBuilder, service) -> {
+                final EJBComponentCreateService ejbComponentCreateService = (EJBComponentCreateService) service;
+                final String securityDomainName = SecurityDomainDependencyConfigurator.this.ejbComponentDescription.getSecurityDomain();
+                if (SecurityDomainDependencyConfigurator.this.ejbComponentDescription.isSecurityDomainKnown()) {
+                    final DeploymentUnit deploymentUnit = context.getDeploymentUnit();
+                    final CapabilityServiceSupport support = deploymentUnit.getAttachment(org.jboss.as.server.deployment.Attachments.CAPABILITY_SERVICE_SUPPORT);
+                    if (securityDomainName != null && ! securityDomainName.isEmpty()) {
+                        serviceBuilder.addDependency(support.getCapabilityServiceName(ApplicationSecurityDomainDefinition.APPLICATION_SECURITY_DOMAIN_CAPABILITY, securityDomainName),
+                                ApplicationSecurityDomain.class, ejbComponentCreateService.getApplicationSecurityDomainInjector());
                     }
+                    if (SecurityDomainDependencyConfigurator.this.ejbComponentDescription.isOutflowSecurityDomainsConfigured()) {
+                        serviceBuilder.addDependency(support.getCapabilityServiceName(IDENTITY_CAPABILITY), Function.class, ejbComponentCreateService.getIdentityOutflowFunctionInjector());
+                    }
+                } else {
+                    if (securityDomainName != null && !securityDomainName.isEmpty()) {
+                        final ServiceName securityDomainServiceName = SecurityDomainService.SERVICE_NAME.append(securityDomainName);
+                        serviceBuilder.addDependency(securityDomainServiceName);
+                    }
+                    serviceBuilder.addDependency(SecurityDomainService.SERVICE_NAME.append(SecurityConstants.DEFAULT_EJB_APPLICATION_POLICY));
                 }
             });
         }

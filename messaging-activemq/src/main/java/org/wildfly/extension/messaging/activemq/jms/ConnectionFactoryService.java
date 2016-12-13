@@ -57,15 +57,12 @@ class ConnectionFactoryService implements Service<Void> {
     /** {@inheritDoc} */
     public synchronized void start(final StartContext context) throws StartException {
         final JMSServerManager jmsManager = jmsServer.getValue();
-        final Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    jmsManager.createConnectionFactory(false, configuration, configuration.getBindings());
-                    context.complete();
-                } catch (Throwable e) {
-                    context.failed(MessagingLogger.ROOT_LOGGER.failedToCreate(e, "connection-factory"));
-                }
+        final Runnable task = () -> {
+            try {
+                jmsManager.createConnectionFactory(false, configuration, configuration.getBindings());
+                context.complete();
+            } catch (Throwable e) {
+                context.failed(MessagingLogger.ROOT_LOGGER.failedToCreate(e, "connection-factory"));
             }
         };
         try {
@@ -80,16 +77,13 @@ class ConnectionFactoryService implements Service<Void> {
     /** {@inheritDoc} */
     public synchronized void stop(final StopContext context) {
         final JMSServerManager jmsManager = jmsServer.getValue();
-        final Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    jmsManager.destroyConnectionFactory(name);
-                } catch (Throwable e) {
-                    MessagingLogger.ROOT_LOGGER.failedToDestroy("connection-factory", name);
-                }
-                context.complete();
+        final Runnable task = () -> {
+            try {
+                jmsManager.destroyConnectionFactory(name);
+            } catch (Throwable e) {
+                MessagingLogger.ROOT_LOGGER.failedToDestroy("connection-factory", name);
             }
+            context.complete();
         };
         // JMS Server Manager uses locking which waits on service completion, use async to prevent starvation
         try {

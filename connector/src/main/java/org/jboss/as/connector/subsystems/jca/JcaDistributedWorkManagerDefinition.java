@@ -28,8 +28,6 @@ import static org.jboss.as.connector.subsystems.jca.JcaWorkManagerDefinition.reg
 import java.util.EnumSet;
 
 import org.jboss.as.controller.AttributeDefinition;
-import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.PropertiesAttributeDefinition;
 import org.jboss.as.controller.ReadResourceNameOperationStepHandler;
@@ -41,7 +39,6 @@ import org.jboss.as.controller.client.helpers.MeasurementUnit;
 import org.jboss.as.controller.operations.validation.EnumValidator;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.transform.OperationTransformer;
-import org.jboss.as.controller.transform.TransformationContext;
 import org.jboss.as.controller.transform.description.ResourceTransformationDescriptionBuilder;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
@@ -94,14 +91,10 @@ public class JcaDistributedWorkManagerDefinition extends SimpleResourceDefinitio
         ResourceTransformationDescriptionBuilder builder = parentBuilder.addChildResource(PATH_DISTRIBUTED_WORK_MANAGER);
         builder.addOperationTransformationOverride("add")
                 .inheritResourceAttributeDefinitions()
-                .setCustomOperationTransformer(new OperationTransformer() {
-                    @Override
-                    public TransformedOperation transformOperation(TransformationContext context, PathAddress address, ModelNode operation)
-                            throws OperationFailedException {
-                        ModelNode copy = operation.clone();
-                        copy.add("transport-jgroups-cluster").set(address.getLastElement().toString());
-                        return new TransformedOperation(copy, TransformedOperation.ORIGINAL_RESULT);
-                    }
+                .setCustomOperationTransformer((context, address, operation) -> {
+                    ModelNode copy = operation.clone();
+                    copy.add("transport-jgroups-cluster").set(address.getLastElement().toString());
+                    return new OperationTransformer.TransformedOperation(copy, OperationTransformer.TransformedOperation.ORIGINAL_RESULT);
                 }).end();
     }
 

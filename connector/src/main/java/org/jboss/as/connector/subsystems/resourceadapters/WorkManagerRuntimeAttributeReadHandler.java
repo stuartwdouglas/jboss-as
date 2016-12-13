@@ -49,86 +49,84 @@ public class WorkManagerRuntimeAttributeReadHandler implements OperationStepHand
     @Override
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
         if (context.isNormalServer()) {
-            context.addStep(new OperationStepHandler() {
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    final String attributeName = operation.require(NAME).asString();
-                    try {
-                        final ModelNode result = context.getResult();
+            context.addStep((context1, operation1) -> {
+                final String attributeName = operation1.require(NAME).asString();
+                try {
+                    final ModelNode result = context1.getResult();
 
-                        switch (attributeName) {
-                            case Constants.WORK_ACTIVE_NAME: {
-                                result.set(wmStat.getWorkActive());
-                                break;
-                            }
-                            case Constants.WORK_FAILED_NAME: {
-                                result.set(wmStat.getWorkFailed());
-                                break;
-                            }
-                            case Constants.WORK_SUCEESSFUL_NAME: {
-                                result.set(wmStat.getWorkSuccessful());
-                                break;
-                            }
-                            case Constants.DO_WORK_ACCEPTED_NAME: {
-                                result.set(wmStat.getDoWorkAccepted());
-                                break;
-                            }
-                            case Constants.DO_WORK_REJECTED_NAME: {
-                                result.set(wmStat.getDoWorkRejected());
-                                break;
-                            }
-                            case Constants.SCHEDULED_WORK_ACCEPTED_NAME: {
-                                result.set(wmStat.getScheduleWorkAccepted());
-                                break;
-                            }
-                            case Constants.SCHEDULED_WORK_REJECTED_NAME: {
-                                result.set(wmStat.getScheduleWorkRejected());
-                                break;
-                            }
-                            case Constants.START_WORK_ACCEPTED_NAME: {
-                                result.set(wmStat.getStartWorkAccepted());
-                                break;
-                            }
-                            case Constants.START_WORK_REJECTED_NAME: {
-                                result.set(wmStat.getStartWorkRejected());
-                                break;
-                            }
-                            case ModelDescriptionConstants.STATISTICS_ENABLED: {
-                                if (distributed) {
-                                    result.set(((DistributedWorkManager) wm).isDistributedStatisticsEnabled());
-                                } else {
-                                    result.set(wm.isStatisticsEnabled());
-                                }
-                                break;
-                            }
-                            case Constants.WORKMANAGER_STATISTICS_ENABLED_NAME: {
-                                result.set(wm.isStatisticsEnabled());
-                                break;
-                            }
-                            case Constants.DISTRIBUTED_STATISTICS_ENABLED_NAME: {
+                    switch (attributeName) {
+                        case Constants.WORK_ACTIVE_NAME: {
+                            result.set(wmStat.getWorkActive());
+                            break;
+                        }
+                        case Constants.WORK_FAILED_NAME: {
+                            result.set(wmStat.getWorkFailed());
+                            break;
+                        }
+                        case Constants.WORK_SUCEESSFUL_NAME: {
+                            result.set(wmStat.getWorkSuccessful());
+                            break;
+                        }
+                        case Constants.DO_WORK_ACCEPTED_NAME: {
+                            result.set(wmStat.getDoWorkAccepted());
+                            break;
+                        }
+                        case Constants.DO_WORK_REJECTED_NAME: {
+                            result.set(wmStat.getDoWorkRejected());
+                            break;
+                        }
+                        case Constants.SCHEDULED_WORK_ACCEPTED_NAME: {
+                            result.set(wmStat.getScheduleWorkAccepted());
+                            break;
+                        }
+                        case Constants.SCHEDULED_WORK_REJECTED_NAME: {
+                            result.set(wmStat.getScheduleWorkRejected());
+                            break;
+                        }
+                        case Constants.START_WORK_ACCEPTED_NAME: {
+                            result.set(wmStat.getStartWorkAccepted());
+                            break;
+                        }
+                        case Constants.START_WORK_REJECTED_NAME: {
+                            result.set(wmStat.getStartWorkRejected());
+                            break;
+                        }
+                        case ModelDescriptionConstants.STATISTICS_ENABLED: {
+                            if (distributed) {
                                 result.set(((DistributedWorkManager) wm).isDistributedStatisticsEnabled());
-                                break;
+                            } else {
+                                result.set(wm.isStatisticsEnabled());
                             }
-                            case Constants.DOWORK_DISTRIBUTION_ENABLED_NAME: {
-                                result.set(((DistributedWorkManager) wm).isDoWorkDistributionEnabled());
-                                break;
-                            }
-                            case Constants.STARTWORK_DISTRIBUTION_ENABLED_NAME: {
-                                result.set(((DistributedWorkManager) wm).isStartWorkDistributionEnabled());
-                                break;
-                            }
-                            case Constants.SCHEDULEWORK_DISTRIBUTION_ENABLED_NAME: {
-                                result.set(((DistributedWorkManager) wm).isScheduleWorkDistributionEnabled());
-                                break;
-                            }
-
+                            break;
+                        }
+                        case Constants.WORKMANAGER_STATISTICS_ENABLED_NAME: {
+                            result.set(wm.isStatisticsEnabled());
+                            break;
+                        }
+                        case Constants.DISTRIBUTED_STATISTICS_ENABLED_NAME: {
+                            result.set(((DistributedWorkManager) wm).isDistributedStatisticsEnabled());
+                            break;
+                        }
+                        case Constants.DOWORK_DISTRIBUTION_ENABLED_NAME: {
+                            result.set(((DistributedWorkManager) wm).isDoWorkDistributionEnabled());
+                            break;
+                        }
+                        case Constants.STARTWORK_DISTRIBUTION_ENABLED_NAME: {
+                            result.set(((DistributedWorkManager) wm).isStartWorkDistributionEnabled());
+                            break;
+                        }
+                        case Constants.SCHEDULEWORK_DISTRIBUTION_ENABLED_NAME: {
+                            result.set(((DistributedWorkManager) wm).isScheduleWorkDistributionEnabled());
+                            break;
                         }
 
-                    } catch (Exception e) {
-                        throw new OperationFailedException(ConnectorLogger.ROOT_LOGGER.failedToGetMetrics(e.getLocalizedMessage()));
                     }
 
-                    context.stepCompleted();
+                } catch (Exception e) {
+                    throw new OperationFailedException(ConnectorLogger.ROOT_LOGGER.failedToGetMetrics(e.getLocalizedMessage()));
                 }
+
+                context1.stepCompleted();
             }, OperationContext.Stage.RUNTIME);
         }
 

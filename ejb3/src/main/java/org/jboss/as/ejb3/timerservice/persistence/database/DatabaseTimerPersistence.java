@@ -500,12 +500,7 @@ public class DatabaseTimerPersistence implements TimerPersistence, Service<Datab
     @Override
     public Closeable registerChangeListener(final String timedObjectId, TimerChangeListener listener) {
         changeListeners.put(timedObjectId, listener);
-        return new Closeable() {
-            @Override
-            public void close() throws IOException {
-                changeListeners.remove(timedObjectId);
-            }
-        };
+        return () -> changeListeners.remove(timedObjectId);
     }
 
     @Override

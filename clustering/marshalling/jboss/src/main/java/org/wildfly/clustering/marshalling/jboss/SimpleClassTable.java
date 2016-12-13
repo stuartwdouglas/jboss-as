@@ -26,7 +26,6 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 
 import org.jboss.marshalling.ClassTable;
-import org.jboss.marshalling.Marshaller;
 import org.jboss.marshalling.Unmarshaller;
 import org.wildfly.clustering.marshalling.Externalizer;
 import org.wildfly.clustering.marshalling.spi.IndexExternalizer;
@@ -50,12 +49,7 @@ public class SimpleClassTable implements ClassTable {
         this.classes = classes;
         for (int i = 0; i < classes.length; i++) {
             final int index = i;
-            Writer writer = new Writer() {
-                @Override
-                public void writeClass(Marshaller output, Class<?> clazz) throws IOException {
-                    indexExternalizer.writeObject(output, index);
-                }
-            };
+            Writer writer = (output, clazz) -> indexExternalizer.writeObject(output, index);
             this.writers.put(classes[i], writer);
         }
     }

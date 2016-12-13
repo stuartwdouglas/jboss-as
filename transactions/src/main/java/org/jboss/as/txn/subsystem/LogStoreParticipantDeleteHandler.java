@@ -23,8 +23,6 @@
 package org.jboss.as.txn.subsystem;
 
 import org.jboss.as.controller.OperationContext;
-import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.dmr.ModelNode;
 
@@ -40,11 +38,6 @@ public class LogStoreParticipantDeleteHandler extends LogStoreParticipantOperati
     void refreshParticipant(OperationContext context) {
         final ModelNode operation = Util.createEmptyOperation("refresh-log-store", context.getCurrentAddress().getParent().getParent());
 
-        context.addStep(operation, new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                probeHandler.execute(context, operation);
-            }
-        }, OperationContext.Stage.MODEL);
+        context.addStep(operation, (context1, operation1) -> probeHandler.execute(context1, operation1), OperationContext.Stage.MODEL);
     }
 }

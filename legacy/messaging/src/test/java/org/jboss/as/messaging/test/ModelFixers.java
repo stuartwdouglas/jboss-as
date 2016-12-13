@@ -34,20 +34,17 @@ import org.jboss.dmr.ModelNode;
  * @author <a href="http://jmesnil.net/">Jeff Mesnil</a> (c) 2014 Red Hat inc.
  */
 public class ModelFixers {
-    static final ModelFixer PATH_FIXER = new ModelFixer() {
-        @Override
-        public ModelNode fixModel(ModelNode modelNode) {
-            // Since AS7-5417, messaging's paths resources are always created.
-            // however for legacy version, they were only created if the path attributes were different from the defaults.
-            // The 'empty' hornetq-server does not set any messaging's path so we discard them to "fix" the model and
-            // compare the current and legacy versions
-            for (String serverWithDefaultPath : new String[]{"empty", "stuff"}) {
-                if (modelNode.get(HORNETQ_SERVER).has(serverWithDefaultPath)) {
-                    modelNode.get(HORNETQ_SERVER, serverWithDefaultPath, PATH).set(new ModelNode());
-                }
+    static final ModelFixer PATH_FIXER = modelNode -> {
+        // Since AS7-5417, messaging's paths resources are always created.
+        // however for legacy version, they were only created if the path attributes were different from the defaults.
+        // The 'empty' hornetq-server does not set any messaging's path so we discard them to "fix" the model and
+        // compare the current and legacy versions
+        for (String serverWithDefaultPath : new String[]{"empty", "stuff"}) {
+            if (modelNode.get(HORNETQ_SERVER).has(serverWithDefaultPath)) {
+                modelNode.get(HORNETQ_SERVER, serverWithDefaultPath, PATH).set(new ModelNode());
             }
-            return modelNode;
         }
+        return modelNode;
     };
 
 

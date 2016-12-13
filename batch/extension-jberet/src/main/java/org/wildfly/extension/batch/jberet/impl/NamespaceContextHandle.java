@@ -38,11 +38,6 @@ class NamespaceContextHandle implements ContextHandle {
     @Override
     public Handle setup() {
         NamespaceContextSelector.pushCurrentSelector(namespaceContextSelector);
-        return new Handle() {
-            @Override
-            public void tearDown() {
-                NamespaceContextSelector.popCurrentSelector();
-            }
-        };
+        return () -> NamespaceContextSelector.popCurrentSelector();
     }
 }

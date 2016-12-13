@@ -24,7 +24,6 @@ package org.wildfly.extension.picketlink.idm.model.parser;
 
 import org.jboss.dmr.ModelNode;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
-import org.wildfly.extension.picketlink.common.model.ModelElement;
 import org.wildfly.extension.picketlink.idm.model.AttributedTypeEnum;
 import org.wildfly.extension.picketlink.idm.model.CredentialHandlerResourceDefinition;
 import org.wildfly.extension.picketlink.idm.model.CredentialTypeEnum;
@@ -66,16 +65,12 @@ public class IDMSubsystemReader_1_0 extends AbstractIDMSubsystemReader {
                                                          name, identityProviderNode,
                                                          LDAPStoreMappingResourceDefinition.INSTANCE.getAttributes(), addOperations);
 
-        parseElement(new ElementParser() {
-            @Override
-            public void parse(final XMLExtendedStreamReader reader, final ModelElement element, final ModelNode parentNode,
-                                     List<ModelNode> addOperations) throws XMLStreamException {
-                switch (element) {
-                    case LDAP_STORE_ATTRIBUTE:
-                        parseConfig(reader, LDAP_STORE_ATTRIBUTE, LDAPStoreAttributeResourceDefinition.NAME.getName(),
-                                       parentNode, LDAPStoreAttributeResourceDefinition.INSTANCE.getAttributes(), addOperations);
-                        break;
-                }
+        parseElement((reader1, element, parentNode, addOperations1) -> {
+            switch (element) {
+                case LDAP_STORE_ATTRIBUTE:
+                    parseConfig(reader1, LDAP_STORE_ATTRIBUTE, LDAPStoreAttributeResourceDefinition.NAME.getName(),
+                                   parentNode, LDAPStoreAttributeResourceDefinition.INSTANCE.getAttributes(), addOperations1);
+                    break;
             }
         }, LDAP_STORE_MAPPING, ldapMappingConfig, reader, addOperations);
     }

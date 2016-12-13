@@ -22,11 +22,8 @@
 
 package org.wildfly.mod_cluster.undertow.metric;
 
-import io.undertow.server.ConduitWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
-import io.undertow.util.ConduitFactory;
-import org.xnio.conduits.StreamSinkConduit;
 
 /**
  * {@link HttpHandler} implementation that counts number of bytes sent via {@link BytesSentStreamSinkConduit}
@@ -49,12 +46,7 @@ public class BytesSentHttpHandler implements HttpHandler {
 
         if (exchange == null) return;
 
-        exchange.addResponseWrapper(new ConduitWrapper<StreamSinkConduit>() {
-            @Override
-            public StreamSinkConduit wrap(ConduitFactory<StreamSinkConduit> factory, HttpServerExchange exchange) {
-                return new BytesSentStreamSinkConduit(factory.create());
-            }
-        });
+        exchange.addResponseWrapper((factory, exchange1) -> new BytesSentStreamSinkConduit(factory.create()));
 
         wrappedHandler.handleRequest(exchange);
 

@@ -194,14 +194,11 @@ public class TransactionSubsystemTestCase extends AbstractSubsystemBaseTest {
         Assert.assertTrue(mainServices.isSuccessfulBoot());
         Assert.assertTrue(legacyServices.isSuccessfulBoot());
 
-        checkSubsystemModelTransformation(mainServices, modelVersion, new ModelFixer() {
-            @Override
-            public ModelNode fixModel(ModelNode modelNode) {
-                modelNode.remove("path");
-                modelNode.remove("relative-to");
-                modelNode.get("process-id-uuid").set(false); //only needs to be removed for 6.2
-                return modelNode;
-            }
+        checkSubsystemModelTransformation(mainServices, modelVersion, modelNode -> {
+            modelNode.remove("path");
+            modelNode.remove("relative-to");
+            modelNode.get("process-id-uuid").set(false); //only needs to be removed for 6.2
+            return modelNode;
         });
 
     }
@@ -257,15 +254,11 @@ public class TransactionSubsystemTestCase extends AbstractSubsystemBaseTest {
         return operation;
     }
 
-    private static ModelFixer ADD_REMOVED_HORNETQ_STORE_ENABLE_ASYNC_IO = new ModelFixer() {
-
-        @Override
-        public ModelNode fixModel(ModelNode modelNode) {
-            modelNode.get(TransactionSubsystemRootResourceDefinition.HORNETQ_STORE_ENABLE_ASYNC_IO.getName()).set(true);
-            modelNode.get(TransactionSubsystemRootResourceDefinition.JOURNAL_STORE_ENABLE_ASYNC_IO.getName()).set(true);
-            modelNode.get(TransactionSubsystemRootResourceDefinition.USE_HORNETQ_STORE.getName()).set(true);
-            modelNode.get(TransactionSubsystemRootResourceDefinition.USE_JOURNAL_STORE.getName()).set(true);
-            return modelNode;
-        }
+    private static ModelFixer ADD_REMOVED_HORNETQ_STORE_ENABLE_ASYNC_IO = modelNode -> {
+        modelNode.get(TransactionSubsystemRootResourceDefinition.HORNETQ_STORE_ENABLE_ASYNC_IO.getName()).set(true);
+        modelNode.get(TransactionSubsystemRootResourceDefinition.JOURNAL_STORE_ENABLE_ASYNC_IO.getName()).set(true);
+        modelNode.get(TransactionSubsystemRootResourceDefinition.USE_HORNETQ_STORE.getName()).set(true);
+        modelNode.get(TransactionSubsystemRootResourceDefinition.USE_JOURNAL_STORE.getName()).set(true);
+        return modelNode;
     };
 }

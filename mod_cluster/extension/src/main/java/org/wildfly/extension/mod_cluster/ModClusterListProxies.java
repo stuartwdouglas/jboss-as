@@ -56,24 +56,21 @@ public class ModClusterListProxies implements OperationStepHandler {
     public void execute(OperationContext context, ModelNode operation)
             throws OperationFailedException {
         if (context.isNormalServer() && context.getServiceRegistry(false).getService(ContainerEventHandlerService.SERVICE_NAME) != null) {
-            context.addStep(new OperationStepHandler() {
-                @Override
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    ServiceController<?> controller = context.getServiceRegistry(false).getService(ContainerEventHandlerService.SERVICE_NAME);
-                    ModClusterServiceMBean service = (ModClusterServiceMBean) controller.getValue();
-                    Map<InetSocketAddress, String> map = service.getProxyInfo();
-                    ROOT_LOGGER.debugf("Mod_cluster ListProxies %s", map);
-                    if (!map.isEmpty()) {
-                        final ModelNode result = new ModelNode();
-                        InetSocketAddress[] addr = map.keySet().toArray(new InetSocketAddress[map.size()]);
-                        for (InetSocketAddress address : addr) {
-                            result.add(address.getHostName() + ":" + address.getPort());
-                        }
-                        context.getResult().set(result);
+            context.addStep((context1, operation1) -> {
+                ServiceController<?> controller = context1.getServiceRegistry(false).getService(ContainerEventHandlerService.SERVICE_NAME);
+                ModClusterServiceMBean service = (ModClusterServiceMBean) controller.getValue();
+                Map<InetSocketAddress, String> map = service.getProxyInfo();
+                ROOT_LOGGER.debugf("Mod_cluster ListProxies %s", map);
+                if (!map.isEmpty()) {
+                    final ModelNode result = new ModelNode();
+                    InetSocketAddress[] addr = map.keySet().toArray(new InetSocketAddress[map.size()]);
+                    for (InetSocketAddress address : addr) {
+                        result.add(address.getHostName() + ":" + address.getPort());
                     }
-
-                    context.stepCompleted();
+                    context1.getResult().set(result);
                 }
+
+                context1.stepCompleted();
             }, OperationContext.Stage.RUNTIME);
         }
 

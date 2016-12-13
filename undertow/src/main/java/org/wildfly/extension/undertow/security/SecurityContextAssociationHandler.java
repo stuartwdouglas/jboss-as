@@ -47,12 +47,7 @@ public class SecurityContextAssociationHandler implements HttpHandler {
     private final Map<String, RunAsIdentityMetaData> runAsIdentityMetaDataMap;
     private final HttpHandler next;
 
-    private static final PrivilegedAction<ServletRequestContext> CURRENT_CONTEXT = new PrivilegedAction<ServletRequestContext>() {
-        @Override
-        public ServletRequestContext run() {
-            return ServletRequestContext.current();
-        }
-    };
+    private static final PrivilegedAction<ServletRequestContext> CURRENT_CONTEXT = () -> ServletRequestContext.current();
 
     public SecurityContextAssociationHandler(final Map<String, RunAsIdentityMetaData> runAsIdentityMetaDataMap, final HttpHandler next) {
         this.runAsIdentityMetaDataMap = runAsIdentityMetaDataMap;
@@ -84,12 +79,9 @@ public class SecurityContextAssociationHandler implements HttpHandler {
     }
 
     public static HandlerWrapper wrapper(final Map<String, RunAsIdentityMetaData> runAsIdentityMetaDataMap) {
-        return new HandlerWrapper() {
-            @Override
-            public HttpHandler wrap(final HttpHandler handler) {
-                //we only run this on REQUEST or ASYNC invocations
-                return new PredicateHandler(Predicates.or(DispatcherTypePredicate.REQUEST, DispatcherTypePredicate.ASYNC), new SecurityContextAssociationHandler(runAsIdentityMetaDataMap, handler), handler);
-            }
+        return handler -> {
+            //we only run this on REQUEST or ASYNC invocations
+            return new PredicateHandler(Predicates.or(DispatcherTypePredicate.REQUEST, DispatcherTypePredicate.ASYNC), new SecurityContextAssociationHandler(runAsIdentityMetaDataMap, handler), handler);
         };
     }
 

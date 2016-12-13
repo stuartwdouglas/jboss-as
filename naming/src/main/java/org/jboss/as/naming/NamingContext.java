@@ -262,16 +262,13 @@ public class NamingContext implements EventContext {
                 getWritableNamingStore().bind(absoluteName, value);
             } else {
                 // The permissions check has already happened for the binding further permissions should be allowed
-                final NamingException e = AccessController.doPrivileged(new PrivilegedAction<NamingException>() {
-                    @Override
-                    public NamingException run() {
-                        try {
-                            getWritableNamingStore().bind(absoluteName, value);
-                        } catch (NamingException e) {
-                            return e;
-                        }
-                        return null;
+                final NamingException e = AccessController.doPrivileged((PrivilegedAction<NamingException>) () -> {
+                    try {
+                        getWritableNamingStore().bind(absoluteName, value);
+                    } catch (NamingException e1) {
+                        return e1;
                     }
+                    return null;
                 });
                 // Check that a NamingException wasn't thrown during the bind
                 if (e != null) {

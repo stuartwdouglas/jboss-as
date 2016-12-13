@@ -75,12 +75,7 @@ public class LogoutSessionListener implements HttpSessionListener {
             final HttpSessionImpl impl = (HttpSessionImpl) se.getSession();
             Session session;
             if (WildFlySecurityManager.isChecking()) {
-                session = WildFlySecurityManager.doChecked(new PrivilegedAction<Session>() {
-                    @Override
-                    public Session run() {
-                        return impl.getSession();
-                    }
-                });
+                session = WildFlySecurityManager.doChecked((PrivilegedAction<Session>) () -> impl.getSession());
             } else {
                 session = impl.getSession();
             }

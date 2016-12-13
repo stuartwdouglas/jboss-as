@@ -79,20 +79,17 @@ interface ContextHandle {
                     // reverse order
                     handles.addFirst(contextHandle.setup());
                 }
-                return new Handle() {
-                    @Override
-                    public void tearDown() {
-                        Exception rethrow = null;
-                        for (Handle handle : handles) {
-                            try {
-                                handle.tearDown();
-                            } catch (Exception e) {
-                                if (rethrow == null) rethrow = e;
-                            }
+                return () -> {
+                    Exception rethrow = null;
+                    for (Handle handle : handles) {
+                        try {
+                            handle.tearDown();
+                        } catch (Exception e) {
+                            if (rethrow == null) rethrow = e;
                         }
-                        if (rethrow != null) {
-                            throw new RuntimeException(rethrow);
-                        }
+                    }
+                    if (rethrow != null) {
+                        throw new RuntimeException(rethrow);
                     }
                 };
             } catch (Exception e) {

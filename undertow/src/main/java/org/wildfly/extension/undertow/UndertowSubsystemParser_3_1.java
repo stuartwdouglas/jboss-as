@@ -24,14 +24,10 @@ package org.wildfly.extension.undertow;
 
 import static org.jboss.as.controller.PersistentResourceXMLDescription.builder;
 
-import java.util.List;
-
-import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PersistentResourceDefinition;
 import org.jboss.as.controller.PersistentResourceXMLDescription;
 import org.jboss.as.controller.PersistentResourceXMLParser;
 import org.jboss.as.controller.operations.common.Util;
-import org.jboss.dmr.ModelNode;
 import org.wildfly.extension.undertow.filters.CustomFilterDefinition;
 import org.wildfly.extension.undertow.filters.ErrorPageDefinition;
 import org.wildfly.extension.undertow.filters.ExpressionFilterDefinition;
@@ -304,12 +300,9 @@ public class UndertowSubsystemParser_3_1 extends PersistentResourceXMLParser {
 
                 )
                  //here to make sure we always add filters & handlers path to mgmt model
-                .setAdditionalOperationsGenerator(new PersistentResourceXMLDescription.AdditionalOperationsGenerator() {
-                        @Override
-                        public void additionalOperations(final PathAddress address, final ModelNode addOperation, final List<ModelNode> operations) {
-                                operations.add(Util.createAddOperation(address.append(UndertowExtension.PATH_FILTERS)));
-                                operations.add(Util.createAddOperation(address.append(UndertowExtension.PATH_HANDLERS)));
-                        }
+                .setAdditionalOperationsGenerator((address, addOperation, operations) -> {
+                        operations.add(Util.createAddOperation(address.append(UndertowExtension.PATH_FILTERS)));
+                        operations.add(Util.createAddOperation(address.append(UndertowExtension.PATH_HANDLERS)));
                 })
                 .build();
     }

@@ -31,7 +31,6 @@ import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.model.test.FailedOperationTransformationConfig;
-import org.jboss.as.model.test.ModelFixer;
 import org.jboss.as.model.test.ModelTestControllerVersion;
 import org.jboss.as.model.test.ModelTestUtils;
 import org.jboss.as.subsystem.test.AbstractSubsystemTest;
@@ -85,13 +84,10 @@ public class JacORBTransformersTestCase extends AbstractSubsystemTest {
         Assert.assertTrue(mainServices.isSuccessfulBoot());
         Assert.assertTrue(legacyServices.isSuccessfulBoot());
 
-        checkSubsystemModelTransformation(mainServices, modelVersion, new ModelFixer() {
-            @Override
-            public ModelNode fixModel(ModelNode modelNode) {
-                //modelNode.get(JacORBSubsystemDefinitions.PERSISTENT_SERVER_ID.getName()).set(JacORBSubsystemDefinitions.PERSISTENT_SERVER_ID.getDefaultValue());
-                modelNode.get(JacORBSubsystemDefinitions.INTEROP_CHUNK_RMI_VALUETYPES.getName()).set(JacORBSubsystemDefinitions.INTEROP_CHUNK_RMI_VALUETYPES.getDefaultValue());
-                return modelNode;
-            }
+        checkSubsystemModelTransformation(mainServices, modelVersion, modelNode -> {
+            //modelNode.get(JacORBSubsystemDefinitions.PERSISTENT_SERVER_ID.getName()).set(JacORBSubsystemDefinitions.PERSISTENT_SERVER_ID.getDefaultValue());
+            modelNode.get(JacORBSubsystemDefinitions.INTEROP_CHUNK_RMI_VALUETYPES.getName()).set(JacORBSubsystemDefinitions.INTEROP_CHUNK_RMI_VALUETYPES.getDefaultValue());
+            return modelNode;
         });
     }
 

@@ -24,7 +24,6 @@ package org.jboss.as.ejb3.component.stateful;
 
 import org.jboss.as.ee.component.BasicComponentCreateService;
 import org.jboss.as.ee.component.ComponentConfiguration;
-import org.jboss.as.ee.component.ComponentStartService;
 import org.jboss.as.ee.component.DependencyConfigurator;
 import org.jboss.as.ejb3.logging.EjbLogger;
 import org.jboss.as.ejb3.cache.CacheInfo;
@@ -52,18 +51,10 @@ public class StatefulComponentCreateServiceFactory extends EJBComponentCreateSer
         }
         // setup an injection dependency to inject the DefaultAccessTimeoutService in the stateful bean
         // component create service
-        configuration.getCreateDependencies().add(new DependencyConfigurator<StatefulSessionComponentCreateService>() {
-            @Override
-            public void configureDependency(ServiceBuilder<?> serviceBuilder, StatefulSessionComponentCreateService componentCreateService) {
-                serviceBuilder.addDependency(DefaultAccessTimeoutService.STATEFUL_SERVICE_NAME, DefaultAccessTimeoutService.class, componentCreateService.getDefaultAccessTimeoutInjector());
-            }
-        });
-        configuration.getCreateDependencies().add(new DependencyConfigurator<StatefulSessionComponentCreateService>() {
-            @Override
-            public void configureDependency(ServiceBuilder<?> builder, StatefulSessionComponentCreateService service) {
-                builder.addDependency(DependencyType.OPTIONAL, RegistryInstallerService.SERVICE_NAME);
-                builder.addDependency(DependencyType.OPTIONAL, EJBRemoteConnectorService.SERVICE_NAME);
-            }
+        configuration.getCreateDependencies().add((DependencyConfigurator<StatefulSessionComponentCreateService>)(serviceBuilder, componentCreateService) -> serviceBuilder.addDependency(DefaultAccessTimeoutService.STATEFUL_SERVICE_NAME, DefaultAccessTimeoutService.class, componentCreateService.getDefaultAccessTimeoutInjector()));
+        configuration.getCreateDependencies().add((builder, service) -> {
+            builder.addDependency(DependencyType.OPTIONAL, RegistryInstallerService.SERVICE_NAME);
+            builder.addDependency(DependencyType.OPTIONAL, EJBRemoteConnectorService.SERVICE_NAME);
         });
         configuration.getCreateDependencies().add(new DependencyConfigurator<StatefulSessionComponentCreateService>() {
             @Override
@@ -81,12 +72,7 @@ public class StatefulComponentCreateServiceFactory extends EJBComponentCreateSer
         });
         @SuppressWarnings("rawtypes")
         final InjectedValue<CacheFactory> factory = new InjectedValue<>();
-        configuration.getStartDependencies().add(new DependencyConfigurator<ComponentStartService>() {
-            @Override
-            public void configureDependency(ServiceBuilder<?> builder, ComponentStartService service) {
-                builder.addDependency(configuration.getComponentDescription().getServiceName().append("cache"), CacheFactory.class, factory);
-            }
-        });
+        configuration.getStartDependencies().add((builder, service) -> builder.addDependency(configuration.getComponentDescription().getServiceName().append("cache"), CacheFactory.class, factory));
         return new StatefulSessionComponentCreateService(configuration, this.ejbJarConfiguration, factory);
     }
 }

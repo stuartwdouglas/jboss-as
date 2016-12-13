@@ -62,46 +62,44 @@ public class InstalledDriversListOperationHandler implements OperationStepHandle
 
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
         if (context.isNormalServer()) {
-            context.addStep(new OperationStepHandler() {
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    ServiceController<?> sc = context.getServiceRegistry(false).getRequiredService(
-                            ConnectorServices.JDBC_DRIVER_REGISTRY_SERVICE);
-                    DriverRegistry driverRegistry = DriverRegistry.class.cast(sc.getValue());
-                    Resource rootNode = context.readResourceFromRoot(PathAddress.EMPTY_ADDRESS, false);
-                    ModelNode rootModel = rootNode.getModel();
-                    String profile = rootModel.hasDefined("profile-name") ? rootModel.get("profile-name").asString() : null;
+            context.addStep((context1, operation1) -> {
+                ServiceController<?> sc = context1.getServiceRegistry(false).getRequiredService(
+                        ConnectorServices.JDBC_DRIVER_REGISTRY_SERVICE);
+                DriverRegistry driverRegistry = DriverRegistry.class.cast(sc.getValue());
+                Resource rootNode = context1.readResourceFromRoot(PathAddress.EMPTY_ADDRESS, false);
+                ModelNode rootModel = rootNode.getModel();
+                String profile = rootModel.hasDefined("profile-name") ? rootModel.get("profile-name").asString() : null;
 
-                    ModelNode result = context.getResult();
-                    for (InstalledDriver driver : driverRegistry.getInstalledDrivers()) {
-                        ModelNode driverNode = new ModelNode();
-                        driverNode.get(DRIVER_NAME.getName()).set(driver.getDriverName());
-                        if (driver.isFromDeployment()) {
-                            driverNode.get(DEPLOYMENT_NAME.getName()).set(driver.getDriverName());
-                            driverNode.get(DRIVER_MODULE_NAME.getName());
-                            driverNode.get(MODULE_SLOT.getName());
-                            driverNode.get(DRIVER_DATASOURCE_CLASS_NAME.getName());
-                            driverNode.get(DRIVER_XA_DATASOURCE_CLASS_NAME.getName());
+                ModelNode result = context1.getResult();
+                for (InstalledDriver driver : driverRegistry.getInstalledDrivers()) {
+                    ModelNode driverNode = new ModelNode();
+                    driverNode.get(DRIVER_NAME.getName()).set(driver.getDriverName());
+                    if (driver.isFromDeployment()) {
+                        driverNode.get(DEPLOYMENT_NAME.getName()).set(driver.getDriverName());
+                        driverNode.get(DRIVER_MODULE_NAME.getName());
+                        driverNode.get(MODULE_SLOT.getName());
+                        driverNode.get(DRIVER_DATASOURCE_CLASS_NAME.getName());
+                        driverNode.get(DRIVER_XA_DATASOURCE_CLASS_NAME.getName());
 
-                        } else {
-                            driverNode.get(DEPLOYMENT_NAME.getName());
-                            driverNode.get(DRIVER_MODULE_NAME.getName()).set(driver.getModuleName().getName());
-                            driverNode.get(MODULE_SLOT.getName()).set(
-                                    driver.getModuleName() != null ? driver.getModuleName().getSlot() : "");
-                            driverNode.get(DRIVER_DATASOURCE_CLASS_NAME.getName()).set(
-                                    driver.getDataSourceClassName() != null ? driver.getDataSourceClassName() : "");
-                            driverNode.get(DRIVER_XA_DATASOURCE_CLASS_NAME.getName()).set(
-                                    driver.getXaDataSourceClassName() != null ? driver.getXaDataSourceClassName() : "");
+                    } else {
+                        driverNode.get(DEPLOYMENT_NAME.getName());
+                        driverNode.get(DRIVER_MODULE_NAME.getName()).set(driver.getModuleName().getName());
+                        driverNode.get(MODULE_SLOT.getName()).set(
+                                driver.getModuleName() != null ? driver.getModuleName().getSlot() : "");
+                        driverNode.get(DRIVER_DATASOURCE_CLASS_NAME.getName()).set(
+                                driver.getDataSourceClassName() != null ? driver.getDataSourceClassName() : "");
+                        driverNode.get(DRIVER_XA_DATASOURCE_CLASS_NAME.getName()).set(
+                                driver.getXaDataSourceClassName() != null ? driver.getXaDataSourceClassName() : "");
 
-                        }
-                        driverNode.get(DRIVER_CLASS_NAME.getName()).set(driver.getDriverClassName());
-                        driverNode.get(DRIVER_MAJOR_VERSION.getName()).set(driver.getMajorVersion());
-                        driverNode.get(DRIVER_MINOR_VERSION.getName()).set(driver.getMinorVersion());
-                        driverNode.get(JDBC_COMPLIANT.getName()).set(driver.isJdbcCompliant());
-                        if (profile != null) {
-                            driverNode.get(PROFILE.getName()).set(profile);
-                        }
-                        result.add(driverNode);
                     }
+                    driverNode.get(DRIVER_CLASS_NAME.getName()).set(driver.getDriverClassName());
+                    driverNode.get(DRIVER_MAJOR_VERSION.getName()).set(driver.getMajorVersion());
+                    driverNode.get(DRIVER_MINOR_VERSION.getName()).set(driver.getMinorVersion());
+                    driverNode.get(JDBC_COMPLIANT.getName()).set(driver.isJdbcCompliant());
+                    if (profile != null) {
+                        driverNode.get(PROFILE.getName()).set(profile);
+                    }
+                    result.add(driverNode);
                 }
             }, OperationContext.Stage.RUNTIME);
         } else {

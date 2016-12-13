@@ -50,7 +50,6 @@ import org.jboss.as.controller.operations.validation.ParameterValidator;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.transform.OperationResultTransformer;
 import org.jboss.as.controller.transform.OperationTransformer;
-import org.jboss.as.controller.transform.TransformationContext;
 import org.jboss.dmr.ModelNode;
 import org.jboss.dmr.ModelType;
 import org.jboss.jca.common.api.metadata.Defaults;
@@ -815,45 +814,39 @@ public class Constants {
             .setParameters(USERNAME, PASSWORD)
             .setRuntimeOnly().build();
 
-    static final OperationTransformer ENABLE_TRANSFORMER = new OperationTransformer() {
-        @Override
-        public TransformedOperation transformOperation(TransformationContext context, PathAddress address, ModelNode operation) throws OperationFailedException {
+    static final OperationTransformer ENABLE_TRANSFORMER = (context, address, operation) -> {
 
-            final String attributeName = operation.require(NAME).asString();
-            if (ENABLED.getName().equals(attributeName)) {
-                final ModelNode transformed = new ModelNode();
-                //If using the same transformer for UNDEFINE_ATTRIBUTE as well, check if it is undefined and set whatever is default
-                ModelNode value = operation.get(VALUE);
-                boolean booleanValue = value.isDefined() ? value.asBoolean() : Defaults.ENABLED;
-                transformed.get(OP).set(booleanValue ? ENABLE : DISABLE);
-                transformed.get(OP_ADDR).set(address.toModelNode());
+        final String attributeName = operation.require(NAME).asString();
+        if (ENABLED.getName().equals(attributeName)) {
+            final ModelNode transformed = new ModelNode();
+            //If using the same transformer for UNDEFINE_ATTRIBUTE as well, check if it is undefined and set whatever is default
+            ModelNode value = operation.get(VALUE);
+            boolean booleanValue = value.isDefined() ? value.asBoolean() : Defaults.ENABLED;
+            transformed.get(OP).set(booleanValue ? ENABLE : DISABLE);
+            transformed.get(OP_ADDR).set(address.toModelNode());
 
-                return new TransformedOperation(transformed, OperationResultTransformer.ORIGINAL_RESULT);
-            }
-            return new TransformedOperation(operation, OperationResultTransformer.ORIGINAL_RESULT);
+            return new OperationTransformer.TransformedOperation(transformed, OperationResultTransformer.ORIGINAL_RESULT);
         }
+        return new OperationTransformer.TransformedOperation(operation, OperationResultTransformer.ORIGINAL_RESULT);
     };
 
-    static final OperationTransformer ENABLE_ADD_TRANSFORMER = new OperationTransformer() {
-        @Override
-        public TransformedOperation transformOperation(TransformationContext context, PathAddress address, ModelNode operation) throws OperationFailedException {
-            if (operation.hasDefined(ENABLED.getName()) && operation.get(ENABLED.getName()).asBoolean()) {
-                ModelNode add = operation.clone();
-                add.remove(ENABLED.getName());
+    static final OperationTransformer ENABLE_ADD_TRANSFORMER = (context, address, operation) -> {
+        if (operation.hasDefined(ENABLED.getName()) && operation.get(ENABLED.getName()).asBoolean()) {
+            ModelNode add = operation.clone();
+            add.remove(ENABLED.getName());
 
-                ModelNode composite = new ModelNode();
-                composite.get(OP).set(COMPOSITE);
-                composite.get(OP_ADDR).setEmptyList();
-                composite.get(STEPS).add(add);
+            ModelNode composite = new ModelNode();
+            composite.get(OP).set(COMPOSITE);
+            composite.get(OP_ADDR).setEmptyList();
+            composite.get(STEPS).add(add);
 
-                ModelNode enable = Util.createEmptyOperation(ENABLE, PathAddress.pathAddress(operation.get(OP_ADDR)));
-                composite.get(STEPS).add(enable);
+            ModelNode enable = Util.createEmptyOperation(ENABLE, PathAddress.pathAddress(operation.get(OP_ADDR)));
+            composite.get(STEPS).add(enable);
 
-                return new TransformedOperation(composite, OperationResultTransformer.ORIGINAL_RESULT);
+            return new OperationTransformer.TransformedOperation(composite, OperationResultTransformer.ORIGINAL_RESULT);
 
-            } else {
-                return new TransformedOperation(operation, OperationResultTransformer.ORIGINAL_RESULT);
-            }
+        } else {
+            return new OperationTransformer.TransformedOperation(operation, OperationResultTransformer.ORIGINAL_RESULT);
         }
     };
 

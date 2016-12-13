@@ -69,14 +69,11 @@ class DefaultComponentViewConfigurator extends AbstractComponentConfigurator imp
             configuration.getViews().add(viewConfiguration);
         }
 
-        configuration.getStartDependencies().add(new DependencyConfigurator<ComponentStartService>() {
-            @Override
-            public void configureDependency(final ServiceBuilder<?> serviceBuilder, ComponentStartService service) throws DeploymentUnitProcessingException {
-                for (final Map.Entry<ServiceName, ServiceBuilder.DependencyType> entry : description.getDependencies().entrySet()) {
-                    serviceBuilder.addDependency(entry.getValue(), entry.getKey());
-                }
-
+        configuration.getStartDependencies().add((serviceBuilder, service) -> {
+            for (final Map.Entry<ServiceName, ServiceBuilder.DependencyType> entry : description.getDependencies().entrySet()) {
+                serviceBuilder.addDependency(entry.getValue(), entry.getKey());
             }
+
         });
     }
 }

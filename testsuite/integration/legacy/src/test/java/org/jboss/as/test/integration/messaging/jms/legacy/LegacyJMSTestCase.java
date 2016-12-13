@@ -39,8 +39,6 @@ import javax.jms.JMSConsumer;
 import javax.jms.JMSContext;
 import javax.jms.JMSException;
 import javax.jms.JMSProducer;
-import javax.jms.Message;
-import javax.jms.MessageListener;
 import javax.jms.TextMessage;
 import javax.naming.Context;
 
@@ -146,16 +144,13 @@ public class LegacyJMSTestCase {
             final List<String> result = new ArrayList<String>();
 
             JMSConsumer consumer = consumerContext.createConsumer(destination);
-            consumer.setMessageListener(new MessageListener() {
-                @Override
-                public void onMessage(Message message) {
-                    TextMessage msg = (TextMessage) message;
-                    try {
-                        result.add(msg.getText());
-                        latch.countDown();
-                    } catch (JMSException e) {
-                        e.printStackTrace();
-                    }
+            consumer.setMessageListener(message -> {
+                TextMessage msg = (TextMessage) message;
+                try {
+                    result.add(msg.getText());
+                    latch.countDown();
+                } catch (JMSException e) {
+                    e.printStackTrace();
                 }
             });
 

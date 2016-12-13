@@ -43,34 +43,21 @@ class SecurityContextHandle implements ContextHandle {
     public Handle setup() {
         final SecurityContext current = getSecurityContext();
         setSecurityContext(securityContext);
-        return new Handle() {
-            @Override
-            public void tearDown() {
-                setSecurityContext(current);
-            }
-        };
+        return () -> setSecurityContext(current);
     }
 
     private static SecurityContext getSecurityContext() {
         if (WildFlySecurityManager.isChecking()) {
-            return AccessController.doPrivileged(new PrivilegedAction<SecurityContext>() {
-                @Override
-                public SecurityContext run() {
-                    return SecurityContextAssociation.getSecurityContext();
-                }
-            });
+            return AccessController.doPrivileged((PrivilegedAction<SecurityContext>) () -> SecurityContextAssociation.getSecurityContext());
         }
         return SecurityContextAssociation.getSecurityContext();
     }
 
     private static void setSecurityContext(final SecurityContext securityContext) {
         if (WildFlySecurityManager.isChecking()) {
-            AccessController.doPrivileged(new PrivilegedAction<Void>() {
-                @Override
-                public Void run() {
-                    SecurityContextAssociation.setSecurityContext(securityContext);
-                    return null;
-                }
+            AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+                SecurityContextAssociation.setSecurityContext(securityContext);
+                return null;
             });
         } else {
             SecurityContextAssociation.setSecurityContext(securityContext);

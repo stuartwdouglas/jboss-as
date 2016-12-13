@@ -26,8 +26,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 
 import io.undertow.UndertowOptions;
-import io.undertow.server.HandlerWrapper;
-import io.undertow.server.HttpHandler;
 import io.undertow.server.ListenerRegistry;
 import io.undertow.server.OpenListener;
 import io.undertow.server.handlers.ChannelUpgradeHandler;
@@ -67,36 +65,18 @@ public class HttpListenerService extends ListenerService {
     public HttpListenerService(String name, final String serverName, OptionMap listenerOptions, OptionMap socketOptions, boolean certificateForwarding, boolean proxyAddressForwarding) {
         super(name, listenerOptions, socketOptions);
         this.serverName = serverName;
-        addWrapperHandler(new HandlerWrapper() {
-            @Override
-            public HttpHandler wrap(final HttpHandler handler) {
-                httpUpgradeHandler.setNonUpgradeHandler(handler);
-                return httpUpgradeHandler;
-            }
+        addWrapperHandler(handler -> {
+            httpUpgradeHandler.setNonUpgradeHandler(handler);
+            return httpUpgradeHandler;
         });
         if(listenerOptions.get(UndertowOptions.ENABLE_HTTP2, false)) {
-            addWrapperHandler(new HandlerWrapper() {
-                @Override
-                public HttpHandler wrap(HttpHandler handler) {
-                    return new Http2UpgradeHandler(handler);
-                }
-            });
+            addWrapperHandler(handler -> new Http2UpgradeHandler(handler));
         }
         if (certificateForwarding) {
-            addWrapperHandler(new HandlerWrapper() {
-                @Override
-                public HttpHandler wrap(HttpHandler handler) {
-                    return new SSLHeaderHandler(handler);
-                }
-            });
+            addWrapperHandler(handler -> new SSLHeaderHandler(handler));
         }
         if (proxyAddressForwarding) {
-            addWrapperHandler(new HandlerWrapper() {
-                @Override
-                public HttpHandler wrap(HttpHandler handler) {
-                    return new ProxyPeerAddressHandler(handler);
-                }
-            });
+            addWrapperHandler(handler -> new ProxyPeerAddressHandler(handler));
         }
     }
 

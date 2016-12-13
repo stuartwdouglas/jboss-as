@@ -20,7 +20,6 @@
 package org.jboss.as.jsf.deployment;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -116,11 +115,7 @@ public class JSFModuleIdFactory {
         baseDirBuilder.append(moduleName.replace(".", File.separator));
 
         File moduleBaseDir = new File(baseDirBuilder.toString());
-        File[] slots = moduleBaseDir.listFiles(new FileFilter() {
-            public boolean accept(File pathname) {
-                return pathname.isDirectory();
-            }
-        });
+        File[] slots = moduleBaseDir.listFiles(pathname -> pathname.isDirectory());
 
         if (slots == null) return;
 

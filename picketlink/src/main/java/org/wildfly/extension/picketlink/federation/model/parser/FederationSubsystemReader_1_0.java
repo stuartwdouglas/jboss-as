@@ -24,7 +24,6 @@ package org.wildfly.extension.picketlink.federation.model.parser;
 
 import org.jboss.dmr.ModelNode;
 import org.jboss.staxmapper.XMLExtendedStreamReader;
-import org.wildfly.extension.picketlink.common.model.ModelElement;
 import org.wildfly.extension.picketlink.federation.model.handlers.HandlerParameterResourceDefinition;
 import org.wildfly.extension.picketlink.federation.model.handlers.HandlerResourceDefinition;
 import org.wildfly.extension.picketlink.federation.model.handlers.HandlerTypeEnum;
@@ -62,18 +61,14 @@ public class FederationSubsystemReader_1_0 extends AbstractFederationSubsystemRe
         ModelNode handlerNode = parseConfig(reader, COMMON_HANDLER, name, entityProviderNode, HandlerResourceDefinition.INSTANCE
                 .getAttributes(), addOperations);
 
-        parseElement(new ElementParser() {
-            @Override
-            public void parse(final XMLExtendedStreamReader reader, final ModelElement element, final ModelNode parentNode,
-                    List<ModelNode> addOperations) throws XMLStreamException {
-                switch (element) {
-                    case COMMON_HANDLER_PARAMETER:
-                        parseConfig(reader, COMMON_HANDLER_PARAMETER, COMMON_NAME.getName(), parentNode,
-                                HandlerParameterResourceDefinition.INSTANCE.getAttributes(), addOperations);
-                        break;
-                    default:
-                        throw unexpectedElement(reader);
-                }
+        parseElement((reader1, element, parentNode, addOperations1) -> {
+            switch (element) {
+                case COMMON_HANDLER_PARAMETER:
+                    parseConfig(reader1, COMMON_HANDLER_PARAMETER, COMMON_NAME.getName(), parentNode,
+                            HandlerParameterResourceDefinition.INSTANCE.getAttributes(), addOperations1);
+                    break;
+                default:
+                    throw unexpectedElement(reader1);
             }
         }, COMMON_HANDLER, handlerNode, reader, addOperations);
     }

@@ -22,7 +22,6 @@
 package org.jboss.as.ejb3.remote;
 
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.security.AccessController;
@@ -280,12 +279,7 @@ public class LocalEjbReceiver extends EJBReceiver implements Service<LocalEjbRec
     private ObjectCloner createCloner(final ClonerConfiguration paramConfig) {
         ObjectCloner parameterCloner;
         if(WildFlySecurityManager.isChecking()) {
-            parameterCloner = WildFlySecurityManager.doUnchecked(new PrivilegedAction<ObjectCloner>() {
-                @Override
-                public ObjectCloner run() {
-                    return ObjectCloners.getSerializingObjectClonerFactory().createCloner(paramConfig);
-                }
-            });
+            parameterCloner = WildFlySecurityManager.doUnchecked((PrivilegedAction<ObjectCloner>) () -> ObjectCloners.getSerializingObjectClonerFactory().createCloner(paramConfig));
         } else {
             parameterCloner = ObjectCloners.getSerializingObjectClonerFactory().createCloner(paramConfig);
         }
@@ -325,12 +319,7 @@ public class LocalEjbReceiver extends EJBReceiver implements Service<LocalEjbRec
 
         try {
             if(WildFlySecurityManager.isChecking()) {
-                return WildFlySecurityManager.doUnchecked(new PrivilegedExceptionAction<Object>() {
-                    @Override
-                    public Object run() throws IOException, ClassNotFoundException {
-                        return cloner.clone(object);
-                    }
-                });
+                return WildFlySecurityManager.doUnchecked((PrivilegedExceptionAction<Object>) () -> cloner.clone(object));
             } else {
                 return cloner.clone(object);
             }
@@ -617,24 +606,16 @@ public class LocalEjbReceiver extends EJBReceiver implements Service<LocalEjbRec
 
 
     private static void setSecurityContextOnAssociation(final SecurityContext sc) {
-        AccessController.doPrivileged(new PrivilegedAction<Void>() {
-
-            @Override
-            public Void run() {
-                SecurityContextAssociation.setSecurityContext(sc);
-                return null;
-            }
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            SecurityContextAssociation.setSecurityContext(sc);
+            return null;
         });
     }
 
     private static void clearSecurityContextOnAssociation() {
-        AccessController.doPrivileged(new PrivilegedAction<Void>() {
-
-            @Override
-            public Void run() {
-                SecurityContextAssociation.clearSecurityContext();
-                return null;
-            }
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            SecurityContextAssociation.clearSecurityContext();
+            return null;
         });
     }
 

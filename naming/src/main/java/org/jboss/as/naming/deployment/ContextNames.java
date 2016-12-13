@@ -23,7 +23,6 @@
 package org.jboss.as.naming.deployment;
 
 import org.jboss.as.naming.ImmediateManagedReference;
-import org.jboss.as.naming.ManagedReference;
 import org.jboss.as.naming.ManagedReferenceFactory;
 import org.jboss.as.naming.NamingContext;
 import org.jboss.as.naming.NamingStore;
@@ -309,20 +308,17 @@ public class ContextNames {
                 @Override
                 public void inject(final NamingStore value) throws InjectionException {
                     final NamingContext storeBaseContext = new NamingContext(value, null);
-                    final ManagedReferenceFactory factory = new ManagedReferenceFactory() {
-                        @Override
-                        public ManagedReference getReference() {
-                            try {
-                                return new ImmediateManagedReference(storeBaseContext.lookup(getBindName()));
-                            } catch (NamingException e) {
-                                if(!optional) {
-                                    throw NamingLogger.ROOT_LOGGER.resourceLookupForInjectionFailed(getAbsoluteJndiName(), e);
-                                } else {
-                                    NamingLogger.ROOT_LOGGER.tracef(e,"failed to lookup %s", getAbsoluteJndiName());
-                                }
+                    final ManagedReferenceFactory factory = () -> {
+                        try {
+                            return new ImmediateManagedReference(storeBaseContext.lookup(getBindName()));
+                        } catch (NamingException e) {
+                            if(!optional) {
+                                throw NamingLogger.ROOT_LOGGER.resourceLookupForInjectionFailed(getAbsoluteJndiName(), e);
+                            } else {
+                                NamingLogger.ROOT_LOGGER.tracef(e,"failed to lookup %s", getAbsoluteJndiName());
                             }
-                            return null;
                         }
+                        return null;
                     };
                     targetInjector.inject(factory);
                 }

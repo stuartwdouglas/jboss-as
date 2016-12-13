@@ -23,12 +23,8 @@
 package org.jboss.as.xts;
 
 import org.jboss.as.ee.component.Attachments;
-import org.jboss.as.ee.component.ComponentConfiguration;
-import org.jboss.as.ee.component.ComponentConfigurator;
 import org.jboss.as.ee.component.ComponentDescription;
 import org.jboss.as.ee.component.EEModuleDescription;
-import org.jboss.as.ee.component.ViewConfiguration;
-import org.jboss.as.ee.component.ViewConfigurator;
 import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
 import org.jboss.as.ejb3.component.session.SessionBeanComponentDescription;
@@ -65,15 +61,11 @@ public class XTSInterceptorDeploymentProcessor implements DeploymentUnitProcesso
     private void registerSessionBeanInterceptors(SessionBeanComponentDescription componentDescription) {
         if (componentDescription.isStateless()) {
 
-            componentDescription.getConfigurators().addFirst(new ComponentConfigurator() {
-                @Override
-                public void configure(DeploymentPhaseContext context, ComponentDescription description, ComponentConfiguration configuration) throws
-                        DeploymentUnitProcessingException {
-                    for (Method method : configuration.getDefinedComponentMethods()) {
-                        if (methodHasServiceRequestAnnotation(method)) {
-                            configuration.addComponentInterceptor(method, XTSEJBInterceptor.FACTORY, InterceptorOrder.Component.XTS_INTERCEPTOR);
-                            configuration.getInterceptorContextKeys().add(XTSEJBInterceptor.CONTEXT_KEY);
-                        }
+            componentDescription.getConfigurators().addFirst((context, description, configuration) -> {
+                for (Method method : configuration.getDefinedComponentMethods()) {
+                    if (methodHasServiceRequestAnnotation(method)) {
+                        configuration.addComponentInterceptor(method, XTSEJBInterceptor.FACTORY, InterceptorOrder.Component.XTS_INTERCEPTOR);
+                        configuration.getInterceptorContextKeys().add(XTSEJBInterceptor.CONTEXT_KEY);
                     }
                 }
             });
@@ -83,13 +75,10 @@ public class XTSInterceptorDeploymentProcessor implements DeploymentUnitProcesso
 
     private void registerWSPOJOInterceptors(WSComponentDescription componentDescription) {
         for (ViewDescription view : componentDescription.getViews()) {
-            view.getConfigurators().add(new ViewConfigurator() {
-                @Override
-                public void configure(DeploymentPhaseContext context, ComponentConfiguration componentConfiguration, ViewDescription description, ViewConfiguration configuration) throws DeploymentUnitProcessingException {
-                    for (final Method method : configuration.getProxyFactory().getCachedMethods()) {
-                        if (methodHasServiceRequestAnnotation(method)) {
-                            configuration.addViewInterceptor(method, XTSPOJOInterceptor.FACTORY, InterceptorOrder.View.XTS_INTERCEPTOR);
-                        }
+            view.getConfigurators().add((context, componentConfiguration, description, configuration) -> {
+                for (final Method method : configuration.getProxyFactory().getCachedMethods()) {
+                    if (methodHasServiceRequestAnnotation(method)) {
+                        configuration.addViewInterceptor(method, XTSPOJOInterceptor.FACTORY, InterceptorOrder.View.XTS_INTERCEPTOR);
                     }
                 }
             });

@@ -70,11 +70,7 @@ public class ProxyServicesImpl implements ProxyServices {
 
     public ClassLoader getClassLoader(final Class<?> proxiedBeanType) {
         if (WildFlySecurityManager.isChecking()) {
-            return AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-                public ClassLoader run() {
-                    return _getClassLoader(proxiedBeanType);
-                }
-            });
+            return AccessController.doPrivileged((PrivilegedAction<ClassLoader>) () -> _getClassLoader(proxiedBeanType));
         } else {
             return _getClassLoader(proxiedBeanType);
         }

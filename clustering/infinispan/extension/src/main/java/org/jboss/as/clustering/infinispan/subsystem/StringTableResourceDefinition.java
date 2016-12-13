@@ -75,30 +75,24 @@ public class StringTableResourceDefinition extends TableResourceDefinition {
         ResourceTransformationDescriptionBuilder builder = parent.addChildResource(PATH);
 
         if (InfinispanModel.VERSION_4_0_0.requiresTransformation(version)) {
-            OperationTransformer addTransformer = new OperationTransformer() {
-                @Override
-                public ModelNode transformOperation(ModelNode operation) {
-                    PathAddress storeAddress = Operations.getPathAddress(operation).getParent();
-                    ModelNode value = new ModelNode();
-                    for (Class<? extends org.jboss.as.clustering.controller.Attribute> attributeClass : Arrays.asList(Attribute.class, TableResourceDefinition.Attribute.class, TableResourceDefinition.ColumnAttribute.class)) {
-                        for (org.jboss.as.clustering.controller.Attribute attribute : attributeClass.getEnumConstants()) {
-                            String name = attribute.getName();
-                            if (operation.hasDefined(name)) {
-                                value.get(name).set(operation.get(name));
-                            }
+            OperationTransformer addTransformer = operation -> {
+                PathAddress storeAddress = Operations.getPathAddress(operation).getParent();
+                ModelNode value = new ModelNode();
+                for (Class<? extends org.jboss.as.clustering.controller.Attribute> attributeClass : Arrays.asList(Attribute.class, TableResourceDefinition.Attribute.class, ColumnAttribute.class)) {
+                    for (org.jboss.as.clustering.controller.Attribute attribute : attributeClass.getEnumConstants()) {
+                        String name = attribute.getName();
+                        if (operation.hasDefined(name)) {
+                            value.get(name).set(operation.get(name));
                         }
                     }
-                    return value.isDefined() ? Operations.createWriteAttributeOperation(storeAddress, StringKeyedJDBCStoreResourceDefinition.DeprecatedAttribute.TABLE, value) : Operations.createUndefineAttributeOperation(storeAddress, StringKeyedJDBCStoreResourceDefinition.DeprecatedAttribute.TABLE);
                 }
+                return value.isDefined() ? Operations.createWriteAttributeOperation(storeAddress, StringKeyedJDBCStoreResourceDefinition.DeprecatedAttribute.TABLE, value) : Operations.createUndefineAttributeOperation(storeAddress, StringKeyedJDBCStoreResourceDefinition.DeprecatedAttribute.TABLE);
             };
             builder.addRawOperationTransformationOverride(ModelDescriptionConstants.ADD, new SimpleOperationTransformer(addTransformer));
 
-            OperationTransformer removeTransformer = new OperationTransformer() {
-                @Override
-                public ModelNode transformOperation(ModelNode operation) {
-                    PathAddress storeAddress = Operations.getPathAddress(operation).getParent();
-                    return Operations.createUndefineAttributeOperation(storeAddress, StringKeyedJDBCStoreResourceDefinition.DeprecatedAttribute.TABLE);
-                }
+            OperationTransformer removeTransformer = operation -> {
+                PathAddress storeAddress = Operations.getPathAddress(operation).getParent();
+                return Operations.createUndefineAttributeOperation(storeAddress, StringKeyedJDBCStoreResourceDefinition.DeprecatedAttribute.TABLE);
             };
             builder.addRawOperationTransformationOverride(ModelDescriptionConstants.REMOVE, new SimpleOperationTransformer(removeTransformer));
         }

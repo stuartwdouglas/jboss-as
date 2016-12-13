@@ -178,30 +178,24 @@ public class HornetQServerResourceDefinition extends ModelOnlyResourceDefinition
      * We only warn the user if he wants to disable the clustered state of the server by setting it to false.
      */
     private static final class ClusteredAttributeHandlers {
-        static final OperationStepHandler READ_HANDLER = new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                boolean clustered = isClustered(context);
-                context.getResult().set(clustered);
-            }
+        static final OperationStepHandler READ_HANDLER = (context, operation) -> {
+            boolean clustered = isClustered(context);
+            context.getResult().set(clustered);
         };
 
-        static final OperationStepHandler WRITE_HANDLER = new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                // the real clustered HornetQ state
-                boolean clustered = isClustered(context);
-                // whether the user wants the server to be clustered
-                ModelNode mock = new ModelNode();
-                mock.get(CLUSTERED.getName()).set(operation.get(ModelDescriptionConstants.VALUE));
-                boolean wantsClustered = CLUSTERED.resolveModelAttribute(context, mock).asBoolean();
-                if (clustered && !wantsClustered) {
-                    PathAddress serverAddress = context.getCurrentAddress();
-                    MessagingLogger.ROOT_LOGGER.warn(MessagingLogger.ROOT_LOGGER.canNotChangeClusteredAttribute(serverAddress));
-                }
-                // ignore the operation
-                context.stepCompleted();
+        static final OperationStepHandler WRITE_HANDLER = (context, operation) -> {
+            // the real clustered HornetQ state
+            boolean clustered = isClustered(context);
+            // whether the user wants the server to be clustered
+            ModelNode mock = new ModelNode();
+            mock.get(CLUSTERED.getName()).set(operation.get(ModelDescriptionConstants.VALUE));
+            boolean wantsClustered = CLUSTERED.resolveModelAttribute(context, mock).asBoolean();
+            if (clustered && !wantsClustered) {
+                PathAddress serverAddress = context.getCurrentAddress();
+                MessagingLogger.ROOT_LOGGER.warn(MessagingLogger.ROOT_LOGGER.canNotChangeClusteredAttribute(serverAddress));
             }
+            // ignore the operation
+            context.stepCompleted();
         };
 
         private static boolean isClustered(OperationContext context) {

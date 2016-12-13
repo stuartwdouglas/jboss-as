@@ -102,11 +102,7 @@ public class UndertowEventHandlerAdapter implements UndertowEventListener, Servi
 
         // Start the periodic STATUS thread
         ThreadGroup group = new ThreadGroup(UndertowEventHandlerAdapter.class.getSimpleName());
-        ThreadFactory factory = doPrivileged(new PrivilegedAction<ThreadFactory>() {
-            public ThreadFactory run() {
-                return new JBossThreadFactory(group, Boolean.FALSE, null, "%G - %t", null, null);
-            }
-        });
+        ThreadFactory factory = doPrivileged((PrivilegedAction<ThreadFactory>) () -> new JBossThreadFactory(group, Boolean.FALSE, null, "%G - %t", null, null));
         this.executor = Executors.newScheduledThreadPool(1, factory);
         this.executor.scheduleWithFixedDelay(this, 0, statusInterval, TimeUnit.SECONDS);
         suspendController.getValue().registerActivity(this);

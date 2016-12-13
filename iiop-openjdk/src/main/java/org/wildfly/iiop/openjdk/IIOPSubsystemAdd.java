@@ -31,7 +31,6 @@ import java.util.Properties;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PersistentResourceDefinition;
 import org.jboss.as.controller.PropertiesAttributeDefinition;
@@ -103,15 +102,12 @@ public class IIOPSubsystemAdd extends AbstractBoottimeAddStepHandler {
     protected void performBoottime(final OperationContext context, final ModelNode operation, final ModelNode model) throws OperationFailedException {
 
         // This needs to run after all child resources so that they can detect a fresh state
-        context.addStep(new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                final Resource resource = context.readResource(PathAddress.EMPTY_ADDRESS);
-                ModelNode node = Resource.Tools.readModel(resource);
-                launchServices(context, node);
-                // Rollback handled by the parent step
-                context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
-            }
+        context.addStep((context1, operation1) -> {
+            final Resource resource = context1.readResource(PathAddress.EMPTY_ADDRESS);
+            ModelNode node = Resource.Tools.readModel(resource);
+            launchServices(context1, node);
+            // Rollback handled by the parent step
+            context1.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
         }, OperationContext.Stage.RUNTIME);
     }
 

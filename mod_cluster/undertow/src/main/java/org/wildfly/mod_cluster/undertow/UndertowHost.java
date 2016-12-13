@@ -78,12 +78,7 @@ public class UndertowHost implements Host {
             }
         };
 
-        return new Iterable<Context>() {
-            @Override
-            public Iterator<Context> iterator() {
-                return iterator;
-            }
-        };
+        return () -> iterator;
     }
 
     @Override

@@ -57,13 +57,11 @@ public class ClearStatisticsHandler implements OperationStepHandler {
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
 
         if (context.isNormalServer()) {
-            context.addStep(new OperationStepHandler() {
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    for (StatisticsPlugin statsPlugin : stats) {
-                        statsPlugin.clear();
-                    }
-                    context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
+            context.addStep((context1, operation1) -> {
+                for (StatisticsPlugin statsPlugin : stats) {
+                    statsPlugin.clear();
                 }
+                context1.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
             }, OperationContext.Stage.RUNTIME);
         }
         context.stepCompleted();

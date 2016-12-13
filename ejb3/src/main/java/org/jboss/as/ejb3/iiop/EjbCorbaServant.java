@@ -443,24 +443,16 @@ public class EjbCorbaServant extends Servant implements InvokeHandler, LocalIIOP
 
 
     private static void setSecurityContextOnAssociation(final SecurityContext sc) {
-        AccessController.doPrivileged(new PrivilegedAction<Void>() {
-
-            @Override
-            public Void run() {
-                SecurityContextAssociation.setSecurityContext(sc);
-                return null;
-            }
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            SecurityContextAssociation.setSecurityContext(sc);
+            return null;
         });
     }
 
     private static void clearSecurityContextOnAssociation() {
-        AccessController.doPrivileged(new PrivilegedAction<Void>() {
-
-            @Override
-            public Void run() {
-                SecurityContextAssociation.clearSecurityContext();
-                return null;
-            }
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            SecurityContextAssociation.clearSecurityContext();
+            return null;
         });
     }
 }

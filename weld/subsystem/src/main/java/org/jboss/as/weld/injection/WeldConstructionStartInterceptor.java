@@ -1,13 +1,9 @@
 package org.jboss.as.weld.injection;
 
-import java.util.Map;
-
 import javax.enterprise.context.spi.CreationalContext;
-import javax.enterprise.inject.spi.AnnotatedConstructor;
 
 import org.jboss.invocation.Interceptor;
 import org.jboss.invocation.InterceptorContext;
-import org.jboss.weld.construction.api.AroundConstructCallback;
 import org.jboss.weld.construction.api.ConstructionHandle;
 import org.jboss.weld.construction.api.WeldCreationalContext;
 
@@ -42,17 +38,13 @@ public class WeldConstructionStartInterceptor implements Interceptor {
         WeldCreationalContext<T> ctxImpl = (WeldCreationalContext<T>) ctx;
         ctxImpl.setConstructorInterceptionSuppressed(true); // Weld will not try to invoke around construct interceptors on this instance
 
-        ctxImpl.registerAroundConstructCallback(new AroundConstructCallback<T>() {
-            @SuppressWarnings("unchecked")
-            @Override
-            public T aroundConstruct(ConstructionHandle<T> ctx, AnnotatedConstructor<T> constructor, Object[] parameters, Map<String, Object> data) throws Exception {
-                context.putPrivateData(ConstructionHandle.class, ctx);
-                context.setParameters(parameters);
-                context.setContextData(data);
-                context.setConstructor(constructor.getJavaMember());
-                context.proceed(); // proceed with the WF interceptor chain
-                return (T) context.getTarget();
-            }
+        ctxImpl.registerAroundConstructCallback((ctx1, constructor, parameters, data) -> {
+            context.putPrivateData(ConstructionHandle.class, ctx1);
+            context.setParameters(parameters);
+            context.setContextData(data);
+            context.setConstructor(constructor.getJavaMember());
+            context.proceed(); // proceed with the WF interceptor chain
+            return (T) context.getTarget();
         });
     }
 

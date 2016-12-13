@@ -37,7 +37,6 @@ import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
@@ -87,29 +86,24 @@ public class RaAdd extends AbstractAddStepHandler {
         } else {
             RaOperationUtil.installRaServicesAndDeployFromModule(context, name, resourceAdapter, archiveOrModuleName, newControllers);
             if (context.isBooting()) {
-                context.addStep(new OperationStepHandler() {
-                    public void execute(final OperationContext context, ModelNode operation) throws OperationFailedException {
+                context.addStep((context12, operation12) -> {
 
-                        //Next lines activate configuration on module deployed rar
-                        //in case there is 2 different resource-adapter config using same module deployed rar
-                        // a Deployment sercivice could be already present and need a restart to consider also this
-                        //newly added configuration
-                        ServiceName restartedServiceName = RaOperationUtil.restartIfPresent(context, archiveOrModuleName, name);
-                        if (restartedServiceName == null) {
-                            RaOperationUtil.activate(context, name, archiveOrModuleName);
-                        }
-                        context.completeStep(new OperationContext.RollbackHandler() {
-                            @Override
-                            public void handleRollback(OperationContext context, ModelNode operation) {
-                                try {
-                                    RaOperationUtil.removeIfActive(context, archiveOrModuleName, name);
-                                } catch (OperationFailedException e) {
-
-                                }
-
-                            }
-                        });
+                    //Next lines activate configuration on module deployed rar
+                    //in case there is 2 different resource-adapter config using same module deployed rar
+                    // a Deployment sercivice could be already present and need a restart to consider also this
+                    //newly added configuration
+                    ServiceName restartedServiceName = RaOperationUtil.restartIfPresent(context12, archiveOrModuleName, name);
+                    if (restartedServiceName == null) {
+                        RaOperationUtil.activate(context12, name, archiveOrModuleName);
                     }
+                    context12.completeStep((context1, operation1) -> {
+                        try {
+                            RaOperationUtil.removeIfActive(context1, archiveOrModuleName, name);
+                        } catch (OperationFailedException e) {
+
+                        }
+
+                    });
                 }, OperationContext.Stage.RUNTIME);
             }
         }

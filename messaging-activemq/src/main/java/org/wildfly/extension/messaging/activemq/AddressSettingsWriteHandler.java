@@ -68,12 +68,9 @@ class AddressSettingsWriteHandler extends AbstractWriteAttributeHandler<AddressS
             final AddressSettings existingSettings = repository.getMatch(match);
             repository.addMatch(match, settings);
             if(existingSettings != null) {
-                handbackHolder.setHandback(new RevertHandback() {
-                    @Override
-                    public void doRevertUpdateToRuntime() {
-                        // Restore the old settings
-                        repository.addMatch(address.getLastElement().getValue(), existingSettings);
-                    }
+                handbackHolder.setHandback(() -> {
+                    // Restore the old settings
+                    repository.addMatch(address.getLastElement().getValue(), existingSettings);
                 });
             }
         }

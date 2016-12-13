@@ -48,13 +48,10 @@ public class SecurityContextThreadSetupAction implements ThreadSetupHandler {
     private final SecurityDomainContext securityDomainContext;
     private final Map<String, Set<String>> principleVsRoleMap;
 
-    private static final PrivilegedAction<Object> TEAR_DOWN_PA = new PrivilegedAction<Object>() {
-        @Override
-        public Object run() {
-            SecurityActions.clearSecurityContext();
-            SecurityRolesAssociation.setSecurityRoles(null);
-            return null;
-        }
+    private static final PrivilegedAction<Object> TEAR_DOWN_PA = () -> {
+        SecurityActions.clearSecurityContext();
+        SecurityRolesAssociation.setSecurityRoles(null);
+        return null;
     };
 
     public SecurityContextThreadSetupAction(final String securityDomain, SecurityDomainContext securityDomainContext, Map<String, Set<String>> principleVsRoleMap) {
@@ -82,16 +79,13 @@ public class SecurityContextThreadSetupAction implements ThreadSetupHandler {
 
             if (mappingManager != null) {
                 if (WildFlySecurityManager.isChecking()) {
-                    WildFlySecurityManager.doUnchecked(new PrivilegedAction<Object>() {
-                        @Override
-                        public Object run() {
-                            // if there are mapping modules let them handle the role mapping
-                            MappingContext<RoleGroup> mc = mappingManager.getMappingContext(MappingType.ROLE.name());
-                            if (mc != null && mc.hasModules()) {
-                                SecurityRolesAssociation.setSecurityRoles(principleVsRoleMap);
-                            }
-                            return null;
+                    WildFlySecurityManager.doUnchecked((PrivilegedAction<Object>) () -> {
+                        // if there are mapping modules let them handle the role mapping
+                        MappingContext<RoleGroup> mc = mappingManager.getMappingContext(MappingType.ROLE.name());
+                        if (mc != null && mc.hasModules()) {
+                            SecurityRolesAssociation.setSecurityRoles(principleVsRoleMap);
                         }
+                        return null;
                     });
                 } else {
                     // if there are mapping modules let them handle the role mapping

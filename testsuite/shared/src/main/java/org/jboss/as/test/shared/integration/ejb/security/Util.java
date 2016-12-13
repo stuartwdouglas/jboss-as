@@ -34,7 +34,6 @@ import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 import javax.security.auth.login.LoginException;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -56,16 +55,14 @@ public class Util {
     public static LoginContext getCLMLoginContext(final String username, final String password) throws LoginException {
         final String configurationName = "Testing";
 
-        CallbackHandler cbh = new CallbackHandler() {
-            public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-                for (Callback current : callbacks) {
-                    if (current instanceof NameCallback) {
-                        ((NameCallback) current).setName(username);
-                    } else if (current instanceof PasswordCallback) {
-                        ((PasswordCallback) current).setPassword(password.toCharArray());
-                    } else {
-                        throw new UnsupportedCallbackException(current);
-                    }
+        CallbackHandler cbh = callbacks -> {
+            for (Callback current : callbacks) {
+                if (current instanceof NameCallback) {
+                    ((NameCallback) current).setName(username);
+                } else if (current instanceof PasswordCallback) {
+                    ((PasswordCallback) current).setPassword(password.toCharArray());
+                } else {
+                    throw new UnsupportedCallbackException(current);
                 }
             }
         };

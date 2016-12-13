@@ -44,14 +44,11 @@ public class ShutdownServlet extends HttpServlet {
     private ManagedExecutorService executorService;
 
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        executorService.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    requestLatch.await();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+        executorService.execute(() -> {
+            try {
+                requestLatch.await();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         });
         response.getWriter().write(TEXT);

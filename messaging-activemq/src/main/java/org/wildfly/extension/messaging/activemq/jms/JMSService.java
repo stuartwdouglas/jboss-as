@@ -90,15 +90,12 @@ public class JMSService implements Service<JMSServerManager> {
 
     @Override
     public void start(final StartContext context) throws StartException {
-        final Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    doStart(context);
-                    context.complete();
-                } catch (StartException e) {
-                    context.failed(e);
-                }
+        final Runnable task = () -> {
+            try {
+                doStart(context);
+                context.complete();
+            } catch (StartException e) {
+                context.failed(e);
             }
         };
         try {
@@ -113,12 +110,9 @@ public class JMSService implements Service<JMSServerManager> {
 
     @Override
     public void stop(final StopContext context) {
-        final Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                doStop(context);
-                context.complete();
-            }
+        final Runnable task = () -> {
+            doStop(context);
+            context.complete();
         };
         try {
             serverExecutor.getValue().submit(task);

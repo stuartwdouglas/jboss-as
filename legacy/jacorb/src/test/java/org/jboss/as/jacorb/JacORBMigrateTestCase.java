@@ -26,10 +26,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUBSYSTEM;
 
-import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationDefinition;
-import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ProcessType;
@@ -107,13 +104,10 @@ public class JacORBMigrateTestCase extends AbstractSubsystemTest {
             rootResource.registerChild(webExtension, Resource.Factory.create());
 
             rootRegistration.registerSubModel(new SimpleResourceDefinition(PathElement.pathElement(EXTENSION),
-                    ControllerResolver.getResolver(EXTENSION), new OperationStepHandler() {
-                        @Override
-                        public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                            extensionAdded = true;
-                            newSubsystem.initialize(extensionRegistry.getExtensionContext("org.wildfly.iiop-openjdk",
-                                    rootRegistration, ExtensionRegistryType.SLAVE));
-                        }
+                    ControllerResolver.getResolver(EXTENSION), (context, operation) -> {
+                        extensionAdded = true;
+                        newSubsystem.initialize(extensionRegistry.getExtensionContext("org.wildfly.iiop-openjdk",
+                                rootRegistration, ExtensionRegistryType.SLAVE));
                     }, null));
         }
 

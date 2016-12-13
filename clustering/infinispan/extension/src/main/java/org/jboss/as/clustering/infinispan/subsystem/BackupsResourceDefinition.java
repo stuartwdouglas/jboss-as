@@ -29,7 +29,6 @@ import org.jboss.as.clustering.controller.SimpleResourceRegistration;
 import org.jboss.as.clustering.controller.ResourceServiceBuilderFactory;
 import org.jboss.as.clustering.controller.ResourceServiceHandler;
 import org.jboss.as.controller.ModelVersion;
-import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.transform.PathAddressTransformer;
@@ -47,12 +46,7 @@ public class BackupsResourceDefinition extends ComponentResourceDefinition {
     static final PathElement PATH = pathElement("backups");
 
     static void buildTransformation(ModelVersion version, ResourceTransformationDescriptionBuilder parent) {
-        PathAddressTransformer addressTransformer = new PathAddressTransformer() {
-            @Override
-            public PathAddress transform(PathElement current, Builder builder) {
-                return builder.next();
-            }
-        };
+        PathAddressTransformer addressTransformer = (current, builder) -> builder.next();
         ResourceTransformationDescriptionBuilder builder = InfinispanModel.VERSION_4_0_0.requiresTransformation(version) ? parent.addChildRedirection(PATH, addressTransformer) : parent.addChildResource(PATH);
 
         BackupResourceDefinition.buildTransformation(version, builder);

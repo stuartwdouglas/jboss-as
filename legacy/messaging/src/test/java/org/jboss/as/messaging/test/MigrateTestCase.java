@@ -32,9 +32,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import org.jboss.as.controller.OperationContext;
-import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ProcessType;
 import org.jboss.as.controller.RunningMode;
@@ -214,14 +211,11 @@ public class MigrateTestCase extends AbstractSubsystemTest {
         @Override
         protected void initializeExtraSubystemsAndModel(ExtensionRegistry extensionRegistry, Resource rootResource, ManagementResourceRegistration rootRegistration, RuntimeCapabilityRegistry capabilityRegistry) {
             rootRegistration.registerSubModel(new SimpleResourceDefinition(PathElement.pathElement(EXTENSION),
-                    ControllerResolver.getResolver(EXTENSION), new OperationStepHandler() {
-                @Override
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    extensionAdded = true;
-                    newSubsystem.initialize(extensionRegistry.getExtensionContext("org.wildfly.extension.messaging-activemq",
-                            rootRegistration, ExtensionRegistryType.SERVER));
-                }
-            }, null));
+                    ControllerResolver.getResolver(EXTENSION), (context, operation) -> {
+                        extensionAdded = true;
+                        newSubsystem.initialize(extensionRegistry.getExtensionContext("org.wildfly.extension.messaging-activemq",
+                                rootRegistration, ExtensionRegistryType.SERVER));
+                    }, null));
             registerCapabilities(capabilityRegistry, JGroupsDefaultRequirement.CHANNEL_FACTORY.getName());
         }
 

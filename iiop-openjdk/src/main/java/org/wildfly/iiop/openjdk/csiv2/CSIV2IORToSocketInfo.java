@@ -129,12 +129,7 @@ public class CSIV2IORToSocketInfo implements IORToSocketInfo {
         }
         ORB orb = ior.getORB();
         TaggedComponent compList = ((com.sun.corba.se.spi.ior.TaggedComponent) iter.next()).getIOPComponent(orb);
-        CDRInputStream in = doPrivileged(new PrivilegedAction<CDRInputStream>() {
-            @Override
-            public CDRInputStream run() {
-                return new EncapsInputStream(orb, compList.component_data, compList.component_data.length);
-            }
-        });
+        CDRInputStream in = doPrivileged((PrivilegedAction<CDRInputStream>) () -> new EncapsInputStream(orb, compList.component_data, compList.component_data.length));
         in.consumeEndian();
         SSL ssl = SSLHelper.read(in);
 
@@ -172,12 +167,7 @@ public class CSIV2IORToSocketInfo implements IORToSocketInfo {
         }
         ORB orb = ior.getORB();
         TaggedComponent compList = ((com.sun.corba.se.spi.ior.TaggedComponent) iter.next()).getIOPComponent(orb);
-        CDRInputStream in = doPrivileged(new PrivilegedAction<CDRInputStream>() {
-            @Override
-            public CDRInputStream run() {
-                return new EncapsInputStream(orb, compList.component_data, compList.component_data.length);
-            }
-        });
+        CDRInputStream in = doPrivileged((PrivilegedAction<CDRInputStream>) () -> new EncapsInputStream(orb, compList.component_data, compList.component_data.length));
         in.consumeEndian();
         return CompoundSecMechListHelper.read(in);
     }
@@ -188,12 +178,7 @@ public class CSIV2IORToSocketInfo implements IORToSocketInfo {
             return null;
         }
         ORB orb = ior.getORB();
-        CDRInputStream in = doPrivileged(new PrivilegedAction<CDRInputStream>() {
-            @Override
-            public CDRInputStream run() {
-                return new EncapsInputStream(orb, comp.component_data, comp.component_data.length);
-            }
-        });
+        CDRInputStream in = doPrivileged((PrivilegedAction<CDRInputStream>) () -> new EncapsInputStream(orb, comp.component_data, comp.component_data.length));
         in.consumeEndian();
         return TLS_SEC_TRANSHelper.read(in);
     }

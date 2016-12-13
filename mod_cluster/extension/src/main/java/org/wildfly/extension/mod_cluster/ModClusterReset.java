@@ -47,14 +47,11 @@ public class ModClusterReset implements OperationStepHandler {
     public void execute(OperationContext context, ModelNode operation)
             throws OperationFailedException {
         if (context.isNormalServer() && context.getServiceRegistry(false).getService(ContainerEventHandlerService.SERVICE_NAME) != null) {
-            context.addStep(new OperationStepHandler() {
-                @Override
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    ServiceController<?> controller = context.getServiceRegistry(false).getService(ContainerEventHandlerService.SERVICE_NAME);
-                    ModClusterServiceMBean service = (ModClusterServiceMBean) controller.getValue();
-                    service.reset();
-                    context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
-                }
+            context.addStep((context1, operation1) -> {
+                ServiceController<?> controller = context1.getServiceRegistry(false).getService(ContainerEventHandlerService.SERVICE_NAME);
+                ModClusterServiceMBean service = (ModClusterServiceMBean) controller.getValue();
+                service.reset();
+                context1.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
             }, OperationContext.Stage.RUNTIME);
         }
 

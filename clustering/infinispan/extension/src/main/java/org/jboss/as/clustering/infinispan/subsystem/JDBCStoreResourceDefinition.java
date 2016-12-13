@@ -49,7 +49,6 @@ import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.Resource;
-import org.jboss.as.controller.transform.TransformationContext;
 import org.jboss.as.controller.transform.description.DiscardAttributeChecker;
 import org.jboss.as.controller.transform.description.RejectAttributeChecker;
 import org.jboss.as.controller.transform.description.ResourceTransformationDescriptionBuilder;
@@ -138,21 +137,18 @@ public abstract class JDBCStoreResourceDefinition extends StoreResourceDefinitio
 
         if (InfinispanModel.VERSION_4_0_0.requiresTransformation(version)) {
             // Converts pool name to its JNDI name
-            Converter converter = new Converter() {
-                @Override
-                public void convert(PathAddress address, String name, ModelNode value, ModelNode model, TransformationContext context) {
-                    if (value.isDefined()) {
-                        PathAddress rootAddress = address.subAddress(0, address.size() - 4);
-                        PathAddress subsystemAddress = rootAddress.append(PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM, "datasources"));
-                        Resource subsystem = context.readResourceFromRoot(subsystemAddress);
-                        String poolName = value.asString();
-                        for (String type : Arrays.asList("data-source", "xa-data-source")) {
-                            if (subsystem.hasChildren(type)) {
-                                for (Resource.ResourceEntry entry : subsystem.getChildren(type)) {
-                                    if (entry.getName().equals(poolName)) {
-                                        value.set(entry.getModel().get("jndi-name"));
-                                        return;
-                                    }
+            Converter converter = (address, name, value, model, context) -> {
+                if (value.isDefined()) {
+                    PathAddress rootAddress = address.subAddress(0, address.size() - 4);
+                    PathAddress subsystemAddress = rootAddress.append(PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM, "datasources"));
+                    Resource subsystem = context.readResourceFromRoot(subsystemAddress);
+                    String poolName = value.asString();
+                    for (String type : Arrays.asList("data-source", "xa-data-source")) {
+                        if (subsystem.hasChildren(type)) {
+                            for (Resource.ResourceEntry entry : subsystem.getChildren(type)) {
+                                if (entry.getName().equals(poolName)) {
+                                    value.set(entry.getModel().get("jndi-name"));
+                                    return;
                                 }
                             }
                         }
@@ -203,44 +199,38 @@ public abstract class JDBCStoreResourceDefinition extends StoreResourceDefinitio
         }
     }
 
-    static final AttributeValueTranslator POOL_NAME_TO_JNDI_NAME_TRANSLATOR = new AttributeValueTranslator() {
-        @Override
-        public ModelNode translate(OperationContext context, ModelNode value) throws OperationFailedException {
-            String poolName = value.asString();
-            PathAddress address = context.getCurrentAddress();
-            PathAddress rootAddress = address.subAddress(0, address.size() - 4);
-            PathAddress subsystemAddress = rootAddress.append(PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM, "datasources"));
-            Resource subsystem = context.readResourceFromRoot(subsystemAddress);
-            for (String type : Arrays.asList("data-source", "xa-data-source")) {
-                Resource resource = subsystem.getChild(PathElement.pathElement(type, poolName));
-                if (resource != null) {
-                    return resource.getModel().get("jndi-name");
-                }
+    static final AttributeValueTranslator POOL_NAME_TO_JNDI_NAME_TRANSLATOR = (context, value) -> {
+        String poolName = value.asString();
+        PathAddress address = context.getCurrentAddress();
+        PathAddress rootAddress = address.subAddress(0, address.size() - 4);
+        PathAddress subsystemAddress = rootAddress.append(PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM, "datasources"));
+        Resource subsystem = context.readResourceFromRoot(subsystemAddress);
+        for (String type : Arrays.asList("data-source", "xa-data-source")) {
+            Resource resource = subsystem.getChild(PathElement.pathElement(type, poolName));
+            if (resource != null) {
+                return resource.getModel().get("jndi-name");
             }
-            throw InfinispanLogger.ROOT_LOGGER.dataSourceNotFound(poolName);
         }
+        throw InfinispanLogger.ROOT_LOGGER.dataSourceNotFound(poolName);
     };
 
-    static final AttributeValueTranslator JNDI_NAME_TO_POOL_NAME_TRANSLATOR = new AttributeValueTranslator() {
-        @Override
-        public ModelNode translate(OperationContext context, ModelNode value) throws OperationFailedException {
-            String jndiName = value.asString();
-            PathAddress address = context.getCurrentAddress();
-            PathAddress rootAddress = address.subAddress(0, address.size() - 4);
-            PathAddress subsystemAddress = rootAddress.append(PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM, "datasources"));
-            Resource subsystem = context.readResourceFromRoot(subsystemAddress);
-            for (String type : Arrays.asList("data-source", "xa-data-source")) {
-                if (subsystem.hasChildren(type)) {
-                    for (Resource.ResourceEntry entry : subsystem.getChildren(type)) {
-                        ModelNode model = entry.getModel();
-                        if (model.get("jndi-name").asString().equals(jndiName)) {
-                            return new ModelNode(entry.getName());
-                        }
+    static final AttributeValueTranslator JNDI_NAME_TO_POOL_NAME_TRANSLATOR = (context, value) -> {
+        String jndiName = value.asString();
+        PathAddress address = context.getCurrentAddress();
+        PathAddress rootAddress = address.subAddress(0, address.size() - 4);
+        PathAddress subsystemAddress = rootAddress.append(PathElement.pathElement(ModelDescriptionConstants.SUBSYSTEM, "datasources"));
+        Resource subsystem = context.readResourceFromRoot(subsystemAddress);
+        for (String type : Arrays.asList("data-source", "xa-data-source")) {
+            if (subsystem.hasChildren(type)) {
+                for (Resource.ResourceEntry entry : subsystem.getChildren(type)) {
+                    ModelNode model = entry.getModel();
+                    if (model.get("jndi-name").asString().equals(jndiName)) {
+                        return new ModelNode(entry.getName());
                     }
                 }
             }
-            throw InfinispanLogger.ROOT_LOGGER.dataSourceJndiNameNotFound(jndiName);
         }
+        throw InfinispanLogger.ROOT_LOGGER.dataSourceJndiNameNotFound(jndiName);
     };
 
     JDBCStoreResourceDefinition(PathElement path, InfinispanResourceDescriptionResolver resolver, boolean allowRuntimeOnlyRegistration) {

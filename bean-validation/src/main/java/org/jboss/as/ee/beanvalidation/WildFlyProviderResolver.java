@@ -66,12 +66,7 @@ public class WildFlyProviderResolver implements ValidationProviderResolver {
 
     private List<ValidationProvider<?>> getValidationProviders(final ClassLoader classLoader) {
         if(WildFlySecurityManager.isChecking()) {
-            return WildFlySecurityManager.doUnchecked(new PrivilegedAction<List<ValidationProvider<?>>>() {
-                @Override
-                public List<ValidationProvider<?>> run() {
-                    return loadProviders(classLoader);
-                }
-            });
+            return WildFlySecurityManager.doUnchecked((PrivilegedAction<List<ValidationProvider<?>>>) () -> loadProviders(classLoader));
         } else {
             return loadProviders(classLoader);
         }

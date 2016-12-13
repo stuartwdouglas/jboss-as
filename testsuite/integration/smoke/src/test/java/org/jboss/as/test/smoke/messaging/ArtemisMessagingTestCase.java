@@ -37,7 +37,6 @@ import org.apache.activemq.artemis.api.core.client.ClientMessage;
 import org.apache.activemq.artemis.api.core.client.ClientProducer;
 import org.apache.activemq.artemis.api.core.client.ClientSession;
 import org.apache.activemq.artemis.api.core.client.ClientSessionFactory;
-import org.apache.activemq.artemis.api.core.client.MessageHandler;
 import org.apache.activemq.artemis.core.remoting.impl.invm.InVMConnectorFactory;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.junit.Arquillian;
@@ -117,16 +116,13 @@ public class ArtemisMessagingTestCase {
         final AtomicReference<ClientMessage> message = new AtomicReference<ClientMessage>();
 
         ClientConsumer consumer = session.createConsumer(QUEUE_EXAMPLE_QUEUE);
-        consumer.setMessageHandler(new MessageHandler() {
-            @Override
-            public void onMessage(ClientMessage m) {
-                try {
-                    m.acknowledge();
-                    message.set(m);
-                    latch.countDown();
-                } catch (ActiveMQException e) {
-                    e.printStackTrace();
-                }
+        consumer.setMessageHandler(m -> {
+            try {
+                m.acknowledge();
+                message.set(m);
+                latch.countDown();
+            } catch (ActiveMQException e) {
+                e.printStackTrace();
             }
         });
 

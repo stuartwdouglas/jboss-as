@@ -38,7 +38,6 @@ import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.SimpleAttributeDefinition;
 import org.jboss.as.naming.deployment.ContextNames;
@@ -71,37 +70,32 @@ public class JMSBridgeAdd extends AbstractAddStepHandler {
     @Override
     protected void performRuntime(final OperationContext context, final ModelNode operation, final ModelNode model)
                     throws OperationFailedException {
-        context.addStep(new OperationStepHandler() {
+        context.addStep((context1, operation1) -> {
+            final PathAddress address = PathAddress.pathAddress(operation1.get(OP_ADDR));
 
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                final PathAddress address = PathAddress.pathAddress(operation.get(OP_ADDR));
+            String moduleName = resolveAttribute(JMSBridgeDefinition.MODULE, context1, model);
+            final JMSBridge bridge = createJMSBridge(context1, model);
 
-                String moduleName = resolveAttribute(JMSBridgeDefinition.MODULE, context, model);
-                final JMSBridge bridge = createJMSBridge(context, model);
+            final String bridgeName = address.getLastElement().getValue();
+            final JMSBridgeService bridgeService = new JMSBridgeService(moduleName, bridgeName, bridge);
+            final ServiceName bridgeServiceName = MessagingServices.getJMSBridgeServiceName(bridgeName);
 
-                final String bridgeName = address.getLastElement().getValue();
-                final JMSBridgeService bridgeService = new JMSBridgeService(moduleName, bridgeName, bridge);
-                final ServiceName bridgeServiceName = MessagingServices.getJMSBridgeServiceName(bridgeName);
-
-                final ServiceBuilder<JMSBridge> jmsBridgeServiceBuilder = context.getServiceTarget().addService(bridgeServiceName, bridgeService)
-                        .addDependency(TxnServices.JBOSS_TXN_TRANSACTION_MANAGER)
-                        .setInitialMode(Mode.ACTIVE);
-                addServerExecutorDependency(jmsBridgeServiceBuilder, bridgeService.getExecutorInjector(), false);
-                if (dependsOnLocalResources(model, JMSBridgeDefinition.SOURCE_CONTEXT)) {
-                    addDependencyForJNDIResource(jmsBridgeServiceBuilder, model, context, JMSBridgeDefinition.SOURCE_CONNECTION_FACTORY);
-                    addDependencyForJNDIResource(jmsBridgeServiceBuilder, model, context, JMSBridgeDefinition.SOURCE_DESTINATION);
-                }
-                if (dependsOnLocalResources(model, JMSBridgeDefinition.TARGET_CONTEXT)) {
-                    addDependencyForJNDIResource(jmsBridgeServiceBuilder, model, context, JMSBridgeDefinition.TARGET_CONNECTION_FACTORY);
-                    addDependencyForJNDIResource(jmsBridgeServiceBuilder, model, context, JMSBridgeDefinition.TARGET_DESTINATION);
-                }
-
-                jmsBridgeServiceBuilder.install();
-
-                context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
+            final ServiceBuilder<JMSBridge> jmsBridgeServiceBuilder = context1.getServiceTarget().addService(bridgeServiceName, bridgeService)
+                    .addDependency(TxnServices.JBOSS_TXN_TRANSACTION_MANAGER)
+                    .setInitialMode(Mode.ACTIVE);
+            addServerExecutorDependency(jmsBridgeServiceBuilder, bridgeService.getExecutorInjector(), false);
+            if (dependsOnLocalResources(model, JMSBridgeDefinition.SOURCE_CONTEXT)) {
+                addDependencyForJNDIResource(jmsBridgeServiceBuilder, model, context1, JMSBridgeDefinition.SOURCE_CONNECTION_FACTORY);
+                addDependencyForJNDIResource(jmsBridgeServiceBuilder, model, context1, JMSBridgeDefinition.SOURCE_DESTINATION);
+            }
+            if (dependsOnLocalResources(model, JMSBridgeDefinition.TARGET_CONTEXT)) {
+                addDependencyForJNDIResource(jmsBridgeServiceBuilder, model, context1, JMSBridgeDefinition.TARGET_CONNECTION_FACTORY);
+                addDependencyForJNDIResource(jmsBridgeServiceBuilder, model, context1, JMSBridgeDefinition.TARGET_DESTINATION);
             }
 
+            jmsBridgeServiceBuilder.install();
+
+            context1.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
         }, OperationContext.Stage.RUNTIME);
     }
 

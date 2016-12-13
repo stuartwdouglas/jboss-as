@@ -24,7 +24,6 @@ package org.wildfly.extension.picketlink.idm.model;
 
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.RestartParentResourceRemoveHandler;
 import org.jboss.as.controller.registry.Resource;
@@ -59,14 +58,11 @@ public class IdentityConfigurationRemoveStepHandler extends RestartParentResourc
 
         super.updateModel(context, operation);
 
-        context.addStep(new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                PartitionManagerRemoveHandler.INSTANCE
-                    .removeIdentityStoreServices(context, originalParentModel, partitionManagerAddress.getLastElement().getValue(), context.getCurrentAddressValue());
+        context.addStep((context1, operation1) -> {
+            PartitionManagerRemoveHandler.INSTANCE
+                .removeIdentityStoreServices(context1, originalParentModel, partitionManagerAddress.getLastElement().getValue(), context1.getCurrentAddressValue());
 
-                context.completeStep(OperationContext.ResultHandler.NOOP_RESULT_HANDLER);
-            }
+            context1.completeStep(OperationContext.ResultHandler.NOOP_RESULT_HANDLER);
         }, OperationContext.Stage.RUNTIME);
     }
 

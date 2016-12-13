@@ -269,13 +269,11 @@ public class PicketLinkTestBase {
         final LoginContext lc = Utils.loginWithKerberos(krb5configuration, user, pass);
 
         // 2. Perform the work as authenticated Subject.
-        final String responseBody = Subject.doAs(lc.getSubject(), new PrivilegedExceptionAction<String>() {
-            public String run() throws Exception {
-                final HttpResponse response = httpClient.execute(httpGet);
-                int statusCode = response.getStatusLine().getStatusCode();
-                assertEquals("Unexpected status code returned after the authentication.", expectedStatusCode, statusCode);
-                return EntityUtils.toString(response.getEntity());
-            }
+        final String responseBody = Subject.doAs(lc.getSubject(), (PrivilegedExceptionAction<String>) () -> {
+            final HttpResponse response1 = httpClient.execute(httpGet);
+            int statusCode1 = response1.getStatusLine().getStatusCode();
+            assertEquals("Unexpected status code returned after the authentication.", expectedStatusCode, statusCode1);
+            return EntityUtils.toString(response1.getEntity());
         });
         lc.logout();
         krb5configuration.resetConfiguration();

@@ -35,7 +35,6 @@ import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.dmr.ModelNode;
@@ -79,11 +78,9 @@ public class GroupingHandlerAdd extends AbstractAddStepHandler {
             }
             // the groupingHandler is added as a child of the server resource. Requires a reload to restart the server with the grouping-handler
             if (context.isNormalServer()) {
-                context.addStep(new OperationStepHandler() {
-                    public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                        context.reloadRequired();
-                        context.completeStep(OperationContext.RollbackHandler.REVERT_RELOAD_REQUIRED_ROLLBACK_HANDLER);
-                    }
+                context.addStep((context1, operation1) -> {
+                    context1.reloadRequired();
+                    context1.completeStep(OperationContext.RollbackHandler.REVERT_RELOAD_REQUIRED_ROLLBACK_HANDLER);
                 }, OperationContext.Stage.RUNTIME);
             }
         }

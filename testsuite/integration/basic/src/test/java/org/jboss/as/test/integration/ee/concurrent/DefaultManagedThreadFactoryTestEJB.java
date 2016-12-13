@@ -62,12 +62,9 @@ public class DefaultManagedThreadFactoryTestEJB {
         logger.debugf("Principal: %s", principal);
         task.setExpectedPrincipal(principal);
         final CountDownLatch latch = new CountDownLatch(1);
-        final Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                task.run();
-                latch.countDown();
-            }
+        final Runnable r = () -> {
+            task.run();
+            latch.countDown();
         };
         managedThreadFactory.newThread(r).start();
         latch.await();

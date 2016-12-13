@@ -23,7 +23,6 @@ package org.wildfly.extension.undertow.deployment;
 
 import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpHandler;
-import io.undertow.server.HttpServerExchange;
 import io.undertow.servlet.handlers.ServletPathMatch;
 import io.undertow.servlet.handlers.ServletRequestContext;
 import io.undertow.util.AttachmentKey;
@@ -45,12 +44,9 @@ class RewriteCorrectingHandlerWrappers {
 
         @Override
         public HttpHandler wrap(final HttpHandler handler) {
-            return new HttpHandler() {
-                @Override
-                public void handleRequest(HttpServerExchange exchange) throws Exception {
-                    exchange.putAttachment(OLD_RELATIVE_PATH, exchange.getRelativePath());
-                    handler.handleRequest(exchange);
-                }
+            return exchange -> {
+                exchange.putAttachment(OLD_RELATIVE_PATH, exchange.getRelativePath());
+                handler.handleRequest(exchange);
             };
         }
     }
@@ -58,18 +54,15 @@ class RewriteCorrectingHandlerWrappers {
     static class PostWrapper implements HandlerWrapper {
         @Override
         public HttpHandler wrap(final HttpHandler handler) {
-            return new HttpHandler() {
-                @Override
-                public void handleRequest(HttpServerExchange exchange) throws Exception {
-                    String old = exchange.getAttachment(OLD_RELATIVE_PATH);
-                    if(!old.equals(exchange.getRelativePath())) {
-                        ServletRequestContext src = exchange.getAttachment(ServletRequestContext.ATTACHMENT_KEY);
-                        ServletPathMatch info = src.getDeployment().getServletPaths().getServletHandlerByPath(exchange.getRelativePath());
-                        src.setCurrentServlet(info.getServletChain());
-                        src.setServletPathMatch(info);
-                    }
-                    handler.handleRequest(exchange);
+            return exchange -> {
+                String old = exchange.getAttachment(OLD_RELATIVE_PATH);
+                if(!old.equals(exchange.getRelativePath())) {
+                    ServletRequestContext src = exchange.getAttachment(ServletRequestContext.ATTACHMENT_KEY);
+                    ServletPathMatch info = src.getDeployment().getServletPaths().getServletHandlerByPath(exchange.getRelativePath());
+                    src.setCurrentServlet(info.getServletChain());
+                    src.setServletPathMatch(info);
                 }
+                handler.handleRequest(exchange);
             };
         }
     }

@@ -35,7 +35,6 @@ import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.xml.stream.XMLResolver;
 import javax.xml.stream.XMLStreamException;
 
 import org.jberet.job.model.Job;
@@ -154,15 +153,12 @@ public class WildFlyJobXmlResolver implements JobXmlResolver {
                 // Parsing the entire job XML seems excessive to just get the job name. There are two reasons for this:
                 //  1) If an error occurs during parsing there's no real need to consider this a valid job
                 //  2) Using the implementation parser seems less error prone for future-proofing
-                final Job job = JobParser.parseJob(entry.getValue().openStream(), classLoader, new XMLResolver() {
-                    // this is essentially what JBeret does, but it's ugly. JBeret might need an API to handle this
-                    @Override
-                    public Object resolveEntity(final String publicID, final String systemID, final String baseURI, final String namespace) throws XMLStreamException {
-                        try {
-                            return (jobXmlFiles.containsKey(systemID) ? jobXmlFiles.get(systemID).openStream() : null);
-                        } catch (IOException e) {
-                            throw new XMLStreamException(e);
-                        }
+                // this is essentially what JBeret does, but it's ugly. JBeret might need an API to handle this
+                final Job job = JobParser.parseJob(entry.getValue().openStream(), classLoader, (publicID, systemID, baseURI, namespace) -> {
+                    try {
+                        return (jobXmlFiles.containsKey(systemID) ? jobXmlFiles.get(systemID).openStream() : null);
+                    } catch (IOException e) {
+                        throw new XMLStreamException(e);
                     }
                 });
                 resolvedJobs.put(entry.getKey(), job.getId());

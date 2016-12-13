@@ -172,12 +172,7 @@ public class UndertowService implements Service<UndertowService> {
 
         UndertowLogger.ROOT_LOGGER.serverStopping(Version.getVersionString());
 
-        fireEvent(new EventInvoker() {
-            @Override
-            public void invoke(UndertowEventListener listener) {
-                listener.onShutdown();
-            }
-        });
+        fireEvent(listener -> listener.onShutdown());
     }
 
     @Override
@@ -187,22 +182,12 @@ public class UndertowService implements Service<UndertowService> {
 
     protected void registerServer(final Server server) {
         registeredServers.add(server);
-        fireEvent(new EventInvoker() {
-            @Override
-            public void invoke(UndertowEventListener listener) {
-                listener.onServerStart(server);
-            }
-        });
+        fireEvent(listener -> listener.onServerStart(server));
     }
 
     protected void unregisterServer(final Server server) {
         registeredServers.remove(server);
-        fireEvent(new EventInvoker() {
-            @Override
-            public void invoke(UndertowEventListener listener) {
-                listener.onServerStop(server);
-            }
-        });
+        fireEvent(listener -> listener.onServerStop(server));
     }
 
     public String getDefaultContainer() {

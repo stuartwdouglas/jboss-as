@@ -25,7 +25,6 @@ package org.wildfly.extension.mod_cluster;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.ReloadRequiredWriteAttributeHandler;
 import org.jboss.as.controller.registry.Resource;
@@ -52,18 +51,15 @@ public class ProxyConfigurationWriteAttributeHandler extends ReloadRequiredWrite
         // This allows a composite op to change both attributes and then the
         // validation occurs after both have done their work.
 
-        context.addStep(new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
+        context.addStep((context1, operation) -> {
 
-                final ModelNode conf = context.readResource(PathAddress.EMPTY_ADDRESS).getModel();
-                if ((conf.hasDefined(CommonAttributes.PROXY_LIST) && conf.hasDefined(CommonAttributes.PROXIES))
-                        || (context.getProcessType().isServer() && conf.hasDefined(CommonAttributes.PROXY_LIST))) {
-                    // That is not supported.
-                    throw new OperationFailedException(ModClusterLogger.ROOT_LOGGER.proxyListAttributeUsage());
-                }
-                context.stepCompleted();
+            final ModelNode conf = context1.readResource(PathAddress.EMPTY_ADDRESS).getModel();
+            if ((conf.hasDefined(CommonAttributes.PROXY_LIST) && conf.hasDefined(CommonAttributes.PROXIES))
+                    || (context1.getProcessType().isServer() && conf.hasDefined(CommonAttributes.PROXY_LIST))) {
+                // That is not supported.
+                throw new OperationFailedException(ModClusterLogger.ROOT_LOGGER.proxyListAttributeUsage());
             }
+            context1.stepCompleted();
         }, OperationContext.Stage.MODEL);
     }
 }

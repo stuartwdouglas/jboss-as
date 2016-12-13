@@ -132,19 +132,16 @@ public class AppClientWrapper implements Runnable {
 
 
     private void init() throws Exception {
-        shutdownThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                if (appClientProcess != null) {
-                    appClientProcess.destroy();
-                    if (archiveOnDisk != null) {
-                        archiveOnDisk.delete();
-                    }
-                    try {
-                        appClientProcess.waitFor();
-                    } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
-                    }
+        shutdownThread = new Thread(() -> {
+            if (appClientProcess != null) {
+                appClientProcess.destroy();
+                if (archiveOnDisk != null) {
+                    archiveOnDisk.delete();
+                }
+                try {
+                    appClientProcess.waitFor();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
                 }
             }
         });

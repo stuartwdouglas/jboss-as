@@ -29,10 +29,7 @@ import java.util.List;
 import javax.annotation.ManagedBean;
 
 import org.jboss.as.ee.logging.EeLogger;
-import org.jboss.as.ee.component.ComponentConfiguration;
 import org.jboss.as.ee.component.EEModuleDescription;
-import org.jboss.as.ee.component.ViewConfiguration;
-import org.jboss.as.ee.component.ViewConfigurator;
 import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ee.component.deployers.EEResourceReferenceProcessorRegistry;
 import org.jboss.as.ee.component.interceptors.InterceptorOrder;
@@ -110,15 +107,13 @@ public class ManagedBeanAnnotationProcessor implements DeploymentUnitProcessor {
 
             // Add the view
             ViewDescription viewDescription = new ViewDescription(componentDescription, beanClassName);
-            viewDescription.getConfigurators().addFirst(new ViewConfigurator() {
-                public void configure(final DeploymentPhaseContext context, final ComponentConfiguration componentConfiguration, final ViewDescription description, final ViewConfiguration configuration) throws DeploymentUnitProcessingException {
-                    // Add MB association interceptors
-                    configuration.addClientPostConstructInterceptor(ManagedBeanCreateInterceptor.FACTORY, InterceptorOrder.ClientPostConstruct.INSTANCE_CREATE);
-                    final ClassLoader classLoader = componentConfiguration.getModuleClassLoader();
-                    configuration.addViewInterceptor(PrivilegedWithCombinerInterceptor.getFactory(), InterceptorOrder.View.PRIVILEGED_INTERCEPTOR);
-                    configuration.addViewInterceptor(AccessCheckingInterceptor.getFactory(), InterceptorOrder.View.CHECKING_INTERCEPTOR);
-                    configuration.addViewInterceptor(new ImmediateInterceptorFactory(new ContextClassLoaderInterceptor(classLoader)), InterceptorOrder.View.TCCL_INTERCEPTOR);
-                }
+            viewDescription.getConfigurators().addFirst((context, componentConfiguration, description, configuration) -> {
+                // Add MB association interceptors
+                configuration.addClientPostConstructInterceptor(ManagedBeanCreateInterceptor.FACTORY, InterceptorOrder.ClientPostConstruct.INSTANCE_CREATE);
+                final ClassLoader classLoader = componentConfiguration.getModuleClassLoader();
+                configuration.addViewInterceptor(PrivilegedWithCombinerInterceptor.getFactory(), InterceptorOrder.View.PRIVILEGED_INTERCEPTOR);
+                configuration.addViewInterceptor(AccessCheckingInterceptor.getFactory(), InterceptorOrder.View.CHECKING_INTERCEPTOR);
+                configuration.addViewInterceptor(new ImmediateInterceptorFactory(new ContextClassLoaderInterceptor(classLoader)), InterceptorOrder.View.TCCL_INTERCEPTOR);
             });
             viewDescription.getBindingNames().addAll(Arrays.asList("java:module/" + beanName, "java:app/" + moduleDescription.getModuleName() + "/" + beanName));
             componentDescription.getViews().add(viewDescription);

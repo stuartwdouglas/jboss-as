@@ -63,12 +63,7 @@ public class InfinispanBeanManagerFactoryBuilderFactory<I> implements BeanManage
     private static final ThreadFactory EVICTION_THREAD_FACTORY = createThreadFactory();
 
     private static ThreadFactory createThreadFactory() {
-        return AccessController.doPrivileged(new PrivilegedAction<ThreadFactory>() {
-            @Override
-            public ThreadFactory run() {
-                return new JBossThreadFactory(new ThreadGroup(InfinispanBeanManager.class.getSimpleName()), Boolean.FALSE, null, "%G - %t", null, null);
-            }
-        });
+        return AccessController.doPrivileged((PrivilegedAction<ThreadFactory>) () -> new JBossThreadFactory(new ThreadGroup(InfinispanBeanManager.class.getSimpleName()), Boolean.FALSE, null, "%G - %t", null, null));
     }
 
     static String getCacheName(ServiceName deploymentUnitServiceName) {

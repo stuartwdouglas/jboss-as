@@ -35,10 +35,7 @@ public interface Mutator {
      * Trivial {@link Mutator} implementation that does nothing.
      * New cache entries, in particular, don't require mutation.
      */
-    Mutator PASSIVE = new Mutator() {
-        @Override
-        public void mutate() {
-            // Do nothing
-        }
+    Mutator PASSIVE = () -> {
+        // Do nothing
     };
 }

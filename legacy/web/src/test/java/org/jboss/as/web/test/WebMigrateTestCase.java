@@ -42,10 +42,7 @@ import java.util.Map;
 
 import io.undertow.predicate.PredicateParser;
 import io.undertow.server.handlers.builder.PredicatedHandlersParser;
-import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationDefinition;
-import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.ProcessType;
 import org.jboss.as.controller.ReloadRequiredRemoveStepHandler;
@@ -272,18 +269,15 @@ public class WebMigrateTestCase extends AbstractSubsystemTest {
 
 
             rootRegistration.registerSubModel(new SimpleResourceDefinition(PathElement.pathElement(EXTENSION),
-                    ControllerResolver.getResolver(EXTENSION), new OperationStepHandler() {
-                @Override
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    if (!extensionAdded) {
-                        extensionAdded = true;
-                        undertow.initialize(extensionRegistry.getExtensionContext("org.wildfly.extension.undertow",
-                                rootRegistration, ExtensionRegistryType.SERVER));
-                        io.initialize(extensionRegistry.getExtensionContext("org.wildfly.extension.io",
-                                rootRegistration, ExtensionRegistryType.SERVER));
-                    }
-                }
-            }, null));
+                    ControllerResolver.getResolver(EXTENSION), (context, operation) -> {
+                        if (!extensionAdded) {
+                            extensionAdded = true;
+                            undertow.initialize(extensionRegistry.getExtensionContext("org.wildfly.extension.undertow",
+                                    rootRegistration, ExtensionRegistryType.SERVER));
+                            io.initialize(extensionRegistry.getExtensionContext("org.wildfly.extension.io",
+                                    rootRegistration, ExtensionRegistryType.SERVER));
+                        }
+                    }, null));
             rootRegistration.registerSubModel(CoreManagementResourceDefinition.forStandaloneServer(new DelegatingConfigurableAuthorizer(), new ManagementSecurityIdentitySupplier(),
                     null, null, new EnvironmentNameReader() {
                 public boolean isServer() {

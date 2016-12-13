@@ -38,14 +38,12 @@ import org.junit.runner.RunWith;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.*;
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.OP_ADDR;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -102,13 +100,9 @@ public class ServletThreadPoolSelectionTestCase {
         try {
             final List<Future<?>> results = new ArrayList<Future<?>>();
             for (int i = 0; i < 100; ++i) {
-                results.add(executor.submit(new Callable<Object>() {
-
-                    @Override
-                    public Object call() throws Exception {
-                        HttpRequest.get(url.toExternalForm() + "/race", 10, SECONDS);
-                        return null;
-                    }
+                results.add(executor.submit(() -> {
+                    HttpRequest.get(url.toExternalForm() + "/race", 10, SECONDS);
+                    return null;
                 }));
             }
             for (Future<?> res : results) {

@@ -68,17 +68,14 @@ class JMSBridgeService implements Service<JMSBridge> {
 
     @Override
     public synchronized void start(final StartContext context) throws StartException {
-        final Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    bridge.setTransactionManager(getTransactionManager(context));
-                    startBridge();
+        final Runnable task = () -> {
+            try {
+                bridge.setTransactionManager(getTransactionManager(context));
+                startBridge();
 
-                    context.complete();
-                } catch (Throwable e) {
-                    context.failed(MessagingLogger.ROOT_LOGGER.failedToCreate(e, "JMS Bridge"));
-                }
+                context.complete();
+            } catch (Throwable e) {
+                context.failed(MessagingLogger.ROOT_LOGGER.failedToCreate(e, "JMS Bridge"));
             }
         };
         try {
@@ -111,17 +108,14 @@ class JMSBridgeService implements Service<JMSBridge> {
 
     @Override
     public synchronized void stop(final StopContext context) {
-        final Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    bridge.stop();
-                    MessagingLogger.ROOT_LOGGER.stoppedService("JMS Bridge", bridgeName);
+        final Runnable task = () -> {
+            try {
+                bridge.stop();
+                MessagingLogger.ROOT_LOGGER.stoppedService("JMS Bridge", bridgeName);
 
-                    context.complete();
-                } catch(Exception e) {
-                    MessagingLogger.ROOT_LOGGER.failedToDestroy("JMS Bridge", bridgeName);
-                }
+                context.complete();
+            } catch(Exception e) {
+                MessagingLogger.ROOT_LOGGER.failedToDestroy("JMS Bridge", bridgeName);
             }
         };
         try {

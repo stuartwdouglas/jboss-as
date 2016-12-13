@@ -179,83 +179,79 @@ public class MethodInvocationMessageHandler extends EJBIdentifierBasedMessageHan
             // done with unmarshalling
             unmarshaller.finish();
 
-            runnable = new Runnable() {
-
-                @Override
-                public void run() {
-                    // check if it's async. If yes, then notify the client that's it's async method (so that
-                    // it can unblock if necessary)
-                    if (componentView.isAsynchronous(invokedMethod)) {
-                        try {
-                            MethodInvocationMessageHandler.this.writeAsyncMethodNotification(channelAssociation, invocationId);
-                        } catch (Throwable t) {
-                            // catch Throwable, so that we don't skip invoking the method, just because we
-                            // failed to send a notification to the client that the method is an async method
-                            EjbLogger.REMOTE_LOGGER.failedToSendAsyncMethodIndicatorToClient(t, invokedMethod);
-                        }
-                    }
-
-                    // invoke the method
-                    Object result = null;
-                    SecurityActions.remotingContextSetConnection(channelAssociation.getChannel().getConnection());
+            runnable = () -> {
+                // check if it's async. If yes, then notify the client that's it's async method (so that
+                // it can unblock if necessary)
+                if (componentView.isAsynchronous(invokedMethod)) {
                     try {
-                        result = invokeMethod(invocationId, componentView, invokedMethod, methodParams, locator, attachments);
-                    } catch (Throwable throwable) {
-                        try {
-                            // if the EJB is shutting down when the invocation was done, then it's as good as the EJB not being available. The client has to know about this as
-                            // a "no such EJB" failure so that it can retry the invocation on a different node if possible.
-                            if (throwable instanceof EJBComponentUnavailableException) {
-                                EjbLogger.EJB3_INVOCATION_LOGGER.debugf("Cannot handle method invocation: %s on bean: %s due to EJB component unavailability exception. Returning a no such EJB available message back to client", invokedMethod, beanName);
-                                MethodInvocationMessageHandler.this.writeNoSuchEJBFailureMessage(channelAssociation, invocationId, appName, moduleName, distinctName, beanName, viewClassName);
-                                // WFLY-7139
-                            } else if (throwable instanceof ComponentIsStoppedException) {
-                                EjbLogger.EJB3_INVOCATION_LOGGER.debugf("Cannot handle method invocation: %s on bean: %s due to EJB component stopped exception. Returning a no such EJB available message back to client", invokedMethod, beanName);
-                                MethodInvocationMessageHandler.this.writeNoSuchEJBFailureMessage(channelAssociation, invocationId, appName, moduleName, distinctName, beanName, viewClassName);
-                            } else {
-                                // write out the failure
-                                Throwable throwableToWrite = throwable;
-                                final Throwable cause = throwable.getCause();
-                                if (componentView.getComponent() instanceof StatefulSessionComponent && throwable instanceof EJBException && cause != null) {
-                                    if (!(componentView.getComponent().isRemotable(cause))) {
-                                        // Avoid serializing the cause of the exception in case it is not remotable
-                                        // Client might not be able to deserialize and throw ClassNotFoundException
-                                        throwableToWrite = new EJBException(throwable.getLocalizedMessage());
-                                    }
+                        MethodInvocationMessageHandler.this.writeAsyncMethodNotification(channelAssociation, invocationId);
+                    } catch (Throwable t) {
+                        // catch Throwable, so that we don't skip invoking the method, just because we
+                        // failed to send a notification to the client that the method is an async method
+                        EjbLogger.REMOTE_LOGGER.failedToSendAsyncMethodIndicatorToClient(t, invokedMethod);
+                    }
+                }
+
+                // invoke the method
+                Object result = null;
+                SecurityActions.remotingContextSetConnection(channelAssociation.getChannel().getConnection());
+                try {
+                    result = invokeMethod(invocationId, componentView, invokedMethod, methodParams, locator, attachments);
+                } catch (Throwable throwable) {
+                    try {
+                        // if the EJB is shutting down when the invocation was done, then it's as good as the EJB not being available. The client has to know about this as
+                        // a "no such EJB" failure so that it can retry the invocation on a different node if possible.
+                        if (throwable instanceof EJBComponentUnavailableException) {
+                            EjbLogger.EJB3_INVOCATION_LOGGER.debugf("Cannot handle method invocation: %s on bean: %s due to EJB component unavailability exception. Returning a no such EJB available message back to client", invokedMethod, beanName);
+                            MethodInvocationMessageHandler.this.writeNoSuchEJBFailureMessage(channelAssociation, invocationId, appName, moduleName, distinctName, beanName, viewClassName);
+                            // WFLY-7139
+                        } else if (throwable instanceof ComponentIsStoppedException) {
+                            EjbLogger.EJB3_INVOCATION_LOGGER.debugf("Cannot handle method invocation: %s on bean: %s due to EJB component stopped exception. Returning a no such EJB available message back to client", invokedMethod, beanName);
+                            MethodInvocationMessageHandler.this.writeNoSuchEJBFailureMessage(channelAssociation, invocationId, appName, moduleName, distinctName, beanName, viewClassName);
+                        } else {
+                            // write out the failure
+                            Throwable throwableToWrite = throwable;
+                            final Throwable cause = throwable.getCause();
+                            if (componentView.getComponent() instanceof StatefulSessionComponent && throwable instanceof EJBException && cause != null) {
+                                if (!(componentView.getComponent().isRemotable(cause))) {
+                                    // Avoid serializing the cause of the exception in case it is not remotable
+                                    // Client might not be able to deserialize and throw ClassNotFoundException
+                                    throwableToWrite = new EJBException(throwable.getLocalizedMessage());
                                 }
-                                MethodInvocationMessageHandler.this.writeException(channelAssociation, MethodInvocationMessageHandler.this.marshallerFactory, invocationId, throwableToWrite, attachments);
                             }
-                        } catch (Throwable ioe) {
-                            // we couldn't write out a method invocation failure message. So let's at least log the
-                            // actual method invocation exception, for debugging/reference
-                            EjbLogger.REMOTE_LOGGER.errorInvokingMethod(throwable, invokedMethod, beanName, appName, moduleName, distinctName);
-                            // now log why we couldn't send back the method invocation failure message
-                            EjbLogger.REMOTE_LOGGER.couldNotWriteMethodInvocation(ioe, invokedMethod, beanName, appName, moduleName, distinctName);
+                            MethodInvocationMessageHandler.this.writeException(channelAssociation, MethodInvocationMessageHandler.this.marshallerFactory, invocationId, throwableToWrite, attachments);
                         }
-                        return;
-                    } finally {
-                        SecurityActions.remotingContextClear();
-                    }
-                    // write out the (successful) method invocation result to the channel output stream
-                    try {
-                        // attach any weak affinity if available
-                        Affinity weakAffinity = null;
-                        if (locator instanceof StatefulEJBLocator && componentView.getComponent() instanceof StatefulSessionComponent) {
-                            final StatefulSessionComponent statefulSessionComponent = (StatefulSessionComponent) componentView.getComponent();
-                            weakAffinity = MethodInvocationMessageHandler.this.getWeakAffinity(statefulSessionComponent, (StatefulEJBLocator<?>) locator);
-                        } else if (componentView.getComponent() instanceof StatelessSessionComponent) {
-                            final StatelessSessionComponent statelessSessionComponent = (StatelessSessionComponent) componentView.getComponent();
-                            weakAffinity = statelessSessionComponent.getWeakAffinity();
-                        }
-                        if (weakAffinity != null) {
-                            attachments.put(Affinity.WEAK_AFFINITY_CONTEXT_KEY, weakAffinity);
-                        }
-                        writeMethodInvocationResponse(channelAssociation, invocationId, result, attachments, invokedMethod, componentView);
                     } catch (Throwable ioe) {
-                        boolean isAsyncVoid = componentView.isAsynchronous(invokedMethod) && invokedMethod.getReturnType().equals(Void.TYPE);
-                        if (!isAsyncVoid)
-                            EjbLogger.REMOTE_LOGGER.couldNotWriteMethodInvocation(ioe, invokedMethod, beanName, appName, moduleName, distinctName);
-                        return;
+                        // we couldn't write out a method invocation failure message. So let's at least log the
+                        // actual method invocation exception, for debugging/reference
+                        EjbLogger.REMOTE_LOGGER.errorInvokingMethod(throwable, invokedMethod, beanName, appName, moduleName, distinctName);
+                        // now log why we couldn't send back the method invocation failure message
+                        EjbLogger.REMOTE_LOGGER.couldNotWriteMethodInvocation(ioe, invokedMethod, beanName, appName, moduleName, distinctName);
                     }
+                    return;
+                } finally {
+                    SecurityActions.remotingContextClear();
+                }
+                // write out the (successful) method invocation result to the channel output stream
+                try {
+                    // attach any weak affinity if available
+                    Affinity weakAffinity = null;
+                    if (locator instanceof StatefulEJBLocator && componentView.getComponent() instanceof StatefulSessionComponent) {
+                        final StatefulSessionComponent statefulSessionComponent = (StatefulSessionComponent) componentView.getComponent();
+                        weakAffinity = MethodInvocationMessageHandler.this.getWeakAffinity(statefulSessionComponent, (StatefulEJBLocator<?>) locator);
+                    } else if (componentView.getComponent() instanceof StatelessSessionComponent) {
+                        final StatelessSessionComponent statelessSessionComponent = (StatelessSessionComponent) componentView.getComponent();
+                        weakAffinity = statelessSessionComponent.getWeakAffinity();
+                    }
+                    if (weakAffinity != null) {
+                        attachments.put(Affinity.WEAK_AFFINITY_CONTEXT_KEY, weakAffinity);
+                    }
+                    writeMethodInvocationResponse(channelAssociation, invocationId, result, attachments, invokedMethod, componentView);
+                } catch (Throwable ioe) {
+                    boolean isAsyncVoid = componentView.isAsynchronous(invokedMethod) && invokedMethod.getReturnType().equals(Void.TYPE);
+                    if (!isAsyncVoid)
+                        EjbLogger.REMOTE_LOGGER.couldNotWriteMethodInvocation(ioe, invokedMethod, beanName, appName, moduleName, distinctName);
+                    return;
                 }
             };
         } finally {

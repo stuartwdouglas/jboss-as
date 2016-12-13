@@ -91,18 +91,15 @@ public class JChannelFactory implements ChannelFactory, ProtocolStackConfigurato
     public Channel createChannel(final String id) throws Exception {
         JGroupsLogger.ROOT_LOGGER.debugf("Creating channel %s from stack %s", id, this.configuration.getName());
 
-        PrivilegedExceptionAction<JChannel> action = new PrivilegedExceptionAction<JChannel>() {
-            @Override
-            public JChannel run() throws Exception {
-                Thread thread = Thread.currentThread();
-                ClassLoader loader = thread.getContextClassLoader();
-                // We need to set the TCCL to be able to resolve custom ProtocolHook class names
-                thread.setContextClassLoader(JChannelFactory.class.getClassLoader());
-                try {
-                    return new JChannel(JChannelFactory.this);
-                } finally {
-                    thread.setContextClassLoader(loader);
-                }
+        PrivilegedExceptionAction<JChannel> action = () -> {
+            Thread thread = Thread.currentThread();
+            ClassLoader loader = thread.getContextClassLoader();
+            // We need to set the TCCL to be able to resolve custom ProtocolHook class names
+            thread.setContextClassLoader(JChannelFactory.class.getClassLoader());
+            try {
+                return new JChannel(JChannelFactory.this);
+            } finally {
+                thread.setContextClassLoader(loader);
             }
         };
         final JChannel channel = WildFlySecurityManager.doUnchecked(action);
@@ -356,29 +353,26 @@ public class JChannelFactory implements ChannelFactory, ProtocolStackConfigurato
             String name = config.getProtocolName();
             try {
                 this.protocolClass = config.getClassLoader().loadClass(name).asSubclass(Protocol.class);
-                PrivilegedAction<Void> action = new PrivilegedAction<Void>() {
-                    @Override
-                    public Void run() {
-                        Class<?> targetClass = Introspector.this.protocolClass;
-                        while (Protocol.class.isAssignableFrom(targetClass)) {
-                            for (Method method: targetClass.getDeclaredMethods()) {
-                                if (method.isAnnotationPresent(Property.class)) {
-                                    String property = method.getAnnotation(Property.class).name();
-                                    if (!property.isEmpty()) {
-                                        Introspector.this.properties.add(property);
-                                    }
+                PrivilegedAction<Void> action = () -> {
+                    Class<?> targetClass = Introspector.this.protocolClass;
+                    while (Protocol.class.isAssignableFrom(targetClass)) {
+                        for (Method method: targetClass.getDeclaredMethods()) {
+                            if (method.isAnnotationPresent(Property.class)) {
+                                String property = method.getAnnotation(Property.class).name();
+                                if (!property.isEmpty()) {
+                                    Introspector.this.properties.add(property);
                                 }
                             }
-                            for (Field field: targetClass.getDeclaredFields()) {
-                                if (field.isAnnotationPresent(Property.class)) {
-                                    String property = field.getAnnotation(Property.class).name();
-                                    Introspector.this.properties.add(!property.isEmpty() ? property : field.getName());
-                                }
-                            }
-                            targetClass = targetClass.getSuperclass();
                         }
-                        return null;
+                        for (Field field: targetClass.getDeclaredFields()) {
+                            if (field.isAnnotationPresent(Property.class)) {
+                                String property = field.getAnnotation(Property.class).name();
+                                Introspector.this.properties.add(!property.isEmpty() ? property : field.getName());
+                            }
+                        }
+                        targetClass = targetClass.getSuperclass();
                     }
+                    return null;
                 };
                 WildFlySecurityManager.doUnchecked(action);
             } catch (ClassNotFoundException e) {

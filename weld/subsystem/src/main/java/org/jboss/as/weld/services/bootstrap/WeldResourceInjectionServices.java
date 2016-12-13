@@ -47,7 +47,6 @@ import org.jboss.as.weld.util.ResourceInjectionUtilities;
 import org.jboss.modules.Module;
 import org.jboss.msc.service.ServiceRegistry;
 import org.jboss.weld.injection.spi.ResourceInjectionServices;
-import org.jboss.weld.injection.spi.ResourceReference;
 import org.jboss.weld.injection.spi.ResourceReferenceFactory;
 import org.jboss.weld.injection.spi.helpers.SimpleResourceReference;
 import org.wildfly.security.manager.WildFlySecurityManager;
@@ -163,22 +162,12 @@ public class WeldResourceInjectionServices extends AbstractResourceInjectionServ
         if (isKnownNamespace(result) && injectionPoint.getAnnotated().isAnnotationPresent(Produces.class)) {
             validateResourceInjectionPointType(getManagedReferenceFactory(getBindInfo(result)), injectionPoint);
         }
-        return new ResourceReferenceFactory<Object>() {
-            @Override
-            public ResourceReference<Object> createResource() {
-                return new SimpleResourceReference<Object>(resolveResource(injectionPoint));
-            }
-        };
+        return () -> new SimpleResourceReference<Object>(resolveResource(injectionPoint));
     }
 
     @Override
     public ResourceReferenceFactory<Object> registerResourceInjectionPoint(final String jndiName, final String mappedName) {
-        return new ResourceReferenceFactory<Object>() {
-            @Override
-            public ResourceReference<Object> createResource() {
-                return new SimpleResourceReference<Object>(resolveResource(jndiName, mappedName));
-            }
-        };
+        return () -> new SimpleResourceReference<Object>(resolveResource(jndiName, mappedName));
     }
 
     private boolean isKnownNamespace(String name) {

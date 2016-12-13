@@ -60,12 +60,7 @@ public class ImportedClassELResolver extends ELResolver {
         }
         final Class<?> klass;
         if (WildFlySecurityManager.isChecking()) {
-            klass = AccessController.doPrivileged(new PrivilegedAction<Class<?>>() {
-                @Override
-                public Class<?> run() {
-                    return importHandler.resolveClass(klassName);
-                }
-            });
+            klass = AccessController.doPrivileged((PrivilegedAction<Class<?>>) () -> importHandler.resolveClass(klassName));
         } else {
             klass = importHandler.resolveClass(klassName);
         }

@@ -204,12 +204,7 @@ public class StatefulSessionComponent extends SessionBeanComponent implements St
         final String locatorAppName = getEarApplicationName() == null ? "" : getEarApplicationName();
         if(WildFlySecurityManager.isChecking()) {
             //need to use doPrivileged rather than doUnchecked, as this can run user code in the proxy constructor
-            return AccessController.doPrivileged(new PrivilegedAction<EJBObject>() {
-                @Override
-                public EJBObject run() {
-                   return EJBClient.createProxy(new StatefulEJBLocator<EJBObject>((Class<EJBObject>) view.getViewClass(), locatorAppName, getModuleName(), getComponentName(), getDistinctName(), getSessionIdOf(ctx), getCache().getStrictAffinity(), WildFlySecurityManager.getPropertyPrivileged(ServerEnvironment.NODE_NAME, null)));
-                }
-            });
+            return AccessController.doPrivileged((PrivilegedAction<EJBObject>) () -> EJBClient.createProxy(new StatefulEJBLocator<EJBObject>((Class<EJBObject>) view.getViewClass(), locatorAppName, getModuleName(), getComponentName(), getDistinctName(), getSessionIdOf(ctx), getCache().getStrictAffinity(), WildFlySecurityManager.getPropertyPrivileged(ServerEnvironment.NODE_NAME, null))));
         } else {
             return EJBClient.createProxy(new StatefulEJBLocator<EJBObject>((Class<EJBObject>) view.getViewClass(), locatorAppName, getModuleName(), getComponentName(), getDistinctName(), getSessionIdOf(ctx), this.getCache().getStrictAffinity(), WildFlySecurityManager.getPropertyPrivileged(ServerEnvironment.NODE_NAME, null)));
         }

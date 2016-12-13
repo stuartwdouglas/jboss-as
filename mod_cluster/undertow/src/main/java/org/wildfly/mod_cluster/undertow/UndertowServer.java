@@ -68,12 +68,7 @@ public class UndertowServer implements Server {
             }
         };
 
-        return new Iterable<Engine>() {
-            @Override
-            public Iterator<Engine> iterator() {
-                return iterator;
-            }
-        };
+        return () -> iterator;
     }
 
     @Override

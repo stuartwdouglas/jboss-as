@@ -49,7 +49,6 @@ import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
@@ -107,12 +106,7 @@ public abstract class AbstractDataSourceAdd extends AbstractAddStepHandler {
         final boolean enabled = ENABLED.resolveModelAttribute(context, model).asBoolean();
         if (enabled) {
             firstRuntimeStep(context, operation, model);
-            context.addStep(new OperationStepHandler() {
-                @Override
-                public void execute(OperationContext operationContext, ModelNode modelNode) throws OperationFailedException {
-                    secondRuntimeStep(context, operation, context.getResourceRegistrationForUpdate(), model, isXa());
-                }
-            }, OperationContext.Stage.RUNTIME);
+            context.addStep((operationContext, modelNode) -> secondRuntimeStep(context, operation, context.getResourceRegistrationForUpdate(), model, isXa()), OperationContext.Stage.RUNTIME);
 
 
         }

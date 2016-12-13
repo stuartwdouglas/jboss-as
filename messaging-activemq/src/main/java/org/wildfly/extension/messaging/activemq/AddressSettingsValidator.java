@@ -49,17 +49,14 @@ class AddressSettingsValidator {
      * Validates that an address-setting:add operation does not define expiry-address or dead-letter address
      * without corresponding resources for them.
      */
-    static OperationStepHandler ADD_VALIDATOR = new OperationStepHandler() {
-        @Override
-        public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-            String addressSetting = PathAddress.pathAddress(operation.require(OP_ADDR)).getLastElement().getValue();
+    static OperationStepHandler ADD_VALIDATOR = (context, operation) -> {
+        String addressSetting = PathAddress.pathAddress(operation.require(OP_ADDR)).getLastElement().getValue();
 
-            PathAddress address = pathAddress(operation.require(ModelDescriptionConstants.OP_ADDR));
-            Resource activeMQServer = context.readResourceFromRoot(MessagingServices.getActiveMQServerPathAddress(address), true);
+        PathAddress address = pathAddress(operation.require(ModelDescriptionConstants.OP_ADDR));
+        Resource activeMQServer = context.readResourceFromRoot(MessagingServices.getActiveMQServerPathAddress(address), true);
 
-            checkExpiryAddress(context, operation, activeMQServer, addressSetting);
-            checkDeadLetterAddress(context, operation, activeMQServer, addressSetting);
-        }
+        checkExpiryAddress(context, operation, activeMQServer, addressSetting);
+        checkDeadLetterAddress(context, operation, activeMQServer, addressSetting);
     };
 
     /**

@@ -61,32 +61,24 @@ public class ModClusterAddProxy implements OperationStepHandler {
     @Override
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
         if (context.isNormalServer() && context.getServiceRegistry(false).getService(ContainerEventHandlerService.SERVICE_NAME) != null) {
-            context.addStep(new OperationStepHandler() {
-                @Override
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    ServiceController<?> controller = context.getServiceRegistry(false).getService(ContainerEventHandlerService.SERVICE_NAME);
-                    final ModClusterServiceMBean service = (ModClusterServiceMBean) controller.getValue();
-                    ROOT_LOGGER.debugf("add-proxy: %s", operation);
+            context.addStep((context12, operation12) -> {
+                ServiceController<?> controller = context12.getServiceRegistry(false).getService(ContainerEventHandlerService.SERVICE_NAME);
+                final ModClusterServiceMBean service = (ModClusterServiceMBean) controller.getValue();
+                ROOT_LOGGER.debugf("add-proxy: %s", operation12);
 
-                    final String host = HOST.resolveModelAttribute(context, operation).asString();
-                    final int port = PORT.resolveModelAttribute(context, operation).asInt();
+                final String host = HOST.resolveModelAttribute(context12, operation12).asString();
+                final int port = PORT.resolveModelAttribute(context12, operation12).asInt();
 
-                    // Keeping this test here to maintain same behavior as previous versions.
-                    try {
-                        InetAddress.getByName(host);
-                    } catch (UnknownHostException e) {
-                        throw new OperationFailedException(ModClusterLogger.ROOT_LOGGER.couldNotResolveProxyIpAddress(), e);
-                    }
-
-                    service.addProxy(host, port);
-
-                    context.completeStep(new OperationContext.RollbackHandler() {
-                        @Override
-                        public void handleRollback(OperationContext context, ModelNode operation) {
-                            service.removeProxy(host, port);
-                        }
-                    });
+                // Keeping this test here to maintain same behavior as previous versions.
+                try {
+                    InetAddress.getByName(host);
+                } catch (UnknownHostException e) {
+                    throw new OperationFailedException(ModClusterLogger.ROOT_LOGGER.couldNotResolveProxyIpAddress(), e);
                 }
+
+                service.addProxy(host, port);
+
+                context12.completeStep((context1, operation1) -> service.removeProxy(host, port));
             }, OperationContext.Stage.RUNTIME);
         }
 

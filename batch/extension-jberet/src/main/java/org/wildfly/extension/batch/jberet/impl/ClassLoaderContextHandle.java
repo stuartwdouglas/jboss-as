@@ -38,11 +38,6 @@ class ClassLoaderContextHandle implements ContextHandle {
     public Handle setup() {
         final ClassLoader current = WildFlySecurityManager.getCurrentContextClassLoaderPrivileged();
         WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(classLoader);
-        return new Handle() {
-            @Override
-            public void tearDown() {
-                WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(current);
-            }
-        };
+        return () -> WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(current);
     }
 }

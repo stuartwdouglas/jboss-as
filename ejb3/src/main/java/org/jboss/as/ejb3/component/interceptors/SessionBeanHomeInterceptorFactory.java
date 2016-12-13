@@ -26,7 +26,6 @@ import java.lang.reflect.Method;
 import org.jboss.as.ee.component.ComponentView;
 import org.jboss.as.naming.ManagedReference;
 import org.jboss.invocation.Interceptor;
-import org.jboss.invocation.InterceptorContext;
 import org.jboss.invocation.InterceptorFactory;
 import org.jboss.invocation.InterceptorFactoryContext;
 import org.jboss.msc.value.InjectedValue;
@@ -56,19 +55,16 @@ public class SessionBeanHomeInterceptorFactory implements InterceptorFactory {
 
     @Override
     public Interceptor create(final InterceptorFactoryContext context) {
-        return new Interceptor() {
-            @Override
-            public Object processInvocation(final InterceptorContext context) throws Exception {
-                final ComponentView view = viewToCreate.getValue();
-                try {
-                    INIT_METHOD.set(method);
-                    INIT_PARAMETERS.set(context.getParameters());
-                    final ManagedReference instance = view.createInstance();
-                    return instance.getInstance();
-                } finally {
-                    INIT_METHOD.remove();
-                    INIT_PARAMETERS.remove();
-                }
+        return context1 -> {
+            final ComponentView view = viewToCreate.getValue();
+            try {
+                INIT_METHOD.set(method);
+                INIT_PARAMETERS.set(context1.getParameters());
+                final ManagedReference instance = view.createInstance();
+                return instance.getInstance();
+            } finally {
+                INIT_METHOD.remove();
+                INIT_PARAMETERS.remove();
             }
         };
     }

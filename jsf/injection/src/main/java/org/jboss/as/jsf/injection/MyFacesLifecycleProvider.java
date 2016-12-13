@@ -51,11 +51,7 @@ public class MyFacesLifecycleProvider implements LifecycleProvider2 {
             return clazz.newInstance();
         } else {
             try {
-                return AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
-                    public Object run() throws IllegalAccessException, InstantiationException {
-                        return clazz.newInstance();
-                    }
-                });
+                return AccessController.doPrivileged((PrivilegedExceptionAction<Object>) () -> clazz.newInstance());
             } catch (PrivilegedActionException pae) {
                 Exception e = pae.getException();
                 if (e instanceof IllegalAccessException) {

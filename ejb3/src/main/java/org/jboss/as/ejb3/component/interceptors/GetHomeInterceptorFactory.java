@@ -23,7 +23,6 @@ package org.jboss.as.ejb3.component.interceptors;
 
 import org.jboss.as.ee.component.ComponentView;
 import org.jboss.invocation.Interceptor;
-import org.jboss.invocation.InterceptorContext;
 import org.jboss.invocation.InterceptorFactory;
 import org.jboss.invocation.InterceptorFactoryContext;
 import org.jboss.msc.value.InjectedValue;
@@ -40,12 +39,7 @@ public class GetHomeInterceptorFactory implements InterceptorFactory {
     private final Interceptor interceptor;
 
     public GetHomeInterceptorFactory() {
-        interceptor = new Interceptor() {
-            @Override
-            public Object processInvocation(final InterceptorContext context) throws Exception {
-                return viewToCreate.getValue().createInstance().getInstance();
-            }
-        };
+        interceptor = context -> viewToCreate.getValue().createInstance().getInstance();
     }
 
     @Override

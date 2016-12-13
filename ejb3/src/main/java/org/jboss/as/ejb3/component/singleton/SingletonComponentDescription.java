@@ -33,10 +33,8 @@ import javax.ejb.TransactionManagementType;
 
 import org.jboss.as.ee.component.Attachments;
 import org.jboss.as.ee.component.ComponentConfiguration;
-import org.jboss.as.ee.component.ComponentConfigurator;
 import org.jboss.as.ee.component.ComponentDescription;
 import org.jboss.as.ee.component.EEApplicationClasses;
-import org.jboss.as.ee.component.ViewConfiguration;
 import org.jboss.as.ee.component.ViewConfigurator;
 import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ee.component.deployers.StartupCountdown;
@@ -57,9 +55,7 @@ import org.jboss.as.ejb3.security.SecurityContextInterceptorFactory;
 import org.jboss.as.ejb3.tx.EjbBMTInterceptor;
 import org.jboss.as.ejb3.tx.LifecycleCMTTxInterceptor;
 import org.jboss.as.ejb3.tx.TimerCMTTxInterceptor;
-import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
-import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.reflect.ClassReflectionIndex;
 import org.jboss.as.server.deployment.reflect.DeploymentReflectionIndex;
 import org.jboss.invocation.InterceptorFactory;
@@ -93,16 +89,13 @@ public class SingletonComponentDescription extends SessionBeanComponentDescripti
                                          final ServiceName deploymentUnitServiceName, final SessionBeanMetaData descriptorData) {
         super(componentName, componentClassName, ejbJarDescription, deploymentUnitServiceName, descriptorData);
 
-        getConfigurators().add(new ComponentConfigurator() {
-            @Override
-            public void configure(final DeploymentPhaseContext context, final ComponentDescription description, final ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                configuration.addTimeoutViewInterceptor(SingletonComponentInstanceAssociationInterceptor.FACTORY, InterceptorOrder.View.ASSOCIATING_INTERCEPTOR);
-                ConcurrencyManagementType concurrencyManagementType = getConcurrencyManagementType();
-                if (concurrencyManagementType == null || concurrencyManagementType == ConcurrencyManagementType.CONTAINER) {
-                    configuration.addTimeoutViewInterceptor(new ContainerManagedConcurrencyInterceptorFactory(Collections.emptyMap()), InterceptorOrder.View.SINGLETON_CONTAINER_MANAGED_CONCURRENCY_INTERCEPTOR);
-                }
-
+        getConfigurators().add((context, description, configuration) -> {
+            configuration.addTimeoutViewInterceptor(SingletonComponentInstanceAssociationInterceptor.FACTORY, InterceptorOrder.View.ASSOCIATING_INTERCEPTOR);
+            ConcurrencyManagementType concurrencyManagementType = getConcurrencyManagementType();
+            if (concurrencyManagementType == null || concurrencyManagementType == ConcurrencyManagementType.CONTAINER) {
+                configuration.addTimeoutViewInterceptor(new ContainerManagedConcurrencyInterceptorFactory(Collections.emptyMap()), InterceptorOrder.View.SINGLETON_CONTAINER_MANAGED_CONCURRENCY_INTERCEPTOR);
             }
+
         });
     }
 
@@ -113,62 +106,50 @@ public class SingletonComponentDescription extends SessionBeanComponentDescripti
         // setup the component create service
         singletonComponentConfiguration.setComponentCreateServiceFactory(new SingletonComponentCreateServiceFactory(this.isInitOnStartup(), dependsOn));
         if(isExplicitSecurityDomainConfigured()) {
-            getConfigurators().add(new ComponentConfigurator() {
-                    @Override
-                    public void configure(final DeploymentPhaseContext context, final ComponentDescription description, final ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                        final DeploymentUnit deploymentUnit = context.getDeploymentUnit();
-                        String contextID = deploymentUnit.getName();
-                        if (deploymentUnit.getParent() != null) {
-                            contextID = deploymentUnit.getParent().getName() + "!" + contextID;
-                        }
-                        if (isSecurityDomainKnown()) {
-                            final HashMap<Integer, InterceptorFactory> elytronInterceptorFactories = getElytronInterceptorFactories(contextID);
-                            elytronInterceptorFactories.forEach((priority, elytronInterceptorFactory) -> configuration.addPostConstructInterceptor(elytronInterceptorFactory, priority));
-                        } else {
-                            configuration.addPostConstructInterceptor(new SecurityContextInterceptorFactory(isExplicitSecurityDomainConfigured(), false, contextID), InterceptorOrder.View.SECURITY_CONTEXT);
-                        }
-                    }
-                });
-        }
-        getConfigurators().add(new ComponentConfigurator() {
-            @Override
-            public void configure(DeploymentPhaseContext context, ComponentDescription description, ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                if (isInitOnStartup()) {
-                    final StartupCountdown startupCountdown = context.getDeploymentUnit().getAttachment(Attachments.STARTUP_COUNTDOWN);
-                    configuration.addPostConstructInterceptor(new ImmediateInterceptorFactory(new StartupCountDownInterceptor(startupCountdown)), InterceptorOrder.ComponentPostConstruct.STARTUP_COUNTDOWN_INTERCEPTOR);
+            getConfigurators().add((context, description, configuration) -> {
+                final DeploymentUnit deploymentUnit = context.getDeploymentUnit();
+                String contextID = deploymentUnit.getName();
+                if (deploymentUnit.getParent() != null) {
+                    contextID = deploymentUnit.getParent().getName() + "!" + contextID;
                 }
+                if (isSecurityDomainKnown()) {
+                    final HashMap<Integer, InterceptorFactory> elytronInterceptorFactories = getElytronInterceptorFactories(contextID);
+                    elytronInterceptorFactories.forEach((priority, elytronInterceptorFactory) -> configuration.addPostConstructInterceptor(elytronInterceptorFactory, priority));
+                } else {
+                    configuration.addPostConstructInterceptor(new SecurityContextInterceptorFactory(isExplicitSecurityDomainConfigured(), false, contextID), InterceptorOrder.View.SECURITY_CONTEXT);
+                }
+            });
+        }
+        getConfigurators().add((context, description, configuration) -> {
+            if (isInitOnStartup()) {
+                final StartupCountdown startupCountdown = context.getDeploymentUnit().getAttachment(Attachments.STARTUP_COUNTDOWN);
+                configuration.addPostConstructInterceptor(new ImmediateInterceptorFactory(new StartupCountDownInterceptor(startupCountdown)), InterceptorOrder.ComponentPostConstruct.STARTUP_COUNTDOWN_INTERCEPTOR);
             }
         });
         if (getTransactionManagementType().equals(TransactionManagementType.CONTAINER)) {
             //we need to add the transaction interceptor to the lifecycle methods
-            getConfigurators().add(new ComponentConfigurator() {
-                @Override
-                public void configure(final DeploymentPhaseContext context, final ComponentDescription description, final ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
+            getConfigurators().add((context, description, configuration) -> {
 
-                    final EEApplicationClasses applicationClasses = context.getDeploymentUnit().getAttachment(Attachments.EE_APPLICATION_CLASSES_DESCRIPTION);
-                    InterceptorClassDescription interceptorConfig = ComponentDescription.mergeInterceptorConfig(configuration.getComponentClass(), applicationClasses.getClassByName(description.getComponentClassName()), description, MetadataCompleteMarker.isMetadataComplete(context.getDeploymentUnit()));
+                final EEApplicationClasses applicationClasses = context.getDeploymentUnit().getAttachment(Attachments.EE_APPLICATION_CLASSES_DESCRIPTION);
+                InterceptorClassDescription interceptorConfig = ComponentDescription.mergeInterceptorConfig(configuration.getComponentClass(), applicationClasses.getClassByName(description.getComponentClassName()), description, MetadataCompleteMarker.isMetadataComplete(context.getDeploymentUnit()));
 
-                    if(interceptorConfig.getPostConstruct() != null) {
-                        configuration.addPostConstructInterceptor(new LifecycleCMTTxInterceptor.Factory(interceptorConfig.getPostConstruct(), true), InterceptorOrder.ComponentPostConstruct.TRANSACTION_INTERCEPTOR);
-                    }
-                    configuration.addPreDestroyInterceptor(new LifecycleCMTTxInterceptor.Factory(interceptorConfig.getPreDestroy() ,true), InterceptorOrder.ComponentPreDestroy.TRANSACTION_INTERCEPTOR);
-
-                    configuration.addTimeoutViewInterceptor(TimerCMTTxInterceptor.FACTORY, InterceptorOrder.View.CMT_TRANSACTION_INTERCEPTOR);
-
+                if(interceptorConfig.getPostConstruct() != null) {
+                    configuration.addPostConstructInterceptor(new LifecycleCMTTxInterceptor.Factory(interceptorConfig.getPostConstruct(), true), InterceptorOrder.ComponentPostConstruct.TRANSACTION_INTERCEPTOR);
                 }
+                configuration.addPreDestroyInterceptor(new LifecycleCMTTxInterceptor.Factory(interceptorConfig.getPreDestroy() ,true), InterceptorOrder.ComponentPreDestroy.TRANSACTION_INTERCEPTOR);
+
+                configuration.addTimeoutViewInterceptor(TimerCMTTxInterceptor.FACTORY, InterceptorOrder.View.CMT_TRANSACTION_INTERCEPTOR);
+
             });
         } else {
             // add the bmt interceptor
-            getConfigurators().add(new ComponentConfigurator() {
-                @Override
-                public void configure(final DeploymentPhaseContext context, final ComponentDescription description, final ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
+            getConfigurators().add((context, description, configuration) -> {
 
-                    configuration.addPostConstructInterceptor(EjbBMTInterceptor.FACTORY, InterceptorOrder.ComponentPostConstruct.TRANSACTION_INTERCEPTOR);
-                    configuration.addPreDestroyInterceptor(EjbBMTInterceptor.FACTORY, InterceptorOrder.ComponentPreDestroy.TRANSACTION_INTERCEPTOR);
-                    // add the bmt interceptor factory
-                    configuration.addComponentInterceptor(EjbBMTInterceptor.FACTORY, InterceptorOrder.Component.BMT_TRANSACTION_INTERCEPTOR, false);
+                configuration.addPostConstructInterceptor(EjbBMTInterceptor.FACTORY, InterceptorOrder.ComponentPostConstruct.TRANSACTION_INTERCEPTOR);
+                configuration.addPreDestroyInterceptor(EjbBMTInterceptor.FACTORY, InterceptorOrder.ComponentPreDestroy.TRANSACTION_INTERCEPTOR);
+                // add the bmt interceptor factory
+                configuration.addComponentInterceptor(EjbBMTInterceptor.FACTORY, InterceptorOrder.Component.BMT_TRANSACTION_INTERCEPTOR, false);
 
-                }
             });
         }
 
@@ -214,32 +195,26 @@ public class SingletonComponentDescription extends SessionBeanComponentDescripti
         this.addConcurrencyManagementInterceptor(view);
 
         // add instance associating interceptor at the start of the interceptor chain
-        view.getConfigurators().addFirst(new ViewConfigurator() {
-            @Override
-            public void configure(DeploymentPhaseContext context, ComponentConfiguration componentConfiguration, ViewDescription description, ViewConfiguration configuration) throws DeploymentUnitProcessingException {
+        view.getConfigurators().addFirst((context, componentConfiguration, description, configuration) -> {
 
-                //add equals/hashCode interceptor
-                for (Method method : configuration.getProxyFactory().getCachedMethods()) {
-                    if ((method.getName().equals("hashCode") && method.getParameterTypes().length == 0) ||
-                            method.getName().equals("equals") && method.getParameterTypes().length == 1 &&
-                                    method.getParameterTypes()[0] == Object.class) {
-                        configuration.addClientInterceptor(method, ComponentTypeIdentityInterceptorFactory.INSTANCE, InterceptorOrder.Client.EJB_EQUALS_HASHCODE);
-                    }
+            //add equals/hashCode interceptor
+            for (Method method : configuration.getProxyFactory().getCachedMethods()) {
+                if ((method.getName().equals("hashCode") && method.getParameterTypes().length == 0) ||
+                        method.getName().equals("equals") && method.getParameterTypes().length == 1 &&
+                                method.getParameterTypes()[0] == Object.class) {
+                    configuration.addClientInterceptor(method, ComponentTypeIdentityInterceptorFactory.INSTANCE, InterceptorOrder.Client.EJB_EQUALS_HASHCODE);
                 }
-
-                // add the singleton component instance associating interceptor
-                configuration.addViewInterceptor(SingletonComponentInstanceAssociationInterceptor.FACTORY, InterceptorOrder.View.ASSOCIATING_INTERCEPTOR);
             }
+
+            // add the singleton component instance associating interceptor
+            configuration.addViewInterceptor(SingletonComponentInstanceAssociationInterceptor.FACTORY, InterceptorOrder.View.ASSOCIATING_INTERCEPTOR);
         });
 
 
         if (view.getMethodIntf() == MethodIntf.REMOTE) {
-            view.getConfigurators().add(new ViewConfigurator() {
-                @Override
-                public void configure(final DeploymentPhaseContext context, final ComponentConfiguration componentConfiguration, final ViewDescription description, final ViewConfiguration configuration) throws DeploymentUnitProcessingException {
-                    final String earApplicationName = componentConfiguration.getComponentDescription().getModuleDescription().getEarApplicationName();
-                    configuration.setViewInstanceFactory(new StatelessRemoteViewInstanceFactory(earApplicationName, componentConfiguration.getModuleName(), componentConfiguration.getComponentDescription().getModuleDescription().getDistinctName(), componentConfiguration.getComponentName()));
-                }
+            view.getConfigurators().add((context, componentConfiguration, description, configuration) -> {
+                final String earApplicationName = componentConfiguration.getComponentDescription().getModuleDescription().getEarApplicationName();
+                configuration.setViewInstanceFactory(new StatelessRemoteViewInstanceFactory(earApplicationName, componentConfiguration.getModuleName(), componentConfiguration.getComponentDescription().getModuleDescription().getDistinctName(), componentConfiguration.getComponentName()));
             });
         }
 
@@ -248,14 +223,11 @@ public class SingletonComponentDescription extends SessionBeanComponentDescripti
     private void addViewSerializationInterceptor(final ViewDescription view) {
         view.setSerializable(true);
         view.setUseWriteReplace(true);
-        view.getConfigurators().add(new ViewConfigurator() {
-            @Override
-            public void configure(final DeploymentPhaseContext context, final ComponentConfiguration componentConfiguration, final ViewDescription description, final ViewConfiguration configuration) throws DeploymentUnitProcessingException {
-                final DeploymentReflectionIndex index = context.getDeploymentUnit().getAttachment(org.jboss.as.server.deployment.Attachments.REFLECTION_INDEX);
-                ClassReflectionIndex classIndex = index.getClassIndex(WriteReplaceInterface.class);
-                for (Method method : classIndex.getMethods()) {
-                    configuration.addClientInterceptor(method, StatelessWriteReplaceInterceptor.factory(configuration.getViewServiceName().getCanonicalName()), InterceptorOrder.Client.WRITE_REPLACE);
-                }
+        view.getConfigurators().add((context, componentConfiguration, description, configuration) -> {
+            final DeploymentReflectionIndex index = context.getDeploymentUnit().getAttachment(org.jboss.as.server.deployment.Attachments.REFLECTION_INDEX);
+            ClassReflectionIndex classIndex = index.getClassIndex(WriteReplaceInterface.class);
+            for (Method method : classIndex.getMethods()) {
+                configuration.addClientInterceptor(method, StatelessWriteReplaceInterceptor.factory(configuration.getViewServiceName().getCanonicalName()), InterceptorOrder.Client.WRITE_REPLACE);
             }
         });
     }
@@ -266,17 +238,14 @@ public class SingletonComponentDescription extends SessionBeanComponentDescripti
     }
 
     private void addConcurrencyManagementInterceptor(final ViewDescription view) {
-        view.getConfigurators().add(new ViewConfigurator() {
-            @Override
-            public void configure(DeploymentPhaseContext context, ComponentConfiguration componentConfiguration, ViewDescription description, ViewConfiguration configuration) throws DeploymentUnitProcessingException {
+        view.getConfigurators().add((context, componentConfiguration, description, configuration) -> {
 
-                final SingletonComponentDescription singletonComponentDescription = (SingletonComponentDescription) componentConfiguration.getComponentDescription();
-                // we don't care about BEAN managed concurrency, so just return
-                if (singletonComponentDescription.getConcurrencyManagementType() == ConcurrencyManagementType.BEAN) {
-                    return;
-                }
-                configuration.addViewInterceptor(new ContainerManagedConcurrencyInterceptorFactory(configuration.getViewToComponentMethodMap()), InterceptorOrder.View.SINGLETON_CONTAINER_MANAGED_CONCURRENCY_INTERCEPTOR);
+            final SingletonComponentDescription singletonComponentDescription = (SingletonComponentDescription) componentConfiguration.getComponentDescription();
+            // we don't care about BEAN managed concurrency, so just return
+            if (singletonComponentDescription.getConcurrencyManagementType() == ConcurrencyManagementType.BEAN) {
+                return;
             }
+            configuration.addViewInterceptor(new ContainerManagedConcurrencyInterceptorFactory(configuration.getViewToComponentMethodMap()), InterceptorOrder.View.SINGLETON_CONTAINER_MANAGED_CONCURRENCY_INTERCEPTOR);
         });
     }
 

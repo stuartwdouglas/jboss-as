@@ -29,7 +29,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -143,20 +142,12 @@ public class LegacySubsystemConfigurationUtil {
         final Map<String, URL> urls = new HashMap<>();
         addSubsystem(urls, subsystemConfigs, "messaging", "ha", "subsystem-templates/messaging.xml");
 
-        return new SubsystemInputStreamSources() {
-            @Override
-            public InputStreamSource getInputStreamSource(String subsystem) {
-                URL url = urls.get(subsystem);
-                if (url == null) {
-                    throw new IllegalArgumentException("No stream for " + subsystem);
-                }
-                return new InputStreamSource() {
-                    @Override
-                    public InputStream getInputStream() throws IOException {
-                        return new BufferedInputStream(url.openStream());
-                    }
-                };
+        return subsystem -> {
+            URL url = urls.get(subsystem);
+            if (url == null) {
+                throw new IllegalArgumentException("No stream for " + subsystem);
             }
+            return () -> new BufferedInputStream(url.openStream());
         };
     }
 

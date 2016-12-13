@@ -94,22 +94,13 @@ public class DefaultApplicationClientCallbackHandler implements CallbackHandler 
     }
 
 
-    private static PrivilegedAction<SecurityContext> SECURITY_CONTEXT = new PrivilegedAction<SecurityContext>() {
-        public SecurityContext run() {
-            return SecurityContextAssociation.getSecurityContext();
-        }
-    };
+    private static PrivilegedAction<SecurityContext> SECURITY_CONTEXT = () -> SecurityContextAssociation.getSecurityContext();
 
     private SubjectInfo getSubjectInfo(final SecurityContext context) {
         if(System.getSecurityManager() == null) {
             return context.getSubjectInfo();
         }
-        return AccessController.doPrivileged(new PrivilegedAction<SubjectInfo>() {
-            @Override
-            public SubjectInfo run() {
-                return context.getSubjectInfo();
-            }
-        });
+        return AccessController.doPrivileged((PrivilegedAction<SubjectInfo>) () -> context.getSubjectInfo());
     }
 
 

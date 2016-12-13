@@ -37,8 +37,6 @@ import javax.transaction.TransactionRequiredException;
 import javax.transaction.TransactionRolledbackException;
 
 import org.jboss.invocation.ImmediateInterceptorFactory;
-import org.jboss.invocation.Interceptor;
-import org.jboss.invocation.InterceptorContext;
 import org.jboss.invocation.InterceptorFactory;
 
 /**
@@ -68,54 +66,48 @@ public class EjbExceptionTransformingInterceptorFactories {
         return newThrowable;
     }
 
-    public static final InterceptorFactory REMOTE_INSTANCE = new ImmediateInterceptorFactory(new Interceptor() {
-        @Override
-        public Object processInvocation(final InterceptorContext context) throws Exception {
-            try {
-                return context.proceed();
-            } catch (EJBTransactionRequiredException e) {
-                // this exception explicitly forbids initializing a cause
-                throw new TransactionRequiredException(e.getMessage());
-            } catch (EJBTransactionRolledbackException e) {
-                // this exception explicitly forbids initializing a cause
-                throw new TransactionRolledbackException(e.getMessage());
-            } catch (NoSuchEJBException e) {
-                // this exception explicitly forbids initializing a cause
-                throw new NoSuchObjectException(e.getMessage());
-            } catch (NoSuchEntityException e) {
-                // this exception explicitly forbids initializing a cause
-                throw new NoSuchObjectException(e.getMessage());
-            } catch (EJBException e) {
-                //as the create exception is not propagated the init method interceptor just stashes it in a ThreadLocal
-                CreateException createException = popCreateException();
-                if (createException != null) {
-                    throw createException;
-                }
-                throw new RemoteException("Invocation failed", e);
+    public static final InterceptorFactory REMOTE_INSTANCE = new ImmediateInterceptorFactory(context -> {
+        try {
+            return context.proceed();
+        } catch (EJBTransactionRequiredException e) {
+            // this exception explicitly forbids initializing a cause
+            throw new TransactionRequiredException(e.getMessage());
+        } catch (EJBTransactionRolledbackException e) {
+            // this exception explicitly forbids initializing a cause
+            throw new TransactionRolledbackException(e.getMessage());
+        } catch (NoSuchEJBException e) {
+            // this exception explicitly forbids initializing a cause
+            throw new NoSuchObjectException(e.getMessage());
+        } catch (NoSuchEntityException e) {
+            // this exception explicitly forbids initializing a cause
+            throw new NoSuchObjectException(e.getMessage());
+        } catch (EJBException e) {
+            //as the create exception is not propagated the init method interceptor just stashes it in a ThreadLocal
+            CreateException createException = popCreateException();
+            if (createException != null) {
+                throw createException;
             }
+            throw new RemoteException("Invocation failed", e);
         }
     });
 
-    public static final InterceptorFactory LOCAL_INSTANCE = new ImmediateInterceptorFactory(new Interceptor() {
-        @Override
-        public Object processInvocation(final InterceptorContext context) throws Exception {
-            try {
-                return context.proceed();
-            } catch (EJBTransactionRequiredException e) {
-                throw copyCause(new TransactionRequiredLocalException(e.getMessage()), e);
-            } catch (EJBTransactionRolledbackException e) {
-                throw new TransactionRolledbackLocalException(e.getMessage(), e);
-            } catch (NoSuchEJBException e) {
-                throw new NoSuchObjectLocalException(e.getMessage(), e);
-            } catch (NoSuchEntityException e) {
-                throw new NoSuchObjectLocalException(e.getMessage(), e);
-            } catch (EJBException e) {
-                CreateException createException = popCreateException();
-                if (createException != null) {
-                    throw createException;
-                }
-                throw e;
+    public static final InterceptorFactory LOCAL_INSTANCE = new ImmediateInterceptorFactory(context -> {
+        try {
+            return context.proceed();
+        } catch (EJBTransactionRequiredException e) {
+            throw copyCause(new TransactionRequiredLocalException(e.getMessage()), e);
+        } catch (EJBTransactionRolledbackException e) {
+            throw new TransactionRolledbackLocalException(e.getMessage(), e);
+        } catch (NoSuchEJBException e) {
+            throw new NoSuchObjectLocalException(e.getMessage(), e);
+        } catch (NoSuchEntityException e) {
+            throw new NoSuchObjectLocalException(e.getMessage(), e);
+        } catch (EJBException e) {
+            CreateException createException = popCreateException();
+            if (createException != null) {
+                throw createException;
             }
+            throw e;
         }
     });
 

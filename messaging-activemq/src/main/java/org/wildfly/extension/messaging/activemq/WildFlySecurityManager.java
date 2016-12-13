@@ -75,40 +75,37 @@ public class WildFlySecurityManager implements ActiveMQSecurityManager {
         boolean authenticated = securityDomainContext.getAuthenticationManager().isValid(new SimplePrincipal(username), password, subject);
 
         if (authenticated) {
-            authenticated = AccessController.doPrivileged(new PrivilegedAction<Boolean>() {
-                @Override
-                public Boolean run() {
-                    final SimplePrincipal principal = new SimplePrincipal(username);
+            authenticated = AccessController.doPrivileged((PrivilegedAction<Boolean>) () -> {
+                final SimplePrincipal principal = new SimplePrincipal(username);
 
-                    // push a new security context if there is not one.
-                    final SecurityContext currentSecurityContext = SecurityContextAssociation.getSecurityContext();
-                    final SecurityContext securityContext;
-                    if (currentSecurityContext == null) {
-                        try {
-                            securityContext = SecurityContextFactory.createSecurityContext(principal, password, subject, securityDomainContext.getAuthenticationManager().getSecurityDomain());
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    } else {
-                        securityContext = currentSecurityContext;
-                        securityContext.getUtil().createSubjectInfo(principal, password, subject);
+                // push a new security context if there is not one.
+                final SecurityContext currentSecurityContext = SecurityContextAssociation.getSecurityContext();
+                final SecurityContext securityContext;
+                if (currentSecurityContext == null) {
+                    try {
+                        securityContext = SecurityContextFactory.createSecurityContext(principal, password, subject, securityDomainContext.getAuthenticationManager().getSecurityDomain());
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
                     }
-                    SecurityContextAssociation.setSecurityContext(securityContext);
-
-                    final Set<Principal> principals = new HashSet<Principal>();
-                    for (Role role : roles) {
-                        if (checkType.hasRole(role)) {
-                            principals.add(new SimplePrincipal(role.getName()));
-                        }
-                    }
-
-                    final boolean authenticated = securityDomainContext.getAuthorizationManager().doesUserHaveRole(new SimplePrincipal(username), principals);
-
-                    // restore the previous security context if any
-                    SecurityContextAssociation.setSecurityContext(currentSecurityContext);
-
-                    return authenticated;
+                } else {
+                    securityContext = currentSecurityContext;
+                    securityContext.getUtil().createSubjectInfo(principal, password, subject);
                 }
+                SecurityContextAssociation.setSecurityContext(securityContext);
+
+                final Set<Principal> principals = new HashSet<Principal>();
+                for (Role role : roles) {
+                    if (checkType.hasRole(role)) {
+                        principals.add(new SimplePrincipal(role.getName()));
+                    }
+                }
+
+                final boolean authenticated1 = securityDomainContext.getAuthorizationManager().doesUserHaveRole(new SimplePrincipal(username), principals);
+
+                // restore the previous security context if any
+                SecurityContextAssociation.setSecurityContext(currentSecurityContext);
+
+                return authenticated1;
             });
         }
 

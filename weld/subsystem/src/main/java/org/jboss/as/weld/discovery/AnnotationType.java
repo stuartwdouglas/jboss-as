@@ -26,19 +26,9 @@ import org.jboss.weld.util.Function;
 
 public class AnnotationType {
 
-    public static final Function<AnnotationType, String> TO_FQCN = new Function<AnnotationType, String>() {
-        @Override
-        public String apply(AnnotationType input) {
-            return input.name.toString();
-        }
-    };
+    public static final Function<AnnotationType, String> TO_FQCN = input -> input.name.toString();
 
-    public static final Function<ClassInfo, AnnotationType> FOR_CLASSINFO = new Function<ClassInfo, AnnotationType>() {
-        @Override
-        public AnnotationType apply(ClassInfo clazz) {
-            return new AnnotationType(clazz.name(), clazz.annotations().containsKey(Indices.INHERITED_NAME));
-        }
-    };
+    public static final Function<ClassInfo, AnnotationType> FOR_CLASSINFO = clazz -> new AnnotationType(clazz.name(), clazz.annotations().containsKey(Indices.INHERITED_NAME));
 
     private final DotName name;
     private final boolean inherited;

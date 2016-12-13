@@ -45,22 +45,18 @@ public class ProcessMonitorService implements ProcessMonitorServiceMBean {
     public void start() {
         log.trace("Starting " + config.getExampleName());
 
-        Thread t = new Thread(new Runnable() {
+        Thread t = new Thread(() -> {
+            long starttime = System.currentTimeMillis();
+            while (!stop.get()) {
+                double totalmemory = bytesToMb(Runtime.getRuntime().totalMemory());
+                double usedmemory = totalmemory - bytesToMb(Runtime.getRuntime().freeMemory());
+                long seconds = (System.currentTimeMillis() - starttime)/1000;
 
-            @Override
-            public void run() {
-                long starttime = System.currentTimeMillis();
-                while (!stop.get()) {
-                    double totalmemory = bytesToMb(Runtime.getRuntime().totalMemory());
-                    double usedmemory = totalmemory - bytesToMb(Runtime.getRuntime().freeMemory());
-                    long seconds = (System.currentTimeMillis() - starttime)/1000;
-
-                    log.trace(config.getExampleName() + "-Montitor: System using " + usedmemory + " Mb of " + totalmemory + " Mb after " + seconds + " seconds");
-                    try {
-                        Thread.sleep(config.getIntervalSeconds() * 1000);
-                    } catch (InterruptedException e) {
-                        stop.set(true);
-                    }
+                log.trace(config.getExampleName() + "-Montitor: System using " + usedmemory + " Mb of " + totalmemory + " Mb after " + seconds + " seconds");
+                try {
+                    Thread.sleep(config.getIntervalSeconds() * 1000);
+                } catch (InterruptedException e) {
+                    stop.set(true);
                 }
             }
         });

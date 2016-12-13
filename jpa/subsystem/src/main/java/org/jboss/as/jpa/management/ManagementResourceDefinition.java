@@ -185,17 +185,12 @@ public class ManagementResourceDefinition extends SimpleResourceDefinition {
 
                                 }
                                 final Object rollBackValue = oldSetting;
-                                context.completeStep(new OperationContext.RollbackHandler() {
-                                    @Override
-                                    public void handleRollback(OperationContext context, ModelNode operation) {
-                                        statistics.setValue(
-                                                statisticName,
-                                                rollBackValue,
-                                                entityManagerFactoryLookup,
-                                                StatisticNameLookup.statisticNameLookup(statisticName),
-                                                Path.path(PathAddress.pathAddress(operation.get(ADDRESS))));
-                                    }
-                                });
+                                context.completeStep((context1, operation1) -> statistics.setValue(
+                                        statisticName,
+                                        rollBackValue,
+                                        entityManagerFactoryLookup,
+                                        StatisticNameLookup.statisticNameLookup(statisticName),
+                                        Path.path(PathAddress.pathAddress(operation1.get(ADDRESS)))));
                             }
                         };
                     resourceRegistration.registerReadWriteAttribute(simpleAttributeDefinitionBuilder.build(), readHandler, writeHandler);

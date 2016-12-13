@@ -55,15 +55,12 @@ public class WeldClassIntrospector implements EEClassIntrospector, Service<EECla
 
         final BeanManager beanManager = this.beanManager.getValue();
         final InjectionTarget injectionTarget = getInjectionTarget(clazz);
-        return new ManagedReferenceFactory() {
-            @Override
-            public ManagedReference getReference() {
-                final CreationalContext context = beanManager.createCreationalContext(null);
-                final Object instance = injectionTarget.produce(context);
-                injectionTarget.inject(instance, context);
-                injectionTarget.postConstruct(instance);
-                return new WeldManagedReference(injectionTarget, context, instance);
-            }
+        return () -> {
+            final CreationalContext context = beanManager.createCreationalContext(null);
+            final Object instance = injectionTarget.produce(context);
+            injectionTarget.inject(instance, context);
+            injectionTarget.postConstruct(instance);
+            return new WeldManagedReference(injectionTarget, context, instance);
         };
     }
 

@@ -60,11 +60,9 @@ public class WeldExecutorServices extends AbstractExecutorServices implements Se
         this.executor = Executors.newFixedThreadPool(bound, runnable -> {
             Thread thread = factory.newThread(runnable);
             if (WildFlySecurityManager.isChecking()) {
-                AccessController.doPrivileged(new PrivilegedAction<Void>() {
-                    public Void run() {
-                        thread.setContextClassLoader(null);
-                        return null;
-                    }
+                AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+                    thread.setContextClassLoader(null);
+                    return null;
                 });
             } else {
                 thread.setContextClassLoader(null);

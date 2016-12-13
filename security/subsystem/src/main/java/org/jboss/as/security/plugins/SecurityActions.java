@@ -51,11 +51,7 @@ class SecurityActions {
 
     static SecurityContext getSecurityContext() {
         if (WildFlySecurityManager.isChecking()) {
-            return doPrivileged(new PrivilegedAction<SecurityContext>() {
-                public SecurityContext run() {
-                    return SecurityContextAssociation.getSecurityContext();
-                }
-            });
+            return doPrivileged((PrivilegedAction<SecurityContext>) () -> SecurityContextAssociation.getSecurityContext());
         } else {
             return SecurityContextAssociation.getSecurityContext();
         }
@@ -63,15 +59,13 @@ class SecurityActions {
 
     static Principal getPrincipal() {
         if (WildFlySecurityManager.isChecking()) {
-            return doPrivileged(new PrivilegedAction<Principal>() {
-                public Principal run() {
-                    Principal principal = null;
-                    SecurityContext sc = getSecurityContext();
-                    if (sc != null) {
-                        principal = sc.getUtil().getUserPrincipal();
-                    }
-                    return principal;
+            return doPrivileged((PrivilegedAction<Principal>) () -> {
+                Principal principal = null;
+                SecurityContext sc = getSecurityContext();
+                if (sc != null) {
+                    principal = sc.getUtil().getUserPrincipal();
                 }
+                return principal;
             });
         } else {
             Principal principal = null;
@@ -85,15 +79,13 @@ class SecurityActions {
 
     static Object getCredential() {
         if (WildFlySecurityManager.isChecking()) {
-            return doPrivileged(new PrivilegedAction<Object>() {
-                public Object run() {
-                    Object credential = null;
-                    SecurityContext sc = getSecurityContext();
-                    if (sc != null) {
-                        credential = sc.getUtil().getCredential();
-                    }
-                    return credential;
+            return doPrivileged((PrivilegedAction<Object>) () -> {
+                Object credential = null;
+                SecurityContext sc = getSecurityContext();
+                if (sc != null) {
+                    credential = sc.getUtil().getCredential();
                 }
+                return credential;
             });
         } else {
             Object credential = null;

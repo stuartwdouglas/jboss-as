@@ -23,9 +23,7 @@
 package org.wildfly.extension.undertow.handlers;
 
 import io.undertow.server.HttpHandler;
-import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.ResponseCodeHandler;
-import io.undertow.server.handlers.proxy.ExclusivityChecker;
 import io.undertow.server.handlers.proxy.LoadBalancingProxyClient;
 import io.undertow.server.handlers.proxy.ProxyHandler;
 import io.undertow.util.Headers;
@@ -141,12 +139,9 @@ public class ReverseProxyHandler extends Handler {
         int maxRetries = MAX_RETRIES.resolveModelAttribute(context, model).asInt();
 
 
-        final LoadBalancingProxyClient lb = new LoadBalancingProxyClient(new ExclusivityChecker() {
-            @Override
-            public boolean isExclusivityRequired(HttpServerExchange exchange) {
-                //we always create a new connection for upgrade requests
-                return exchange.getRequestHeaders().contains(Headers.UPGRADE);
-            }
+        final LoadBalancingProxyClient lb = new LoadBalancingProxyClient(exchange -> {
+            //we always create a new connection for upgrade requests
+            return exchange.getRequestHeaders().contains(Headers.UPGRADE);
         })
                 .setConnectionsPerThread(connectionsPerThread)
                 .setMaxQueueSize(requestQueueSize)

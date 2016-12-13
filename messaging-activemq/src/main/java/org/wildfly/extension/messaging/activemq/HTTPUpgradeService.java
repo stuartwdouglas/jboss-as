@@ -184,32 +184,26 @@ public class HTTPUpgradeService implements Service<HTTPUpgradeService> {
     }
 
     private static HttpUpgradeListener switchToMessagingProtocol(final ActiveMQServer activemqServer, final String acceptorName, final String protocolName) {
-        return new HttpUpgradeListener() {
-            @Override
-            public void handleUpgrade(StreamConnection streamConnection, HttpServerExchange exchange) {
-                ChannelListener<StreamConnection> listener = new ChannelListener<StreamConnection>() {
-                    @Override
-                    public void handleEvent(StreamConnection connection) {
-                        MessagingLogger.ROOT_LOGGER.debugf("Switching to %s protocol for %s http-acceptor", protocolName, acceptorName);
-                        ActiveMQServer server = selectServer(exchange, activemqServer);
-                        RemotingService remotingService = server.getRemotingService();
-                        if (!remotingService.isStarted() || remotingService.isPaused()) {
-                            // ActiveMQ no longer accepts connection
-                            IoUtils.safeClose(connection);
-                            return;
-                        }
-                        NettyAcceptor acceptor = (NettyAcceptor) remotingService.getAcceptor(acceptorName);
-                        SocketChannel channel = new WrappingXnioSocketChannel(connection);
-                        try {
-                            acceptor.transfer(channel);
-                            connection.getSourceChannel().resumeReads();
-                        } catch (IllegalStateException e) {
-                            IoUtils.safeClose(connection);
-                        }
-                    }
-                };
-                ChannelListeners.invokeChannelListener(streamConnection, listener);
-            }
+        return (streamConnection, exchange) -> {
+            ChannelListener<StreamConnection> listener = connection -> {
+                MessagingLogger.ROOT_LOGGER.debugf("Switching to %s protocol for %s http-acceptor", protocolName, acceptorName);
+                ActiveMQServer server = selectServer(exchange, activemqServer);
+                RemotingService remotingService = server.getRemotingService();
+                if (!remotingService.isStarted() || remotingService.isPaused()) {
+                    // ActiveMQ no longer accepts connection
+                    IoUtils.safeClose(connection);
+                    return;
+                }
+                NettyAcceptor acceptor = (NettyAcceptor) remotingService.getAcceptor(acceptorName);
+                SocketChannel channel = new WrappingXnioSocketChannel(connection);
+                try {
+                    acceptor.transfer(channel);
+                    connection.getSourceChannel().resumeReads();
+                } catch (IllegalStateException e) {
+                    IoUtils.safeClose(connection);
+                }
+            };
+            ChannelListeners.invokeChannelListener(streamConnection, listener);
         };
     }
 

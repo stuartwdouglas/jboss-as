@@ -13,26 +13,11 @@ import java.security.PrivilegedAction;
  */
 class SecurityActions {
 
-    private static final PrivilegedAction<Principal> GET_PRINCIPLE_ACTION = new PrivilegedAction<Principal>() {
-        @Override
-        public Principal run() {
-            return SecurityContextAssociation.getPrincipal();
-        }
-    };
+    private static final PrivilegedAction<Principal> GET_PRINCIPLE_ACTION = () -> SecurityContextAssociation.getPrincipal();
 
-    private static final PrivilegedAction<Object> GET_CREDENTIAL_ACTION = new PrivilegedAction<Object>() {
-        @Override
-        public Object run() {
-            return SecurityContextAssociation.getCredential();
-        }
-    };
+    private static final PrivilegedAction<Object> GET_CREDENTIAL_ACTION = () -> SecurityContextAssociation.getCredential();
 
-    private static final PrivilegedAction<RunAs> PEEK_RUN_AS_IDENTITY_ACTION = new PrivilegedAction<RunAs>() {
-        @Override
-        public RunAs run() {
-            return SecurityContextAssociation.peekRunAsIdentity();
-        }
-    };
+    private static final PrivilegedAction<RunAs> PEEK_RUN_AS_IDENTITY_ACTION = () -> SecurityContextAssociation.peekRunAsIdentity();
 
     static Principal getPrincipal() {
         if(WildFlySecurityManager.isChecking()) {

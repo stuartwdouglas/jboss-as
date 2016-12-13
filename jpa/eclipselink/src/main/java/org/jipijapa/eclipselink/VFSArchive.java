@@ -34,7 +34,6 @@ import java.util.Map;
 import org.eclipse.persistence.jpa.Archive;
 import org.jboss.vfs.VFS;
 import org.jboss.vfs.VirtualFile;
-import org.jboss.vfs.VirtualFileFilter;
 
 /**
  * This is the guts of the Eclipse-to-JBossAS7 integration for
@@ -56,12 +55,7 @@ public class VFSArchive implements Archive {
         this.descriptorLocation = descriptorLocation;
 
         root = VFS.getChild(rootUrl.toURI());
-        List<VirtualFile> children = root.getChildrenRecursively(new VirtualFileFilter() {
-            @Override
-            public boolean accepts(VirtualFile file) {
-                return file.isFile();
-            }
-        });
+        List<VirtualFile> children = root.getChildrenRecursively(file -> file.isFile());
 
         files = new HashMap<String, VirtualFile>();
         for (VirtualFile file : children) {

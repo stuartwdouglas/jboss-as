@@ -49,17 +49,9 @@ public class WebValveParamAdd implements OperationStepHandler {
         }
 
         if (!context.isBooting() && context.isNormalServer()) {
-            context.addStep(new OperationStepHandler() {
-                @Override
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    context.reloadRequired();
-                    context.completeStep(new OperationContext.RollbackHandler() {
-                        @Override
-                        public void handleRollback(OperationContext context, ModelNode operation) {
-                            context.revertReloadRequired();
-                        }
-                    });
-                }
+            context.addStep((context12, operation12) -> {
+                context12.reloadRequired();
+                context12.completeStep((context1, operation1) -> context1.revertReloadRequired());
             }, OperationContext.Stage.RUNTIME);
         }
     }

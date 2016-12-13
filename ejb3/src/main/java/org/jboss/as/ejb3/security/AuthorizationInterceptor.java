@@ -28,7 +28,6 @@ import java.security.Principal;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.security.ProtectionDomain;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -114,16 +113,13 @@ public class AuthorizationInterceptor implements Interceptor {
         try {
             if(WildFlySecurityManager.isChecking()) {
                 try {
-                    AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
-                        @Override
-                        public ProtectionDomain run() {
+                    AccessController.doPrivileged((PrivilegedExceptionAction<Object>) () -> {
 
-                            if (!securityManager.authorize(ejbComponent.getComponentName(), componentView.getProxyClass().getProtectionDomain().getCodeSource(),
-                                    methodIntfType.name(), AuthorizationInterceptor.this.viewMethod, AuthorizationInterceptor.this.getMethodRolesAsPrincipals(), AuthorizationInterceptor.this.contextID)) {
-                                throw EjbLogger.ROOT_LOGGER.invocationOfMethodNotAllowed(invokedMethod,ejbComponent.getComponentName());
-                            }
-                            return null;
+                        if (!securityManager.authorize(ejbComponent.getComponentName(), componentView.getProxyClass().getProtectionDomain().getCodeSource(),
+                                methodIntfType.name(), AuthorizationInterceptor.this.viewMethod, AuthorizationInterceptor.this.getMethodRolesAsPrincipals(), AuthorizationInterceptor.this.contextID)) {
+                            throw EjbLogger.ROOT_LOGGER.invocationOfMethodNotAllowed(invokedMethod,ejbComponent.getComponentName());
                         }
+                        return null;
                     });
                 } catch (PrivilegedActionException e) {
                     throw e.getException();

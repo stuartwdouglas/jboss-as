@@ -61,33 +61,27 @@ public class StackProtocolResourceDefinition extends ProtocolResourceDefinition 
 
         if (JGroupsModel.VERSION_3_0_0.requiresTransformation(version)) {
             // Translate /subsystem=jgroups/stack=*/protocol=*:add() -> /subsystem=jgroups/stack=*:add-protocol()
-            OperationTransformer addTransformer = new OperationTransformer() {
-                @Override
-                public ModelNode transformOperation(ModelNode operation) {
-                    PathAddress address = Operations.getPathAddress(operation);
-                    PathAddress stackAddress = address.subAddress(0, address.size() - 1);
-                    ModelNode addProtocolOp = operation.clone();
-                    addProtocolOp.get(ModelDescriptionConstants.OP_ADDR).set(stackAddress.toModelNode());
-                    addProtocolOp.get(ModelDescriptionConstants.OP).set("add-protocol");
+            OperationTransformer addTransformer = operation -> {
+                PathAddress address = Operations.getPathAddress(operation);
+                PathAddress stackAddress = address.subAddress(0, address.size() - 1);
+                ModelNode addProtocolOp = operation.clone();
+                addProtocolOp.get(ModelDescriptionConstants.OP_ADDR).set(stackAddress.toModelNode());
+                addProtocolOp.get(ModelDescriptionConstants.OP).set("add-protocol");
 
-                    addProtocolOp = new LegacyPropertyAddOperationTransformer().transformOperation(addProtocolOp);
+                addProtocolOp = new LegacyPropertyAddOperationTransformer().transformOperation(addProtocolOp);
 
-                    return addProtocolOp;
-                }
+                return addProtocolOp;
             };
             builder.addOperationTransformationOverride(ModelDescriptionConstants.ADD).setCustomOperationTransformer(new SimpleOperationTransformer(addTransformer)).inheritResourceAttributeDefinitions();
 
             // Translate /subsystem=jgroups/stack=*/protocol=*:remove() -> /subsystem=jgroups/stack=*:remove-protocol()
-            OperationTransformer removeTransformer = new OperationTransformer() {
-                @Override
-                public ModelNode transformOperation(ModelNode operation) {
-                    PathAddress address = Operations.getPathAddress(operation);
-                    String protocol = address.getLastElement().getValue();
-                    PathAddress stackAddress = address.subAddress(0, address.size() - 1);
-                    ModelNode legacyOperation = Util.createOperation("remove-protocol", stackAddress);
-                    legacyOperation.get(ProtocolResourceDefinition.DeprecatedAttribute.TYPE.getName()).set(protocol);
-                    return legacyOperation;
-                }
+            OperationTransformer removeTransformer = operation -> {
+                PathAddress address = Operations.getPathAddress(operation);
+                String protocol = address.getLastElement().getValue();
+                PathAddress stackAddress = address.subAddress(0, address.size() - 1);
+                ModelNode legacyOperation = Util.createOperation("remove-protocol", stackAddress);
+                legacyOperation.get(DeprecatedAttribute.TYPE.getName()).set(protocol);
+                return legacyOperation;
             };
             builder.addOperationTransformationOverride(ModelDescriptionConstants.REMOVE).setCustomOperationTransformer(new SimpleOperationTransformer(removeTransformer));
 

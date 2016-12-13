@@ -60,7 +60,6 @@ import org.jboss.as.controller.CapabilityReferenceRecorder;
 import org.jboss.as.controller.ModelVersion;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
@@ -74,8 +73,6 @@ import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.controller.transform.OperationTransformer;
-import org.jboss.as.controller.transform.ResourceTransformationContext;
-import org.jboss.as.controller.transform.ResourceTransformer;
 import org.jboss.as.controller.transform.description.AttributeConverter.DefaultValueAttributeConverter;
 import org.jboss.as.controller.transform.description.ResourceTransformationDescriptionBuilder;
 import org.jboss.dmr.ModelNode;
@@ -184,18 +181,10 @@ public class TransportResourceDefinition extends ProtocolResourceDefinition {
         if (JGroupsModel.VERSION_3_0_0.requiresTransformation(version)) {
             builder.getAttributeBuilder().setValueConverter(new DefaultValueAttributeConverter(Attribute.SHARED.getDefinition()), Attribute.SHARED.getDefinition());
 
-            builder.setCustomResourceTransformer(new ResourceTransformer() {
-                @Override
-                public void transformResource(ResourceTransformationContext context, PathAddress address, Resource resource) throws OperationFailedException {
-                    new LegacyPropertyResourceTransformer().transformResource(context, LEGACY_ADDRESS_TRANSFORMER.transform(address), resource);
-                }
-            });
-            builder.addOperationTransformationOverride(ModelDescriptionConstants.ADD).setCustomOperationTransformer(new SimpleOperationTransformer(new org.jboss.as.clustering.controller.transform.OperationTransformer() {
-                @Override
-                public ModelNode transformOperation(final ModelNode operation) {
-                    operation.get(ModelDescriptionConstants.OP_ADDR).set(LEGACY_ADDRESS_TRANSFORMER.transform(Operations.getPathAddress(operation)).toModelNode());
-                    return new LegacyPropertyAddOperationTransformer().transformOperation(operation);
-                }
+            builder.setCustomResourceTransformer((context, address, resource) -> new LegacyPropertyResourceTransformer().transformResource(context, LEGACY_ADDRESS_TRANSFORMER.transform(address), resource));
+            builder.addOperationTransformationOverride(ModelDescriptionConstants.ADD).setCustomOperationTransformer(new SimpleOperationTransformer(operation -> {
+                operation.get(ModelDescriptionConstants.OP_ADDR).set(LEGACY_ADDRESS_TRANSFORMER.transform(Operations.getPathAddress(operation)).toModelNode());
+                return new LegacyPropertyAddOperationTransformer().transformOperation(operation);
             })).inheritResourceAttributeDefinitions();
             builder.addOperationTransformationOverride(ModelDescriptionConstants.REMOVE).setCustomOperationTransformer(new SimpleRemoveOperationTransformer(LEGACY_ADDRESS_TRANSFORMER));
             builder.addOperationTransformationOverride(ModelDescriptionConstants.READ_ATTRIBUTE_OPERATION).setCustomOperationTransformer(new SimpleReadAttributeOperationTransformer(LEGACY_ADDRESS_TRANSFORMER));
@@ -225,12 +214,7 @@ public class TransportResourceDefinition extends ProtocolResourceDefinition {
     }
 
     // Transform /subsystem=jgroups/stack=*/transport=* -> /subsystem=jgroups/stack=*/transport=TRANSPORT
-    static final PathAddressTransformer LEGACY_ADDRESS_TRANSFORMER = new PathAddressTransformer() {
-        @Override
-        public PathAddress transform(PathAddress address) {
-            return address.subAddress(0, address.size() - 1).append(LEGACY_PATH);
-        }
-    };
+    static final PathAddressTransformer LEGACY_ADDRESS_TRANSFORMER = address -> address.subAddress(0, address.size() - 1).append(LEGACY_PATH);
 
     TransportResourceDefinition(ResourceServiceBuilderFactory<ChannelFactory> parentBuilderFactory) {
         super(new Parameters(WILDCARD_PATH, new JGroupsResourceDescriptionResolver(WILDCARD_PATH, ProtocolResourceDefinition.WILDCARD_PATH)), parentBuilderFactory);
@@ -305,17 +289,14 @@ public class TransportResourceDefinition extends ProtocolResourceDefinition {
                 // Add a new step to validate instead of doing it directly in this method.
                 // This allows a composite op to change both attributes and then the
                 // validation occurs after both have done their work.
-                context.addStep(new OperationStepHandler() {
-                    @Override
-                    public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                        ModelNode conf = context.readResource(PathAddress.EMPTY_ADDRESS).getModel();
-                        // TODO doesn't cover the admin-only modes
-                        if (context.getProcessType().isServer()) {
-                            for (ThreadingAttribute attribute : EnumSet.allOf(ThreadingAttribute.class)) {
-                                if (conf.hasDefined(attribute.getName())) {
-                                    // That is not supported.
-                                    throw new OperationFailedException(JGroupsLogger.ROOT_LOGGER.threadsAttributesUsedInRuntime());
-                                }
+                context.addStep((context1, operation) -> {
+                    ModelNode conf = context1.readResource(PathAddress.EMPTY_ADDRESS).getModel();
+                    // TODO doesn't cover the admin-only modes
+                    if (context1.getProcessType().isServer()) {
+                        for (ThreadingAttribute attribute : EnumSet.allOf(ThreadingAttribute.class)) {
+                            if (conf.hasDefined(attribute.getName())) {
+                                // That is not supported.
+                                throw new OperationFailedException(JGroupsLogger.ROOT_LOGGER.threadsAttributesUsedInRuntime());
                             }
                         }
                     }

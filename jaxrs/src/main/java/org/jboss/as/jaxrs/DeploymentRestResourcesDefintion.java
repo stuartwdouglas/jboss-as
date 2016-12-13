@@ -195,37 +195,34 @@ public class DeploymentRestResourcesDefintion extends SimpleResourceDefinition {
                             .getServletRegistration(resteasyServlet.getServletConfig().getServletName()).getMappings();
                     final ResourceMethodRegistry registry = (ResourceMethodRegistry) ((HttpServletDispatcher) resteasyServlet)
                             .getDispatcher().getRegistry();
-                    context.addStep(new OperationStepHandler() {
-                        @Override
-                        public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                            final ModelNode response = new ModelNode();
-                            List<JaxrsResourceMethodDescription> resMethodInvokers = new ArrayList<>();
-                            List<JaxrsResourceLocatorDescription> resLocatorInvokers = new ArrayList<>();
-                            for (Map.Entry<String, List<ResourceInvoker>> resource : registry.getBounded().entrySet()) {
-                                String mapping = resource.getKey();
-                                List<ResourceInvoker> resouceInvokers = resource.getValue();
-                                for (ResourceInvoker resourceInvoker : resouceInvokers) {
-                                    if (ResourceMethodInvoker.class.isAssignableFrom(resourceInvoker.getClass())) {
-                                        ResourceMethodInvoker methodInvoker = (ResourceMethodInvoker) resourceInvoker;
-                                        if (methodInvoker.getResourceClass().getCanonicalName().equals(clsName)) {
-                                            JaxrsResourceMethodDescription resMethodDesc = resMethodDescription(methodInvoker, contextPath, mapping, servletMappings);
-                                            resMethodInvokers.add(resMethodDesc);
-                                        }
-                                    } else if (ResourceLocatorInvoker.class.isAssignableFrom(resourceInvoker.getClass())) {
-                                        ResourceLocatorInvoker locatorInvoker = (ResourceLocatorInvoker) resourceInvoker;
-                                        if (clsName.equals(locatorInvoker.getMethod().getDeclaringClass().getCanonicalName())) {
-                                            ResourceClass resClass =  ResourceBuilder.locatorFromAnnotations(locatorInvoker.getMethod().getReturnType());
-                                            JaxrsResourceLocatorDescription resLocatorDesc = resLocatorDescription(resClass, contextPath, mapping, servletMappings, new ArrayList<Class<?>>());
-                                            resLocatorInvokers.add(resLocatorDesc);
-                                        }
+                    context.addStep((context1, operation1) -> {
+                        final ModelNode response = new ModelNode();
+                        List<JaxrsResourceMethodDescription> resMethodInvokers = new ArrayList<>();
+                        List<JaxrsResourceLocatorDescription> resLocatorInvokers = new ArrayList<>();
+                        for (Map.Entry<String, List<ResourceInvoker>> resource : registry.getBounded().entrySet()) {
+                            String mapping = resource.getKey();
+                            List<ResourceInvoker> resouceInvokers = resource.getValue();
+                            for (ResourceInvoker resourceInvoker : resouceInvokers) {
+                                if (ResourceMethodInvoker.class.isAssignableFrom(resourceInvoker.getClass())) {
+                                    ResourceMethodInvoker methodInvoker = (ResourceMethodInvoker) resourceInvoker;
+                                    if (methodInvoker.getResourceClass().getCanonicalName().equals(clsName)) {
+                                        JaxrsResourceMethodDescription resMethodDesc = resMethodDescription(methodInvoker, contextPath, mapping, servletMappings);
+                                        resMethodInvokers.add(resMethodDesc);
+                                    }
+                                } else if (ResourceLocatorInvoker.class.isAssignableFrom(resourceInvoker.getClass())) {
+                                    ResourceLocatorInvoker locatorInvoker = (ResourceLocatorInvoker) resourceInvoker;
+                                    if (clsName.equals(locatorInvoker.getMethod().getDeclaringClass().getCanonicalName())) {
+                                        ResourceClass resClass =  ResourceBuilder.locatorFromAnnotations(locatorInvoker.getMethod().getReturnType());
+                                        JaxrsResourceLocatorDescription resLocatorDesc = resLocatorDescription(resClass, contextPath, mapping, servletMappings, new ArrayList<Class<?>>());
+                                        resLocatorInvokers.add(resLocatorDesc);
                                     }
                                 }
                             }
-                            Collections.sort(resMethodInvokers);
-                            Collections.sort(resLocatorInvokers);
-                            handleAttribute(clsName, resMethodInvokers, resLocatorInvokers, servletMappings, response);
-                            context.getResult().set(response);
                         }
+                        Collections.sort(resMethodInvokers);
+                        Collections.sort(resLocatorInvokers);
+                        handleAttribute(clsName, resMethodInvokers, resLocatorInvokers, servletMappings, response);
+                        context1.getResult().set(response);
                     }, OperationContext.Stage.RUNTIME);
                 }
             } catch (ServletException ex) {

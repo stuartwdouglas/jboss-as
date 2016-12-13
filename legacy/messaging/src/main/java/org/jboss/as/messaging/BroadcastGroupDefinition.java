@@ -45,7 +45,6 @@ import org.jboss.as.controller.ModelOnlyAddStepHandler;
 import org.jboss.as.controller.ModelOnlyResourceDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.PrimitiveListAttributeDefinition;
@@ -108,12 +107,7 @@ public class BroadcastGroupDefinition extends ModelOnlyResourceDefinition {
 
                         final ModelNode connectorRefs = resource.getModel().get(CONNECTOR_REFS.getName());
                         if (connectorRefs.isDefined()) {
-                            context.addStep(new OperationStepHandler() {
-                                @Override
-                                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                                    validateConnectors(context, operation, connectorRefs);
-                                }
-                            }, OperationContext.Stage.MODEL);
+                            context.addStep((context1, operation1) -> validateConnectors(context1, operation1, connectorRefs), OperationContext.Stage.MODEL);
                         }
 
                     }

@@ -89,12 +89,7 @@ public class LocalCommandDispatcher<C> implements CommandDispatcher<C> {
 
     @Override
     public <R> Future<R> submitOnNode(final Command<R, ? super C> command, Node node) {
-        Callable<R> task = new Callable<R>() {
-            @Override
-            public R call() throws Exception {
-                return command.execute(LocalCommandDispatcher.this.context);
-            }
-        };
+        Callable<R> task = () -> command.execute(LocalCommandDispatcher.this.context);
         return this.executor.submit(task);
     }
 

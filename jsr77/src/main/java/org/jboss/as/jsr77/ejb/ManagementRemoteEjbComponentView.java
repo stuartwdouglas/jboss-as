@@ -81,12 +81,7 @@ public class ManagementRemoteEjbComponentView extends BaseManagementEjbComponent
         final Object[] params = interceptorContext.getParameters();
         if(WildFlySecurityManager.isChecking()) {
             try {
-            return AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
-                @Override
-                public Object run() throws Exception {
-                    return invokeInternal(method, params);
-                }
-            });
+            return AccessController.doPrivileged((PrivilegedExceptionAction<Object>) () -> invokeInternal(method, params));
             } catch (PrivilegedActionException e) {
                 Throwable cause = e.getCause();
                 if (cause != null) {

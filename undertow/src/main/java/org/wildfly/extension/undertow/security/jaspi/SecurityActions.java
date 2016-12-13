@@ -44,12 +44,7 @@ class SecurityActions {
      */
     public static SecurityContext getSecurityContext() {
         if (WildFlySecurityManager.isChecking()) {
-            return WildFlySecurityManager.doUnchecked(new PrivilegedAction<SecurityContext>() {
-                @Override
-                public SecurityContext run() {
-                    return SecurityContextAssociation.getSecurityContext();
-                }
-            });
+            return WildFlySecurityManager.doUnchecked((PrivilegedAction<SecurityContext>) () -> SecurityContextAssociation.getSecurityContext());
         } else {
             return SecurityContextAssociation.getSecurityContext();
         }

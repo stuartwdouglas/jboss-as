@@ -42,14 +42,11 @@ public class ReflectiveClassIntrospector implements EEClassIntrospector, Service
         if (WildFlySecurityManager.isChecking()) {
             // Execute in a privileged block for executions, such as JSP's, that do not copy the security
             // context/protection domains onto class loaders. The permission check is done on the constructor.
-            return AccessController.doPrivileged(new PrivilegedAction<ManagedReferenceFactory>() {
-                @Override
-                public ManagedReferenceFactory run() {
-                    try {
-                        return new ConstructorManagedReferenceFactory(clazz.getDeclaredConstructor());
-                    } catch (NoSuchMethodException e) {
-                        throw new RuntimeException(e);
-                    }
+            return AccessController.doPrivileged((PrivilegedAction<ManagedReferenceFactory>) () -> {
+                try {
+                    return new ConstructorManagedReferenceFactory(clazz.getDeclaredConstructor());
+                } catch (NoSuchMethodException e) {
+                    throw new RuntimeException(e);
                 }
             });
         } else {

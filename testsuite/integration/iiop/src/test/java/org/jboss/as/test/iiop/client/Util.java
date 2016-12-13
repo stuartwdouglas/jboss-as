@@ -23,7 +23,6 @@
 package org.jboss.as.test.iiop.client;
 
 import java.util.Properties;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -75,12 +74,9 @@ public class Util {
         // Recovery manager has to be started on client when we want recovery
         // and we start the transaction on client
         recoveryManagerPool = Executors.newFixedThreadPool(1);
-        recoveryManagerPool.submit(new Callable<String>() {
-            @Override
-            public String call() throws Exception {
-                RecoveryManager.main(new String[] { "-test" });
-                return "Running recovery manager";
-            }
+        recoveryManagerPool.submit(() -> {
+            RecoveryManager.main(new String[] { "-test" });
+            return "Running recovery manager";
         });
 
     }

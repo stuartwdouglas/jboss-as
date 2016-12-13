@@ -99,20 +99,18 @@ final class WSEndpointMetrics implements OperationStepHandler {
      */
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
         if (context.isNormalServer()) {
-            context.addStep(new OperationStepHandler() {
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    final ServiceRegistry registry = context.getServiceRegistry(false);
-                    if (registry != null) {
-                        try {
-                            context.getResult().set(getEndpointMetricsFragment(operation, registry));
-                        } catch (Exception e) {
-                            throw new OperationFailedException(getFallbackMessage() + ": " + e.getMessage());
-                        }
-                    } else {
-                        context.getResult().set(getFallbackMessage());
+            context.addStep((context1, operation1) -> {
+                final ServiceRegistry registry = context1.getServiceRegistry(false);
+                if (registry != null) {
+                    try {
+                        context1.getResult().set(getEndpointMetricsFragment(operation1, registry));
+                    } catch (Exception e) {
+                        throw new OperationFailedException(getFallbackMessage() + ": " + e.getMessage());
                     }
-                    context.stepCompleted();
+                } else {
+                    context1.getResult().set(getFallbackMessage());
                 }
+                context1.stepCompleted();
             }, OperationContext.Stage.RUNTIME);
         } else {
             context.getResult().set(getFallbackMessage());

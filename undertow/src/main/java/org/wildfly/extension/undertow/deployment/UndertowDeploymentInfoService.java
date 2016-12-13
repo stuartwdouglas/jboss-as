@@ -29,8 +29,6 @@ import io.undertow.predicate.Predicate;
 import io.undertow.security.api.AuthenticationMechanism;
 import io.undertow.security.api.AuthenticationMode;
 import io.undertow.server.HandlerWrapper;
-import io.undertow.server.HttpHandler;
-import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.builder.PredicatedHandler;
 import io.undertow.server.handlers.resource.CachingResourceManager;
 import io.undertow.server.handlers.resource.FileResourceManager;
@@ -174,7 +172,6 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.EventListener;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -534,16 +531,12 @@ public class UndertowDeploymentInfoService implements Service<DeploymentInfo> {
     }
 
     private ConfidentialPortManager getConfidentialPortManager() {
-        return new ConfidentialPortManager() {
-
-            @Override
-            public int getConfidentialPort(HttpServerExchange exchange) {
-                int port = exchange.getConnection().getLocalAddress(InetSocketAddress.class).getPort();
-                if (port<0){
-                    UndertowLogger.ROOT_LOGGER.debugf("Confidential port not defined for port %s", port);
-                }
-                return host.getValue().getServer().getValue().lookupSecurePort(port);
+        return exchange -> {
+            int port = exchange.getConnection().getLocalAddress(InetSocketAddress.class).getPort();
+            if (port<0){
+                UndertowLogger.ROOT_LOGGER.debugf("Confidential port not defined for port %s", port);
             }
+            return host.getValue().getServer().getValue().lookupSecurePort(port);
         };
     }
 
@@ -1063,15 +1056,12 @@ public class UndertowDeploymentInfoService implements Service<DeploymentInfo> {
 
             if (predicatedHandlers != null && !predicatedHandlers.isEmpty()) {
                 d.addOuterHandlerChainWrapper(new RewriteCorrectingHandlerWrappers.PostWrapper());
-                d.addOuterHandlerChainWrapper(new HandlerWrapper() {
-                    @Override
-                    public HttpHandler wrap(HttpHandler handler) {
-                        if (predicatedHandlers.size() == 1) {
-                            PredicatedHandler ph = predicatedHandlers.get(0);
-                            return Handlers.predicate(ph.getPredicate(), ph.getHandler().wrap(handler), handler);
-                        } else {
-                            return Handlers.predicates(predicatedHandlers, handler);
-                        }
+                d.addOuterHandlerChainWrapper(handler -> {
+                    if (predicatedHandlers.size() == 1) {
+                        PredicatedHandler ph = predicatedHandlers.get(0);
+                        return Handlers.predicate(ph.getPredicate(), ph.getHandler().wrap(handler), handler);
+                    } else {
+                        return Handlers.predicates(predicatedHandlers, handler);
                     }
                 });
                 d.addOuterHandlerChainWrapper(new RewriteCorrectingHandlerWrappers.PreWrapper());
@@ -1181,12 +1171,7 @@ public class UndertowDeploymentInfoService implements Service<DeploymentInfo> {
         //it looks like jasper needs these in order of least specified to most specific
         final LinkedHashMap<String, JspPropertyGroup> ret = new LinkedHashMap<>();
         final ArrayList<String> paths = new ArrayList<>(result.keySet());
-        Collections.sort(paths, new Comparator<String>() {
-            @Override
-            public int compare(final String o1, final String o2) {
-                return o1.length() - o2.length();
-            }
-        });
+        Collections.sort(paths, (o1, o2) -> o1.length() - o2.length());
         for (String path : paths) {
             ret.put(path, result.get(path));
         }
@@ -1383,22 +1368,19 @@ public class UndertowDeploymentInfoService implements Service<DeploymentInfo> {
     }
 
     private static <T> InstanceFactory<T> createInstanceFactory(final ManagedReferenceFactory creator) {
-        return new InstanceFactory<T>() {
-            @Override
-            public InstanceHandle<T> createInstance() throws InstantiationException {
-                final ManagedReference instance = creator.getReference();
-                return new InstanceHandle<T>() {
-                    @Override
-                    public T getInstance() {
-                        return (T) instance.getInstance();
-                    }
+        return () -> {
+            final ManagedReference instance = creator.getReference();
+            return new InstanceHandle<T>() {
+                @Override
+                public T getInstance() {
+                    return (T) instance.getInstance();
+                }
 
-                    @Override
-                    public void release() {
-                        instance.release();
-                    }
-                };
-            }
+                @Override
+                public void release() {
+                    instance.release();
+                }
+            };
         };
     }
 

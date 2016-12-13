@@ -52,12 +52,7 @@ public class DelegatingStubFactoryFactory extends StubFactoryFactoryBase {
 
     public PresentationManager.StubFactory createStubFactory(final String className, final boolean isIDLStub, final String remoteCodeBase, final Class expectedClass, final ClassLoader classLoader) {
         if(WildFlySecurityManager.isChecking()) {
-            return AccessController.doPrivileged(new PrivilegedAction<PresentationManager.StubFactory>() {
-                @Override
-                public PresentationManager.StubFactory run() {
-                    return getStubFactoryImpl(className, isIDLStub, remoteCodeBase, expectedClass, classLoader);
-                }
-            });
+            return AccessController.doPrivileged((PrivilegedAction<PresentationManager.StubFactory>) () -> getStubFactoryImpl(className, isIDLStub, remoteCodeBase, expectedClass, classLoader));
         } else {
             return getStubFactoryImpl(className, isIDLStub, remoteCodeBase, expectedClass, classLoader);
         }
@@ -82,12 +77,7 @@ public class DelegatingStubFactoryFactory extends StubFactoryFactoryBase {
 
     public Tie getTie(final Class cls) {
         if (WildFlySecurityManager.isChecking()) {
-            return AccessController.doPrivileged(new PrivilegedAction<Tie>() {
-                @Override
-                public Tie run() {
-                    return getTieImpl(cls);
-                }
-            });
+            return AccessController.doPrivileged((PrivilegedAction<Tie>) () -> getTieImpl(cls));
         } else {
             return getTieImpl(cls);
         }

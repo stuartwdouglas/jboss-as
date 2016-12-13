@@ -169,16 +169,13 @@ public class JaxrsDeploymentDefinition extends SimpleResourceDefinition {
                 if (resteasyServlet != null) {
                     final Collection<String> servletMappings = resteasyServlet.getServletConfig().getServletContext().getServletRegistration(resteasyServlet.getServletConfig().getServletName()).getMappings();
                     final ResourceMethodRegistry registry = (ResourceMethodRegistry) ((HttpServletDispatcher) resteasyServlet).getDispatcher().getRegistry();
-                    context.addStep(new OperationStepHandler() {
-                        @Override
-                        public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {
-                            if (registry != null) {
-                                final ModelNode response = new ModelNode();
-                                for (Map.Entry<String, List<ResourceInvoker>> resource : registry.getBounded().entrySet()) {
-                                    handle(response, contextPath, servletMappings, resource.getKey(), resource.getValue());
-                                }
-                                context.getResult().set(response);
+                    context.addStep((context1, operation1) -> {
+                        if (registry != null) {
+                            final ModelNode response = new ModelNode();
+                            for (Map.Entry<String, List<ResourceInvoker>> resource : registry.getBounded().entrySet()) {
+                                handle(response, contextPath, servletMappings, resource.getKey(), resource.getValue());
                             }
+                            context1.getResult().set(response);
                         }
                     }, OperationContext.Stage.RUNTIME);
                 }

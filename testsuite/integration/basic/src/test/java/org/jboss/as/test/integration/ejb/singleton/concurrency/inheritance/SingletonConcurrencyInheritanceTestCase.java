@@ -75,14 +75,11 @@ public class SingletonConcurrencyInheritanceTestCase {
         final CountDownLatch entered = new CountDownLatch(1);
         //call a method with a write lock
         //this will block till we hit the latch
-        Future<?> future = pool.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    singleton.readLockOverriddenByParent(latch, entered);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+        Future<?> future = pool.submit(() -> {
+            try {
+                singleton.readLockOverriddenByParent(latch, entered);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         });
         entered.await();
@@ -104,14 +101,11 @@ public class SingletonConcurrencyInheritanceTestCase {
         final CountDownLatch entered = new CountDownLatch(1);
         //call a method with a write lock
         //this will block till we hit the latch
-        Future<?> future = pool.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    singleton.writeLockOverriddenByParent(latch, entered);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+        Future<?> future = pool.submit(() -> {
+            try {
+                singleton.writeLockOverriddenByParent(latch, entered);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         });
         entered.await();
@@ -128,14 +122,11 @@ public class SingletonConcurrencyInheritanceTestCase {
         final CountDownLatch entered = new CountDownLatch(1);
         //call a method with a write lock
         //this will block till we hit the latch
-        Future<?> future = pool.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    singleton.writeLock(latch, entered);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+        Future<?> future = pool.submit(() -> {
+            try {
+                singleton.writeLock(latch, entered);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         });
         entered.await();
@@ -157,14 +148,11 @@ public class SingletonConcurrencyInheritanceTestCase {
         final CountDownLatch entered = new CountDownLatch(1);
         //call a method with a write lock
         //this will block till we hit the latch
-        Future<?> future = pool.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    singleton.impliedWriteLock(latch, entered);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+        Future<?> future = pool.submit(() -> {
+            try {
+                singleton.impliedWriteLock(latch, entered);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         });
         entered.await();
@@ -187,14 +175,11 @@ public class SingletonConcurrencyInheritanceTestCase {
         final CountDownLatch entered = new CountDownLatch(1);
         //call a method with a write lock
         //this will block till we hit the latch
-        Future<?> future = pool.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    singleton.readLock(latch, entered);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+        Future<?> future = pool.submit(() -> {
+            try {
+                singleton.readLock(latch, entered);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         });
         entered.await();
@@ -210,14 +195,11 @@ public class SingletonConcurrencyInheritanceTestCase {
         final CountDownLatch entered = new CountDownLatch(1);
         //call a method with a write lock
         //this will block till we hit the latch
-        Future<?> future = pool.submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    singleton.writeLock(latch, entered);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+        Future<?> future = pool.submit(() -> {
+            try {
+                singleton.writeLock(latch, entered);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
         });
         entered.await();

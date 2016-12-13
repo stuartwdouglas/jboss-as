@@ -26,13 +26,10 @@ package org.wildfly.extension.undertow;
 
 import static org.jboss.as.controller.PersistentResourceXMLDescription.builder;
 
-import java.util.List;
 import org.jboss.as.controller.AttributeParser;
-import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PersistentResourceXMLDescription;
 import org.jboss.as.controller.PersistentResourceXMLParser;
 import org.jboss.as.controller.operations.common.Util;
-import org.jboss.dmr.ModelNode;
 import org.wildfly.extension.undertow.filters.BasicAuthHandler;
 import org.wildfly.extension.undertow.filters.RequestLimitHandler;
 import org.wildfly.extension.undertow.filters.ErrorPageDefinition;
@@ -112,11 +109,8 @@ public class UndertowSubsystemParser_1_0 extends PersistentResourceXMLParser{
                 )
                 .addChild(
                         builder(ServletContainerDefinition.INSTANCE)
-                                .setAdditionalOperationsGenerator(new PersistentResourceXMLDescription.AdditionalOperationsGenerator() {
-                                    @Override
-                                    public void additionalOperations(PathAddress address, ModelNode addOperation, List<ModelNode> operations) {
-                                        operations.add(Util.createAddOperation(address.append(UndertowExtension.PATH_WEBSOCKETS))); //backwards compat
-                                    }
+                                .setAdditionalOperationsGenerator((address, addOperation, operations) -> {
+                                    operations.add(Util.createAddOperation(address.append(UndertowExtension.PATH_WEBSOCKETS))); //backwards compat
                                 })
                                 .addAttribute(ServletContainerDefinition.ALLOW_NON_STANDARD_WRAPPERS)
                                 .addAttribute(ServletContainerDefinition.DEFAULT_BUFFER_CACHE)
@@ -220,12 +214,9 @@ public class UndertowSubsystemParser_1_0 extends PersistentResourceXMLParser{
 
                 )
                 //here to make sure we always add filters & handlers path to mgmt model
-                .setAdditionalOperationsGenerator(new PersistentResourceXMLDescription.AdditionalOperationsGenerator() {
-                    @Override
-                    public void additionalOperations(final PathAddress address, final ModelNode addOperation, final List<ModelNode> operations) {
-                        operations.add(Util.createAddOperation(address.append(UndertowExtension.PATH_FILTERS)));
-                        operations.add(Util.createAddOperation(address.append(UndertowExtension.PATH_HANDLERS)));
-                    }
+                .setAdditionalOperationsGenerator((address, addOperation, operations) -> {
+                    operations.add(Util.createAddOperation(address.append(UndertowExtension.PATH_FILTERS)));
+                    operations.add(Util.createAddOperation(address.append(UndertowExtension.PATH_HANDLERS)));
                 })
                 .build();
     }

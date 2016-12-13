@@ -47,29 +47,27 @@ public abstract class PoolMetrics implements OperationStepHandler {
 
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
         if (context.isNormalServer()) {
-            context.addStep(new OperationStepHandler() {
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    final PathAddress address = PathAddress.pathAddress(operation.require(OP_ADDR));
-                    final String jndiName = address.getLastElement().getValue();
-                    final String attributeName = operation.require(NAME).asString();
+            context.addStep((context1, operation1) -> {
+                final PathAddress address = PathAddress.pathAddress(operation1.require(OP_ADDR));
+                final String jndiName = address.getLastElement().getValue();
+                final String attributeName = operation1.require(NAME).asString();
 
-                    final ServiceController<?> managementRepoService = context.getServiceRegistry(false).getService(
-                            ConnectorServices.MANAGEMENT_REPOSITORY_SERVICE);
-                    if (managementRepoService != null) {
-                        try {
-                            final ManagementRepository repository = (ManagementRepository) managementRepoService.getValue();
-                            final ModelNode result = context.getResult();
-                            List<StatisticsPlugin> stats = getMatchingStats(jndiName, repository);
-                            for (StatisticsPlugin stat : stats) {
+                final ServiceController<?> managementRepoService = context1.getServiceRegistry(false).getService(
+                        ConnectorServices.MANAGEMENT_REPOSITORY_SERVICE);
+                if (managementRepoService != null) {
+                    try {
+                        final ManagementRepository repository = (ManagementRepository) managementRepoService.getValue();
+                        final ModelNode result = context1.getResult();
+                        List<StatisticsPlugin> stats = getMatchingStats(jndiName, repository);
+                        for (StatisticsPlugin stat : stats) {
 
-                                result.set("" + stat.getValue(attributeName));
-                            }
-                        } catch (Exception e) {
-                            throw new OperationFailedException(ConnectorLogger.ROOT_LOGGER.failedToGetMetrics(e.getLocalizedMessage()));
+                            result.set("" + stat.getValue(attributeName));
                         }
+                    } catch (Exception e) {
+                        throw new OperationFailedException(ConnectorLogger.ROOT_LOGGER.failedToGetMetrics(e.getLocalizedMessage()));
                     }
-                    context.stepCompleted();
                 }
+                context1.stepCompleted();
             }, OperationContext.Stage.RUNTIME);
         }
 
@@ -89,21 +87,19 @@ public abstract class PoolMetrics implements OperationStepHandler {
         @Override
         public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
             if (context.isNormalServer()) {
-                context.addStep(new OperationStepHandler() {
-                    public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                        final String attributeName = operation.require(NAME).asString();
+                context.addStep((context1, operation1) -> {
+                    final String attributeName = operation1.require(NAME).asString();
 
-                        final ServiceController<?> managementRepoService = context.getServiceRegistry(false).getService(
-                                ConnectorServices.MANAGEMENT_REPOSITORY_SERVICE);
-                        if (managementRepoService != null) {
-                            try {
-                                setModelValue(context.getResult(), attributeName);
-                            } catch (Exception e) {
-                               throw new OperationFailedException(ConnectorLogger.ROOT_LOGGER.failedToGetMetrics(e.getLocalizedMessage()));
-                            }
+                    final ServiceController<?> managementRepoService = context1.getServiceRegistry(false).getService(
+                            ConnectorServices.MANAGEMENT_REPOSITORY_SERVICE);
+                    if (managementRepoService != null) {
+                        try {
+                            setModelValue(context1.getResult(), attributeName);
+                        } catch (Exception e) {
+                           throw new OperationFailedException(ConnectorLogger.ROOT_LOGGER.failedToGetMetrics(e.getLocalizedMessage()));
                         }
-                        context.stepCompleted();
                     }
+                    context1.stepCompleted();
                 }, OperationContext.Stage.RUNTIME);
             }
 

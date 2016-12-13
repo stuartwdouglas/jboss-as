@@ -134,37 +134,26 @@ public class NamingBindingResourceDefinition extends SimpleResourceDefinition {
                 .addParameter(MODULE)
                 .addParameter(LOOKUP)
                 .addParameter(ENVIRONMENT);
-        resourceRegistration.registerOperationHandler(builder.build(), new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                context.addStep(new OperationStepHandler() {
-                    @Override
-                    public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
+        resourceRegistration.registerOperationHandler(builder.build(), (context, operation) -> context.addStep((context12, operation12) -> {
 
-                        validateResourceModel(operation, false);
-                        Resource resource = context.readResourceForUpdate(PathAddress.EMPTY_ADDRESS);
-                        ModelNode model = resource.getModel();
-                        for (AttributeDefinition attr : ATTRIBUTES) {
-                            attr.validateAndSet(operation, model);
-                        }
-
-                        context.addStep(new OperationStepHandler() {
-                            @Override
-                            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                                final String name = context.getCurrentAddressValue();
-                                final ContextNames.BindInfo bindInfo = ContextNames.bindInfoFor(name);
-                                ServiceController<ManagedReferenceFactory> service = (ServiceController<ManagedReferenceFactory>) context.getServiceRegistry(false).getService(bindInfo.getBinderServiceName());
-                                if (service == null) {
-                                    context.reloadRequired();
-                                    return;
-                                }
-                                NamingBindingAdd.INSTANCE.doRebind(context, operation, (BinderService) service.getService());
-                            }
-                        }, OperationContext.Stage.RUNTIME);
-                    }
-                }, OperationContext.Stage.MODEL);
+            validateResourceModel(operation12, false);
+            Resource resource = context12.readResourceForUpdate(PathAddress.EMPTY_ADDRESS);
+            ModelNode model = resource.getModel();
+            for (AttributeDefinition attr : ATTRIBUTES) {
+                attr.validateAndSet(operation12, model);
             }
-        });
+
+            context12.addStep((context1, operation1) -> {
+                final String name = context1.getCurrentAddressValue();
+                final ContextNames.BindInfo bindInfo = ContextNames.bindInfoFor(name);
+                ServiceController<ManagedReferenceFactory> service = (ServiceController<ManagedReferenceFactory>) context1.getServiceRegistry(false).getService(bindInfo.getBinderServiceName());
+                if (service == null) {
+                    context1.reloadRequired();
+                    return;
+                }
+                NamingBindingAdd.INSTANCE.doRebind(context1, operation1, (BinderService) service.getService());
+            }, OperationContext.Stage.RUNTIME);
+        }, OperationContext.Stage.MODEL));
     }
 
     @Override

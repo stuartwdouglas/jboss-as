@@ -61,31 +61,25 @@ public class ModClusterStopContext implements OperationStepHandler {
     @Override
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
         if (context.isNormalServer() && context.getServiceRegistry(false).getService(ContainerEventHandlerService.SERVICE_NAME) != null) {
-            context.addStep(new OperationStepHandler() {
-                @Override
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    ServiceController<?> controller = context.getServiceRegistry(false).getService(ContainerEventHandlerService.SERVICE_NAME);
-                    final ModClusterServiceMBean service = (ModClusterServiceMBean) controller.getValue();
-                    ROOT_LOGGER.debugf("stop-context: %s", operation);
+            context.addStep((context12, operation12) -> {
+                ServiceController<?> controller = context12.getServiceRegistry(false).getService(ContainerEventHandlerService.SERVICE_NAME);
+                final ModClusterServiceMBean service = (ModClusterServiceMBean) controller.getValue();
+                ROOT_LOGGER.debugf("stop-context: %s", operation12);
 
-                    final String webHost = VIRTUAL_HOST.resolveModelAttribute(context, operation).asString();
-                    final String webContext = CONTEXT.resolveModelAttribute(context, operation).asString();
-                    final int waitTime = WAIT_TIME.resolveModelAttribute(context, operation).asInt();
+                final String webHost = VIRTUAL_HOST.resolveModelAttribute(context12, operation12).asString();
+                final String webContext = CONTEXT.resolveModelAttribute(context12, operation12).asString();
+                final int waitTime = WAIT_TIME.resolveModelAttribute(context12, operation12).asInt();
 
-                    try {
-                        service.stopContext(webHost, webContext, waitTime, TimeUnit.SECONDS);
-                    } catch (IllegalArgumentException e) {
-                        throw new OperationFailedException(ModClusterLogger.ROOT_LOGGER.contextOrHostNotFound(webHost, webContext));
-                    }
-
-                    context.completeStep(new OperationContext.RollbackHandler() {
-                        @Override
-                        public void handleRollback(OperationContext context, ModelNode operation) {
-                            // TODO We're assuming that the context was previously enabled, but it could have been disabled
-                            service.enableContext(webHost, webContext);
-                        }
-                    });
+                try {
+                    service.stopContext(webHost, webContext, waitTime, TimeUnit.SECONDS);
+                } catch (IllegalArgumentException e) {
+                    throw new OperationFailedException(ModClusterLogger.ROOT_LOGGER.contextOrHostNotFound(webHost, webContext));
                 }
+
+                context12.completeStep((context1, operation1) -> {
+                    // TODO We're assuming that the context was previously enabled, but it could have been disabled
+                    service.enableContext(webHost, webContext);
+                });
             }, OperationContext.Stage.RUNTIME);
         }
 

@@ -161,21 +161,18 @@ public final class ResourceAdapterDeploymentService extends AbstractResourceAdap
     private void cleanupStartAsync(final StartContext context, final String deploymentName, final Throwable cause,
                                    final ServiceName duServiceName, final ClassLoader toUse) {
         ExecutorService executorService = getLifecycleExecutorService();
-        Runnable r = new Runnable() {
-            @Override
-            public void run() {
-                ClassLoader old = WildFlySecurityManager.getCurrentContextClassLoaderPrivileged();
+        Runnable r = () -> {
+            ClassLoader old = WildFlySecurityManager.getCurrentContextClassLoaderPrivileged();
+            try {
+                WritableServiceBasedNamingStore.pushOwner(duServiceName);
+                WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(toUse);
+                unregisterAll(deploymentName);
+            } finally {
                 try {
-                    WritableServiceBasedNamingStore.pushOwner(duServiceName);
-                    WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(toUse);
-                    unregisterAll(deploymentName);
+                    context.failed(ConnectorLogger.ROOT_LOGGER.failedToStartRaDeployment(cause, deploymentName));
                 } finally {
-                    try {
-                        context.failed(ConnectorLogger.ROOT_LOGGER.failedToStartRaDeployment(cause, deploymentName));
-                    } finally {
-                        WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(old);
-                        WritableServiceBasedNamingStore.popOwner();
-                    }
+                    WildFlySecurityManager.setCurrentContextClassLoaderPrivileged(old);
+                    WritableServiceBasedNamingStore.popOwner();
                 }
             }
         };

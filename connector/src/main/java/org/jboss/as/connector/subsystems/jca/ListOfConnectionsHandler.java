@@ -50,31 +50,27 @@ public class ListOfConnectionsHandler implements OperationStepHandler {
     public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {
 
         if (context.isNormalServer()) {
-            context.addStep(new OperationStepHandler() {
+            context.addStep((context1, operation1) -> {
+                ModelNode result = new ModelNode();
 
-                @Override
-                public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {
-                    ModelNode result = new ModelNode();
-
-                    CachedConnectionManager ccm = (CachedConnectionManager) context.getServiceRegistry(false).getService(ConnectorServices.CCM_SERVICE).getValue();
-                    Map<String, String> map = ccm.listConnections();
-                    ModelNode txResult = new ModelNode();
-                    for (Map.Entry<String, String> entry : map.entrySet()) {
-                        txResult.add(entry.getKey(), entry.getValue());
-                    }
-
-                    ccm = (CachedConnectionManager) context.getServiceRegistry(false).getService(ConnectorServices.NON_TX_CCM_SERVICE).getValue();
-                    map= ccm.listConnections();
-                    ModelNode nonTxResult = new ModelNode();
-                    for (Map.Entry<String, String> entry : map.entrySet()) {
-                        nonTxResult.add(entry.getKey(), entry.getValue());
-                    }
-
-                    result.get(Constants.TX).set(txResult);
-                    result.get(Constants.NON_TX).set(nonTxResult);
-                    context.getResult().set(result);
-                    context.stepCompleted();
+                CachedConnectionManager ccm = (CachedConnectionManager) context1.getServiceRegistry(false).getService(ConnectorServices.CCM_SERVICE).getValue();
+                Map<String, String> map = ccm.listConnections();
+                ModelNode txResult = new ModelNode();
+                for (Map.Entry<String, String> entry : map.entrySet()) {
+                    txResult.add(entry.getKey(), entry.getValue());
                 }
+
+                ccm = (CachedConnectionManager) context1.getServiceRegistry(false).getService(ConnectorServices.NON_TX_CCM_SERVICE).getValue();
+                map= ccm.listConnections();
+                ModelNode nonTxResult = new ModelNode();
+                for (Map.Entry<String, String> entry : map.entrySet()) {
+                    nonTxResult.add(entry.getKey(), entry.getValue());
+                }
+
+                result.get(Constants.TX).set(txResult);
+                result.get(Constants.NON_TX).set(nonTxResult);
+                context1.getResult().set(result);
+                context1.stepCompleted();
             }, OperationContext.Stage.RUNTIME);
         }
 

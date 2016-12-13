@@ -92,19 +92,15 @@ public class PathDefinition extends PersistentResourceDefinition {
         PATHS.put(PAGING_DIRECTORY, create(PATH_BASE).setDefaultValue(new ModelNode(DEFAULT_PAGING_DIR)).build());
     }
 
-    static final OperationStepHandler PATH_ADD = new OperationStepHandler() {
+    static final OperationStepHandler PATH_ADD = (context, operation) -> {
+        final Resource resource = context.createResource(PathAddress.EMPTY_ADDRESS);
+        final ModelNode model = resource.getModel();
+        final String path = PathAddress.pathAddress(operation.require(OP_ADDR)).getLastElement().getValue();
 
-        @Override
-        public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {
-            final Resource resource = context.createResource(PathAddress.EMPTY_ADDRESS);
-            final ModelNode model = resource.getModel();
-            final String path = PathAddress.pathAddress(operation.require(OP_ADDR)).getLastElement().getValue();
-
-            for (AttributeDefinition attribute : getAttributes(path)) {
-                attribute.validateAndSet(operation, model);
-            }
-            reloadRequiredStep(context);
+        for (AttributeDefinition attribute : getAttributes(path)) {
+            attribute.validateAndSet(operation, model);
         }
+        reloadRequiredStep(context);
     };
 
     static final OperationStepHandler PATH_REMOVE = new AbstractRemoveStepHandler() {
@@ -168,20 +164,17 @@ public class PathDefinition extends PersistentResourceDefinition {
 
     static void reloadRequiredStep(final OperationContext context) {
         if(context.isNormalServer()) {
-            context.addStep(new OperationStepHandler() {
-                @Override
-                public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {
-                    final ServiceName serviceName = MessagingServices.getActiveMQServiceName(PathAddress.pathAddress(operation.get(ModelDescriptionConstants.OP_ADDR)));
-                    final ServiceController<?> controller = context.getServiceRegistry(false).getService(serviceName);
-                    OperationContext.RollbackHandler rh;
-                    if(controller != null) {
-                        context.reloadRequired();
-                        rh = OperationContext.RollbackHandler.REVERT_RELOAD_REQUIRED_ROLLBACK_HANDLER;
-                    } else {
-                        rh = OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER;
-                    }
-                    context.completeStep(rh);
+            context.addStep((context1, operation) -> {
+                final ServiceName serviceName = MessagingServices.getActiveMQServiceName(PathAddress.pathAddress(operation.get(ModelDescriptionConstants.OP_ADDR)));
+                final ServiceController<?> controller = context1.getServiceRegistry(false).getService(serviceName);
+                OperationContext.RollbackHandler rh;
+                if(controller != null) {
+                    context1.reloadRequired();
+                    rh = OperationContext.RollbackHandler.REVERT_RELOAD_REQUIRED_ROLLBACK_HANDLER;
+                } else {
+                    rh = OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER;
                 }
+                context1.completeStep(rh);
             }, OperationContext.Stage.RUNTIME);
         }
     }

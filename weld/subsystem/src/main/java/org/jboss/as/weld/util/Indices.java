@@ -37,19 +37,9 @@ public class Indices {
 
     public static final DotName INHERITED_NAME = DotName.createSimple(Inherited.class.getName());
 
-    public static final Function<ClassInfo, String> CLASS_INFO_TO_FQCN = new Function<ClassInfo, String>() {
-        @Override
-        public String apply(ClassInfo input) {
-            return input.name().toString();
-        }
-    };
+    public static final Function<ClassInfo, String> CLASS_INFO_TO_FQCN = input -> input.name().toString();
 
-    public static final Predicate<ClassInfo> ANNOTATION_PREDICATE = new Predicate<ClassInfo>() {
-        @Override
-        public boolean test(ClassInfo input) {
-            return isAnnotation(input);
-        }
-    };
+    public static final Predicate<ClassInfo> ANNOTATION_PREDICATE = input -> isAnnotation(input);
 
     private Indices() {
     }

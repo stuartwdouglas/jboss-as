@@ -33,7 +33,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.http.Header;
@@ -431,18 +430,16 @@ public abstract class SSOTestBase {
         }
         try {
             RetryTaskExecutor<Boolean> rte = new RetryTaskExecutor<>();
-            rte.retryTask(new Callable<Boolean>() {
-                public Boolean call() throws Exception {
-                    ModelNode readOp = createOpNode(null, READ_ATTRIBUTE_OPERATION);
-                    readOp.get("name").set("server-state");
-                    ModelNode result = client.execute(new OperationBuilder(readOp).build());
-                    if (result.hasDefined("outcome") && "success".equals(result.get("outcome").asString())) {
-                        if ((result.hasDefined("result")) && (result.get("result").asString().equals("running")))
-                            return true;
-                    }
-                    log.trace("Server is down.");
-                    throw new Exception("Connector not available.");
+            rte.retryTask(() -> {
+                ModelNode readOp = createOpNode(null, READ_ATTRIBUTE_OPERATION);
+                readOp.get("name").set("server-state");
+                ModelNode result = client.execute(new OperationBuilder(readOp).build());
+                if (result.hasDefined("outcome") && "success".equals(result.get("outcome").asString())) {
+                    if ((result.hasDefined("result")) && (result.get("result").asString().equals("running")))
+                        return true;
                 }
+                log.trace("Server is down.");
+                throw new Exception("Connector not available.");
             });
         } catch (TimeoutException e) {
             throw new RuntimeException("Timeout on restart operation. " + e.getMessage());

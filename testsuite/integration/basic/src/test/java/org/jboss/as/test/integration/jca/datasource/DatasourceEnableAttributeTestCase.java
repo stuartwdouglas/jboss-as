@@ -22,8 +22,6 @@
 
 package org.jboss.as.test.integration.jca.datasource;
 
-import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.SUBSYSTEM;
-
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.junit.Arquillian;
 import org.jboss.dmr.ModelNode;

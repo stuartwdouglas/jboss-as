@@ -62,27 +62,23 @@ public class JdrReportRequestHandler implements OperationStepHandler {
         validator.validate(operation);
 
         // Register a handler for the RUNTIME stage
-        context.addStep(new OperationStepHandler() {
+        context.addStep((context1, operation1) -> {
 
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
+            ServiceRegistry registry = context1.getServiceRegistry(false);
+            JdrReportCollector jdrCollector = JdrReportCollector.class.cast(registry.getRequiredService(JdrReportService.SERVICE_NAME).getValue());
 
-                ServiceRegistry registry = context.getServiceRegistry(false);
-                JdrReportCollector jdrCollector = JdrReportCollector.class.cast(registry.getRequiredService(JdrReportService.SERVICE_NAME).getValue());
+            ModelNode response = context1.getResult();
+            JdrReport report = jdrCollector.collect();
 
-                ModelNode response = context.getResult();
-                JdrReport report = jdrCollector.collect();
-
-                if (report.getStartTime() != null) {
-                    response.get("start-time").set(report.getStartTime().toString());
-                }
-                if (report.getEndTime() != null) {
-                    response.get("end-time").set(report.getEndTime().toString());
-                }
-                response.get("report-location").set(report.getLocation());
-
-                context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
+            if (report.getStartTime() != null) {
+                response.get("start-time").set(report.getStartTime().toString());
             }
+            if (report.getEndTime() != null) {
+                response.get("end-time").set(report.getEndTime().toString());
+            }
+            response.get("report-location").set(report.getLocation());
+
+            context1.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
         }, OperationContext.Stage.RUNTIME);
     }
 }

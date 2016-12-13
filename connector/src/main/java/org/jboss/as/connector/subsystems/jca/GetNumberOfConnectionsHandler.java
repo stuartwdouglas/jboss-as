@@ -48,24 +48,20 @@ public class GetNumberOfConnectionsHandler implements OperationStepHandler {
     public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {
 
         if (context.isNormalServer()) {
-            context.addStep(new OperationStepHandler() {
+            context.addStep((context1, operation1) -> {
+                ModelNode result = new ModelNode();
 
-                @Override
-                public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {
-                    ModelNode result = new ModelNode();
+                CachedConnectionManager ccm = (CachedConnectionManager) context1.getServiceRegistry(false).getService(ConnectorServices.CCM_SERVICE).getValue();
+                ModelNode txResult = new ModelNode().set(ccm.getNumberOfConnections());
 
-                    CachedConnectionManager ccm = (CachedConnectionManager) context.getServiceRegistry(false).getService(ConnectorServices.CCM_SERVICE).getValue();
-                    ModelNode txResult = new ModelNode().set(ccm.getNumberOfConnections());
+                ccm = (CachedConnectionManager) context1.getServiceRegistry(false).getService(ConnectorServices.NON_TX_CCM_SERVICE).getValue();
+                ModelNode nonTxResult = new ModelNode().set(ccm.getNumberOfConnections());
 
-                    ccm = (CachedConnectionManager) context.getServiceRegistry(false).getService(ConnectorServices.NON_TX_CCM_SERVICE).getValue();
-                    ModelNode nonTxResult = new ModelNode().set(ccm.getNumberOfConnections());
+                result.get(Constants.TX).set(txResult);
+                result.get(Constants.NON_TX).set(nonTxResult);
 
-                    result.get(Constants.TX).set(txResult);
-                    result.get(Constants.NON_TX).set(nonTxResult);
-
-                    context.getResult().set(result);
-                    context.stepCompleted();
-                }
+                context1.getResult().set(result);
+                context1.stepCompleted();
             }, OperationContext.Stage.RUNTIME);
         }
 

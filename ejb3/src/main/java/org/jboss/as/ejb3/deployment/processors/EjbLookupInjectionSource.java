@@ -74,30 +74,27 @@ public class EjbLookupInjectionSource extends InjectionSource {
             type = null;
         }
 
-        injector.inject(new ManagedReferenceFactory() {
-            @Override
-            public ManagedReference getReference() {
-                try {
-                    final Object value = new InitialContext().lookup(lookup);
+        injector.inject(() -> {
+            try {
+                final Object value = new InitialContext().lookup(lookup);
 
-                    return new ManagedReference() {
-                        @Override
-                        public void release() {
+                return new ManagedReference() {
+                    @Override
+                    public void release() {
 
+                    }
+
+                    @Override
+                    public Object getInstance() {
+                        if(type != null && value instanceof org.omg.CORBA.Object) {
+                            return PortableRemoteObject.narrow(value, type);
+                        } else {
+                            return value;
                         }
-
-                        @Override
-                        public Object getInstance() {
-                            if(type != null && value instanceof org.omg.CORBA.Object) {
-                                return PortableRemoteObject.narrow(value, type);
-                            } else {
-                                return value;
-                            }
-                        }
-                    };
-                } catch (NamingException e) {
-                    throw new RuntimeException(e);
-                }
+                    }
+                };
+            } catch (NamingException e) {
+                throw new RuntimeException(e);
             }
         });
     }

@@ -28,8 +28,6 @@ import org.jboss.as.server.deployment.Services;
 import org.jboss.as.server.deployment.SimpleAttachable;
 import org.jboss.jandex.Indexer;
 import org.jboss.msc.service.ServiceName;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -60,20 +58,14 @@ public class TestHelper {
         final DeploymentUnit deploymentUnit = mock(DeploymentUnit.class);
         when(deploymentUnit.getName()).thenReturn(duName);
 
-        when(deploymentUnit.getAttachment((AttachmentKey<Object>) any())).thenAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                AttachmentKey<?> key = (AttachmentKey<?>) invocation.getArguments()[0];
-                return attachable.getAttachment(key);
-            }
+        when(deploymentUnit.getAttachment((AttachmentKey<Object>) any())).thenAnswer(invocation -> {
+            AttachmentKey<?> key = (AttachmentKey<?>) invocation.getArguments()[0];
+            return attachable.getAttachment(key);
         });
-        when(deploymentUnit.putAttachment((AttachmentKey<Object>) any(), any())).thenAnswer(new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocation) throws Throwable {
-                AttachmentKey<Object> key = (AttachmentKey<Object>) invocation.getArguments()[0];
-                Object value = invocation.getArguments()[1];
-                return attachable.putAttachment(key, value);
-            }
+        when(deploymentUnit.putAttachment((AttachmentKey<Object>) any(), any())).thenAnswer(invocation -> {
+            AttachmentKey<Object> key = (AttachmentKey<Object>) invocation.getArguments()[0];
+            Object value = invocation.getArguments()[1];
+            return attachable.putAttachment(key, value);
         });
         ServiceName deploymentUnitServiceName = Services.deploymentUnitName(duName);
         when(deploymentUnit.getServiceName()).thenReturn(deploymentUnitServiceName);

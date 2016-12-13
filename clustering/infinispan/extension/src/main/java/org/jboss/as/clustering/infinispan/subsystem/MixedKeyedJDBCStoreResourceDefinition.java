@@ -34,14 +34,12 @@ import org.jboss.as.clustering.controller.transform.LegacyPropertyWriteOperation
 import org.jboss.as.clustering.controller.transform.SimpleOperationTransformer;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.ModelVersion;
-import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.operations.global.MapOperations;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.controller.transform.ResourceTransformationContext;
-import org.jboss.as.controller.transform.ResourceTransformer;
 import org.jboss.as.controller.transform.description.ResourceTransformationDescriptionBuilder;
 import org.jboss.dmr.ModelNode;
 
@@ -85,28 +83,25 @@ public class MixedKeyedJDBCStoreResourceDefinition extends JDBCStoreResourceDefi
         JDBCStoreResourceDefinition.buildTransformation(version, builder);
 
         if (InfinispanModel.VERSION_4_0_0.requiresTransformation(version)) {
-            builder.setCustomResourceTransformer(new ResourceTransformer() {
-                @Override
-                public void transformResource(ResourceTransformationContext context, PathAddress address, Resource resource) throws OperationFailedException {
-                    final ModelNode model = resource.getModel();
+            builder.setCustomResourceTransformer((context, address, resource) -> {
+                final ModelNode model = resource.getModel();
 
-                    final ModelNode binaryTableModel = Resource.Tools.readModel(resource.removeChild(BinaryTableResourceDefinition.PATH));
-                    if (binaryTableModel != null && binaryTableModel.isDefined()) {
-                        model.get(DeprecatedAttribute.BINARY_TABLE.getName()).set(binaryTableModel);
-                    }
-
-                    final ModelNode stringTableModel = Resource.Tools.readModel(resource.removeChild(StringTableResourceDefinition.PATH));
-                    if (stringTableModel != null && stringTableModel.isDefined()) {
-                        model.get(DeprecatedAttribute.STRING_TABLE.getName()).set(stringTableModel);
-                    }
-
-                    final ModelNode properties = model.remove(StoreResourceDefinition.Attribute.PROPERTIES.getName());
-                    final ResourceTransformationContext childContext = context.addTransformedResource(PathAddress.EMPTY_ADDRESS, resource);
-
-                    LegacyPropertyResourceTransformer.transformPropertiesToChildrenResources(properties, address, childContext);
-
-                    context.processChildren(resource);
+                final ModelNode binaryTableModel = Resource.Tools.readModel(resource.removeChild(BinaryTableResourceDefinition.PATH));
+                if (binaryTableModel != null && binaryTableModel.isDefined()) {
+                    model.get(DeprecatedAttribute.BINARY_TABLE.getName()).set(binaryTableModel);
                 }
+
+                final ModelNode stringTableModel = Resource.Tools.readModel(resource.removeChild(StringTableResourceDefinition.PATH));
+                if (stringTableModel != null && stringTableModel.isDefined()) {
+                    model.get(DeprecatedAttribute.STRING_TABLE.getName()).set(stringTableModel);
+                }
+
+                final ModelNode properties = model.remove(StoreResourceDefinition.Attribute.PROPERTIES.getName());
+                final ResourceTransformationContext childContext = context.addTransformedResource(PathAddress.EMPTY_ADDRESS, resource);
+
+                LegacyPropertyResourceTransformer.transformPropertiesToChildrenResources(properties, address, childContext);
+
+                context.processChildren(resource);
             });
         }
 

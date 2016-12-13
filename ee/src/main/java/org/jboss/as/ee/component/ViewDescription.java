@@ -39,8 +39,6 @@ import org.jboss.as.server.deployment.reflect.ClassReflectionIndex;
 import org.jboss.as.server.deployment.reflect.ClassReflectionIndexUtil;
 import org.jboss.as.server.deployment.reflect.DeploymentReflectionIndex;
 import org.jboss.invocation.ImmediateInterceptorFactory;
-import org.jboss.invocation.Interceptor;
-import org.jboss.invocation.InterceptorContext;
 import org.jboss.invocation.Interceptors;
 import org.jboss.invocation.proxy.MethodIdentifier;
 import org.jboss.invocation.proxy.ProxyFactory;
@@ -179,11 +177,9 @@ public class ViewDescription {
         return new ViewBindingInjectionSource(serviceName);
     }
 
-    public static final ImmediateInterceptorFactory CLIENT_DISPATCHER_INTERCEPTOR_FACTORY = new ImmediateInterceptorFactory(new Interceptor() {
-        public Object processInvocation(final InterceptorContext context) throws Exception {
-            ComponentView view = context.getPrivateData(ComponentView.class);
-            return view.invoke(context);
-        }
+    public static final ImmediateInterceptorFactory CLIENT_DISPATCHER_INTERCEPTOR_FACTORY = new ImmediateInterceptorFactory(context -> {
+        ComponentView view = context.getPrivateData(ComponentView.class);
+        return view.invoke(context);
     });
 
     private static class DefaultConfigurator implements ViewConfigurator {

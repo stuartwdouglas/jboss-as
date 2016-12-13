@@ -43,26 +43,24 @@ public class PoolStatisticsRuntimeAttributeReadHandler implements OperationStepH
     @Override
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
         if (context.isNormalServer()) {
-            context.addStep(new OperationStepHandler() {
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    final String attributeName = operation.require(NAME).asString();
-                    try {
-                        final ModelNode result = context.getResult();
+            context.addStep((context1, operation1) -> {
+                final String attributeName = operation1.require(NAME).asString();
+                try {
+                    final ModelNode result = context1.getResult();
 
-                        switch (attributeName) {
+                    switch (attributeName) {
 
-                            case ModelDescriptionConstants.STATISTICS_ENABLED: {
-                                result.set(stats.isEnabled());
-                                break;
-                            }
+                        case ModelDescriptionConstants.STATISTICS_ENABLED: {
+                            result.set(stats.isEnabled());
+                            break;
                         }
-
-                    } catch (Exception e) {
-                        throw new OperationFailedException(ConnectorLogger.ROOT_LOGGER.failedToGetMetrics(e.getLocalizedMessage()));
                     }
 
-                    context.stepCompleted();
+                } catch (Exception e) {
+                    throw new OperationFailedException(ConnectorLogger.ROOT_LOGGER.failedToGetMetrics(e.getLocalizedMessage()));
                 }
+
+                context1.stepCompleted();
             }, OperationContext.Stage.RUNTIME);
         }
 

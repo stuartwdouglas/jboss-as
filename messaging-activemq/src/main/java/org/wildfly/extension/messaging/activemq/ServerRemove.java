@@ -27,7 +27,6 @@ import static org.wildfly.extension.messaging.activemq.ServerDefinition.ACTIVEMQ
 import org.jboss.as.controller.AbstractRemoveStepHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.registry.Resource;
 import org.jboss.dmr.ModelNode;
@@ -56,17 +55,14 @@ class ServerRemove extends AbstractRemoveStepHandler {
         Resource resource = context.readResource(PathAddress.EMPTY_ADDRESS);
         // add a runtime step to remove services related to broadcast-group/discovery-group that are started
         // when the server is added.
-        context.addStep(new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                final String serverName = context.getCurrentAddressValue();
-                final ServiceName serviceName = MessagingServices.getActiveMQServiceName(serverName);
-                for(final Resource.ResourceEntry broadcastGroup : resource.getChildren(CommonAttributes.BROADCAST_GROUP)) {
-                    context.removeService(GroupBindingService.getBroadcastBaseServiceName(serviceName).append(broadcastGroup.getName()));
-                }
-                for(final Resource.ResourceEntry divertGroup : resource.getChildren(CommonAttributes.DISCOVERY_GROUP)) {
-                    context.removeService(GroupBindingService.getDiscoveryBaseServiceName(serviceName).append(divertGroup.getName()));
-                }
+        context.addStep((context1, operation1) -> {
+            final String serverName = context1.getCurrentAddressValue();
+            final ServiceName serviceName = MessagingServices.getActiveMQServiceName(serverName);
+            for(final Resource.ResourceEntry broadcastGroup : resource.getChildren(CommonAttributes.BROADCAST_GROUP)) {
+                context1.removeService(GroupBindingService.getBroadcastBaseServiceName(serviceName).append(broadcastGroup.getName()));
+            }
+            for(final Resource.ResourceEntry divertGroup : resource.getChildren(CommonAttributes.DISCOVERY_GROUP)) {
+                context1.removeService(GroupBindingService.getDiscoveryBaseServiceName(serviceName).append(divertGroup.getName()));
             }
         }, OperationContext.Stage.RUNTIME);
         super.performRemove(context, operation, model);

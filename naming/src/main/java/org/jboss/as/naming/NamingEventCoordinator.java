@@ -57,11 +57,7 @@ public class NamingEventCoordinator {
     private volatile Map<TargetScope, List<ListenerHolder>> holdersByTarget = Collections.emptyMap();
     private volatile Map<NamingListener, ListenerHolder> holdersByListener = Collections.emptyMap();
 
-    private final ThreadFactory threadFactory = doPrivileged(new PrivilegedAction<JBossThreadFactory>() {
-        public JBossThreadFactory run() {
-            return new JBossThreadFactory(new ThreadGroup("NamingEventCoordinator-threads"), Boolean.FALSE, null, "%G - %t", null, null);
-        }
-    });
+    private final ThreadFactory threadFactory = doPrivileged((PrivilegedAction<JBossThreadFactory>) () -> new JBossThreadFactory(new ThreadGroup("NamingEventCoordinator-threads"), Boolean.FALSE, null, "%G - %t", null, null));
 
     private final Executor executor = Executors.newSingleThreadExecutor(threadFactory);
 

@@ -210,61 +210,55 @@ public class MigrateOperation implements OperationStepHandler {
         // invoke an OSH to add the messaging-activemq extension
         // FIXME: this does not work it the extension :add is added to the migrationOperations directly (https://issues.jboss.org/browse/WFCORE-323)
         addMessagingActiveMQExtension(context, migrationOperations, describe);
-        context.addStep(new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                // transform the legacy add operations and put them in migrationOperations
-                transformResources(context, legacyModelAddOps, migrationOperations, addLegacyEntries, warnings);
+        context.addStep((context12, operation12) -> {
+            // transform the legacy add operations and put them in migrationOperations
+            transformResources(context12, legacyModelAddOps, migrationOperations, addLegacyEntries, warnings);
 
-                // put the /subsystem=messaging:remove operation
-                removeMessagingSubsystem(migrationOperations, context.getProcessType() == ProcessType.STANDALONE_SERVER);
+            // put the /subsystem=messaging:remove operation
+            removeMessagingSubsystem(migrationOperations, context12.getProcessType() == ProcessType.STANDALONE_SERVER);
 
-                PathAddress parentAddress = context.getCurrentAddress().getParent();
-                fixAddressesForDomainMode(parentAddress, migrationOperations);
+            PathAddress parentAddress = context12.getCurrentAddress().getParent();
+            fixAddressesForDomainMode(parentAddress, migrationOperations);
 
-                if (describe) {
-                    // :describe-migration operation
+            if (describe) {
+                // :describe-migration operation
 
-                    // for describe-migration operation, do nothing and return the list of operations that would
-                    // be executed in the composite operation
-                    final Collection<ModelNode> values = migrationOperations.values();
-                    ModelNode result = new ModelNode();
+                // for describe-migration operation, do nothing and return the list of operations that would
+                // be executed in the composite operation
+                final Collection<ModelNode> values = migrationOperations.values();
+                ModelNode result = new ModelNode();
+                fillWarnings(result, warnings);
+                result.get(MIGRATION_OPERATIONS).set(values);
+
+                context12.getResult().set(result);
+            } else {
+                // :migrate operation
+                // invoke an OSH on a composite operation with all the migration operations
+                final Map<PathAddress, ModelNode> migrateOpResponses = migrateSubsystems(context12, migrationOperations);
+
+                context12.completeStep((resultAction, context1, operation1) -> {
+                    final ModelNode result = new ModelNode();
                     fillWarnings(result, warnings);
-                    result.get(MIGRATION_OPERATIONS).set(values);
-
-                    context.getResult().set(result);
-                } else {
-                    // :migrate operation
-                    // invoke an OSH on a composite operation with all the migration operations
-                    final Map<PathAddress, ModelNode> migrateOpResponses = migrateSubsystems(context, migrationOperations);
-
-                    context.completeStep(new OperationContext.ResultHandler() {
-                        @Override
-                        public void handleResult(OperationContext.ResultAction resultAction, OperationContext context, ModelNode operation) {
-                            final ModelNode result = new ModelNode();
-                            fillWarnings(result, warnings);
-                            if (resultAction == OperationContext.ResultAction.ROLLBACK) {
-                                for (Map.Entry<PathAddress, ModelNode> entry : migrateOpResponses.entrySet()) {
-                                    if (entry.getValue().hasDefined(FAILURE_DESCRIPTION)) {
-                                        //we check for failure description, as every node has 'failed', but one
-                                        //the real error has a failure description
-                                        //we break when we find the first one, as there will only ever be one failure
-                                        //as the op stops after the first failure
-                                        ModelNode desc = new ModelNode();
-                                        desc.get(OP).set(migrationOperations.get(entry.getKey()));
-                                        desc.get(RESULT).set(entry.getValue());
-                                        result.get(MIGRATION_ERROR).set(desc);
-                                        break;
-                                    }
-                                }
-                                context.getFailureDescription().set(ROOT_LOGGER.migrationFailed());
+                    if (resultAction == OperationContext.ResultAction.ROLLBACK) {
+                        for (Map.Entry<PathAddress, ModelNode> entry : migrateOpResponses.entrySet()) {
+                            if (entry.getValue().hasDefined(FAILURE_DESCRIPTION)) {
+                                //we check for failure description, as every node has 'failed', but one
+                                //the real error has a failure description
+                                //we break when we find the first one, as there will only ever be one failure
+                                //as the op stops after the first failure
+                                ModelNode desc = new ModelNode();
+                                desc.get(OP).set(migrationOperations.get(entry.getKey()));
+                                desc.get(RESULT).set(entry.getValue());
+                                result.get(MIGRATION_ERROR).set(desc);
+                                break;
                             }
-
-                            context.getResult().set(result);
                         }
-                    });
+                        context1.getFailureDescription().set(ROOT_LOGGER.migrationFailed());
+                    }
 
-                }
+                    context1.getResult().set(result);
+                });
+
             }
         }, MODEL);
     }

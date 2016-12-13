@@ -36,11 +36,9 @@ import javax.ejb.TransactionManagementType;
 import org.jboss.as.ee.component.Attachments;
 import org.jboss.as.ee.component.Component;
 import org.jboss.as.ee.component.ComponentConfiguration;
-import org.jboss.as.ee.component.ComponentConfigurator;
 import org.jboss.as.ee.component.ComponentDescription;
 import org.jboss.as.ee.component.ComponentInstanceInterceptorFactory;
 import org.jboss.as.ee.component.EEApplicationClasses;
-import org.jboss.as.ee.component.ViewConfiguration;
 import org.jboss.as.ee.component.ViewConfigurator;
 import org.jboss.as.ee.component.ViewDescription;
 import org.jboss.as.ee.component.interceptors.InterceptorClassDescription;
@@ -56,8 +54,6 @@ import org.jboss.as.ejb3.component.session.SessionBeanComponentDescription;
 import org.jboss.as.ejb3.deployment.EjbJarDescription;
 import org.jboss.as.ejb3.tx.LifecycleCMTTxInterceptor;
 import org.jboss.as.ejb3.tx.StatefulBMTInterceptor;
-import org.jboss.as.server.deployment.DeploymentPhaseContext;
-import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.reflect.ClassReflectionIndex;
 import org.jboss.as.server.deployment.reflect.DeploymentReflectionIndex;
 import org.jboss.invocation.ImmediateInterceptorFactory;
@@ -142,22 +138,14 @@ public class StatefulComponentDescription extends SessionBeanComponentDescriptio
     }
 
     private void addInitMethodInvokingInterceptor() {
-        getConfigurators().addFirst(new ComponentConfigurator() {
-            @Override
-            public void configure(DeploymentPhaseContext context, ComponentDescription description, ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                configuration.addPostConstructInterceptor(StatefulInitMethodInterceptor.INSTANCE, InterceptorOrder.ComponentPostConstruct.SFSB_INIT_METHOD);
-            }
-        });
+        getConfigurators().addFirst((context, description, configuration) -> configuration.addPostConstructInterceptor(StatefulInitMethodInterceptor.INSTANCE, InterceptorOrder.ComponentPostConstruct.SFSB_INIT_METHOD));
     }
 
     private void addStatefulSessionSynchronizationInterceptor() {
         // we must run before the DefaultFirstConfigurator
-        getConfigurators().addFirst(new ComponentConfigurator() {
-            @Override
-            public void configure(DeploymentPhaseContext context, ComponentDescription description, ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                final InterceptorFactory interceptorFactory = StatefulSessionSynchronizationInterceptor.factory(getTransactionManagementType());
-                configuration.addComponentInterceptor(interceptorFactory, InterceptorOrder.Component.SYNCHRONIZATION_INTERCEPTOR, false);
-            }
+        getConfigurators().addFirst((context, description, configuration) -> {
+            final InterceptorFactory interceptorFactory = StatefulSessionSynchronizationInterceptor.factory(getTransactionManagementType());
+            configuration.addComponentInterceptor(interceptorFactory, InterceptorOrder.Component.SYNCHRONIZATION_INTERCEPTOR, false);
         });
 
     }
@@ -170,35 +158,29 @@ public class StatefulComponentDescription extends SessionBeanComponentDescriptio
         statefulComponentConfiguration.setComponentCreateServiceFactory(new StatefulComponentCreateServiceFactory());
 
         if (getTransactionManagementType() == TransactionManagementType.BEAN) {
-            getConfigurators().add(new ComponentConfigurator() {
-                @Override
-                public void configure(final DeploymentPhaseContext context, final ComponentDescription description, final ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                    final ComponentInstanceInterceptorFactory bmtComponentInterceptorFactory = new ComponentInstanceInterceptorFactory() {
-                        @Override
-                        protected Interceptor create(Component component, InterceptorFactoryContext context) {
-                            if (!(component instanceof StatefulSessionComponent)) {
-                                throw EjbLogger.ROOT_LOGGER.componentNotInstanceOfSessionComponent(component, component.getComponentClass(), "stateful");
-                            }
-                            return new StatefulBMTInterceptor((StatefulSessionComponent) component);
+            getConfigurators().add((context, description, configuration) -> {
+                final ComponentInstanceInterceptorFactory bmtComponentInterceptorFactory = new ComponentInstanceInterceptorFactory() {
+                    @Override
+                    protected Interceptor create(Component component, InterceptorFactoryContext context) {
+                        if (!(component instanceof StatefulSessionComponent)) {
+                            throw EjbLogger.ROOT_LOGGER.componentNotInstanceOfSessionComponent(component, component.getComponentClass(), "stateful");
                         }
-                    };
-                    configuration.addComponentInterceptor(bmtComponentInterceptorFactory, InterceptorOrder.Component.BMT_TRANSACTION_INTERCEPTOR, false);
-                }
+                        return new StatefulBMTInterceptor((StatefulSessionComponent) component);
+                    }
+                };
+                configuration.addComponentInterceptor(bmtComponentInterceptorFactory, InterceptorOrder.Component.BMT_TRANSACTION_INTERCEPTOR, false);
             });
         } else {
-            getConfigurators().add(new ComponentConfigurator() {
-                @Override
-                public void configure(final DeploymentPhaseContext context, final ComponentDescription description, final ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                    final EEApplicationClasses applicationClasses = context.getDeploymentUnit().getAttachment(Attachments.EE_APPLICATION_CLASSES_DESCRIPTION);
-                    InterceptorClassDescription interceptorConfig = ComponentDescription.mergeInterceptorConfig(configuration.getComponentClass(), applicationClasses.getClassByName(description.getComponentClassName()), description, MetadataCompleteMarker.isMetadataComplete(context.getDeploymentUnit()));
+            getConfigurators().add((context, description, configuration) -> {
+                final EEApplicationClasses applicationClasses = context.getDeploymentUnit().getAttachment(Attachments.EE_APPLICATION_CLASSES_DESCRIPTION);
+                InterceptorClassDescription interceptorConfig = ComponentDescription.mergeInterceptorConfig(configuration.getComponentClass(), applicationClasses.getClassByName(description.getComponentClassName()), description, MetadataCompleteMarker.isMetadataComplete(context.getDeploymentUnit()));
 
-                    configuration.addPostConstructInterceptor(new LifecycleCMTTxInterceptor.Factory(interceptorConfig.getPostConstruct(), false), InterceptorOrder.ComponentPostConstruct.TRANSACTION_INTERCEPTOR);
-                    configuration.addPreDestroyInterceptor(new LifecycleCMTTxInterceptor.Factory(interceptorConfig.getPreDestroy(), false), InterceptorOrder.ComponentPreDestroy.TRANSACTION_INTERCEPTOR);
+                configuration.addPostConstructInterceptor(new LifecycleCMTTxInterceptor.Factory(interceptorConfig.getPostConstruct(), false), InterceptorOrder.ComponentPostConstruct.TRANSACTION_INTERCEPTOR);
+                configuration.addPreDestroyInterceptor(new LifecycleCMTTxInterceptor.Factory(interceptorConfig.getPreDestroy(), false), InterceptorOrder.ComponentPreDestroy.TRANSACTION_INTERCEPTOR);
 
-                    if (description.isPassivationApplicable()) {
-                        configuration.addPrePassivateInterceptor(new LifecycleCMTTxInterceptor.Factory(interceptorConfig.getPrePassivate(), false), InterceptorOrder.ComponentPassivation.TRANSACTION_INTERCEPTOR);
-                        configuration.addPostActivateInterceptor(new LifecycleCMTTxInterceptor.Factory(interceptorConfig.getPostActivate(), false), InterceptorOrder.ComponentPassivation.TRANSACTION_INTERCEPTOR);
-                    }
+                if (description.isPassivationApplicable()) {
+                    configuration.addPrePassivateInterceptor(new LifecycleCMTTxInterceptor.Factory(interceptorConfig.getPrePassivate(), false), InterceptorOrder.ComponentPassivation.TRANSACTION_INTERCEPTOR);
+                    configuration.addPostActivateInterceptor(new LifecycleCMTTxInterceptor.Factory(interceptorConfig.getPostActivate(), false), InterceptorOrder.ComponentPassivation.TRANSACTION_INTERCEPTOR);
                 }
             });
         }
@@ -253,12 +235,9 @@ public class StatefulComponentDescription extends SessionBeanComponentDescriptio
         this.addViewSerializationInterceptor(view);
 
         if (view.getMethodIntf() == MethodIntf.REMOTE) {
-            view.getConfigurators().add(new ViewConfigurator() {
-                @Override
-                public void configure(final DeploymentPhaseContext context, final ComponentConfiguration componentConfiguration, final ViewDescription description, final ViewConfiguration configuration) throws DeploymentUnitProcessingException {
-                    final String earApplicationName = componentConfiguration.getComponentDescription().getModuleDescription().getEarApplicationName();
-                    configuration.setViewInstanceFactory(new StatefulRemoteViewInstanceFactory(earApplicationName, componentConfiguration.getModuleName(), componentConfiguration.getComponentDescription().getModuleDescription().getDistinctName(), componentConfiguration.getComponentName()));
-                }
+            view.getConfigurators().add((context, componentConfiguration, description, configuration) -> {
+                final String earApplicationName = componentConfiguration.getComponentDescription().getModuleDescription().getEarApplicationName();
+                configuration.setViewInstanceFactory(new StatefulRemoteViewInstanceFactory(earApplicationName, componentConfiguration.getModuleName(), componentConfiguration.getComponentDescription().getModuleDescription().getDistinctName(), componentConfiguration.getComponentName()));
             });
         }
     }
@@ -271,14 +250,11 @@ public class StatefulComponentDescription extends SessionBeanComponentDescriptio
     private void addViewSerializationInterceptor(final ViewDescription view) {
         view.setSerializable(true);
         view.setUseWriteReplace(true);
-        view.getConfigurators().add(new ViewConfigurator() {
-            @Override
-            public void configure(final DeploymentPhaseContext context, final ComponentConfiguration componentConfiguration, final ViewDescription description, final ViewConfiguration configuration) throws DeploymentUnitProcessingException {
-                final DeploymentReflectionIndex index = context.getDeploymentUnit().getAttachment(org.jboss.as.server.deployment.Attachments.REFLECTION_INDEX);
-                ClassReflectionIndex classIndex = index.getClassIndex(WriteReplaceInterface.class);
-                for (Method method : (Collection<Method>)classIndex.getMethods()) {
-                    configuration.addClientInterceptor(method, new StatefulWriteReplaceInterceptor.Factory(configuration.getViewServiceName().getCanonicalName()), InterceptorOrder.Client.WRITE_REPLACE);
-                }
+        view.getConfigurators().add((context, componentConfiguration, description, configuration) -> {
+            final DeploymentReflectionIndex index = context.getDeploymentUnit().getAttachment(org.jboss.as.server.deployment.Attachments.REFLECTION_INDEX);
+            ClassReflectionIndex classIndex = index.getClassIndex(WriteReplaceInterface.class);
+            for (Method method : (Collection<Method>)classIndex.getMethods()) {
+                configuration.addClientInterceptor(method, new StatefulWriteReplaceInterceptor.Factory(configuration.getViewServiceName().getCanonicalName()), InterceptorOrder.Client.WRITE_REPLACE);
             }
         });
     }
@@ -303,69 +279,60 @@ public class StatefulComponentDescription extends SessionBeanComponentDescriptio
     }
 
     private void addStatefulInstanceAssociatingInterceptor(final EJBViewDescription view) {
-        view.getConfigurators().add(new ViewConfigurator() {
-            @Override
-            public void configure(final DeploymentPhaseContext context, final ComponentConfiguration componentConfiguration, ViewDescription description, ViewConfiguration viewConfiguration) throws DeploymentUnitProcessingException {
-                EJBViewDescription ejbViewDescription = (EJBViewDescription) view;
-                //if this is a home interface we add a different interceptor
-                if (ejbViewDescription.getMethodIntf() == MethodIntf.HOME || ejbViewDescription.getMethodIntf() == MethodIntf.LOCAL_HOME) {
-                    for (Method method : viewConfiguration.getProxyFactory().getCachedMethods()) {
-                        if ((method.getName().equals("hashCode") && method.getParameterTypes().length == 0) ||
-                                method.getName().equals("equals") && method.getParameterTypes().length == 1 &&
-                                        method.getParameterTypes()[0] == Object.class) {
-                            viewConfiguration.addClientInterceptor(method, ComponentTypeIdentityInterceptorFactory.INSTANCE, InterceptorOrder.Client.EJB_EQUALS_HASHCODE);
-                        }
+        view.getConfigurators().add((context, componentConfiguration, description, viewConfiguration) -> {
+            EJBViewDescription ejbViewDescription = (EJBViewDescription) view;
+            //if this is a home interface we add a different interceptor
+            if (ejbViewDescription.getMethodIntf() == MethodIntf.HOME || ejbViewDescription.getMethodIntf() == MethodIntf.LOCAL_HOME) {
+                for (Method method : viewConfiguration.getProxyFactory().getCachedMethods()) {
+                    if ((method.getName().equals("hashCode") && method.getParameterTypes().length == 0) ||
+                            method.getName().equals("equals") && method.getParameterTypes().length == 1 &&
+                                    method.getParameterTypes()[0] == Object.class) {
+                        viewConfiguration.addClientInterceptor(method, ComponentTypeIdentityInterceptorFactory.INSTANCE, InterceptorOrder.Client.EJB_EQUALS_HASHCODE);
                     }
-                } else {
-                    // interceptor factory return an interceptor which sets up the session id on component view instance creation
-                    final InterceptorFactory sessionIdGeneratingInterceptorFactory = StatefulComponentSessionIdGeneratingInterceptor.FACTORY;
+                }
+            } else {
+                // interceptor factory return an interceptor which sets up the session id on component view instance creation
+                final InterceptorFactory sessionIdGeneratingInterceptorFactory = StatefulComponentSessionIdGeneratingInterceptor.FACTORY;
 
-                    // add the session id generating interceptor to the start of the *post-construct interceptor chain of the ComponentViewInstance*
-                    viewConfiguration.addClientPostConstructInterceptor(sessionIdGeneratingInterceptorFactory, InterceptorOrder.ClientPostConstruct.INSTANCE_CREATE);
+                // add the session id generating interceptor to the start of the *post-construct interceptor chain of the ComponentViewInstance*
+                viewConfiguration.addClientPostConstructInterceptor(sessionIdGeneratingInterceptorFactory, InterceptorOrder.ClientPostConstruct.INSTANCE_CREATE);
 
-                    for (Method method : viewConfiguration.getProxyFactory().getCachedMethods()) {
-                        if ((method.getName().equals("hashCode") && method.getParameterTypes().length == 0) ||
-                                method.getName().equals("equals") && method.getParameterTypes().length == 1 &&
-                                        method.getParameterTypes()[0] == Object.class) {
-                            viewConfiguration.addClientInterceptor(method, StatefulIdentityInterceptor.FACTORY, InterceptorOrder.Client.EJB_EQUALS_HASHCODE);
-                        }
+                for (Method method : viewConfiguration.getProxyFactory().getCachedMethods()) {
+                    if ((method.getName().equals("hashCode") && method.getParameterTypes().length == 0) ||
+                            method.getName().equals("equals") && method.getParameterTypes().length == 1 &&
+                                    method.getParameterTypes()[0] == Object.class) {
+                        viewConfiguration.addClientInterceptor(method, StatefulIdentityInterceptor.FACTORY, InterceptorOrder.Client.EJB_EQUALS_HASHCODE);
                     }
                 }
             }
         });
         if (view.getMethodIntf() != MethodIntf.LOCAL_HOME && view.getMethodIntf() != MethodIntf.HOME) {
-            view.getConfigurators().add(new ViewConfigurator() {
-                @Override
-                public void configure(DeploymentPhaseContext context, ComponentConfiguration componentConfiguration, ViewDescription description, ViewConfiguration configuration) throws DeploymentUnitProcessingException {
-                    // add the instance associating interceptor to the *start of the invocation interceptor chain*
-                    configuration.addViewInterceptor(StatefulComponentInstanceInterceptor.FACTORY, InterceptorOrder.View.ASSOCIATING_INTERCEPTOR);
-                }
+            view.getConfigurators().add((context, componentConfiguration, description, configuration) -> {
+                // add the instance associating interceptor to the *start of the invocation interceptor chain*
+                configuration.addViewInterceptor(StatefulComponentInstanceInterceptor.FACTORY, InterceptorOrder.View.ASSOCIATING_INTERCEPTOR);
             });
         }
 
     }
 
     private void addRemoveMethodInterceptor(final ViewDescription view) {
-        view.getConfigurators().add(new ViewConfigurator() {
-            @Override
-            public void configure(DeploymentPhaseContext context, ComponentConfiguration componentConfiguration, ViewDescription description, ViewConfiguration configuration) throws DeploymentUnitProcessingException {
-                final StatefulComponentDescription statefulComponentDescription = (StatefulComponentDescription) componentConfiguration.getComponentDescription();
-                final Collection<StatefulRemoveMethod> removeMethods = statefulComponentDescription.getRemoveMethods();
-                if (removeMethods.isEmpty()) {
-                    return;
-                }
-                for (final Method viewMethod : configuration.getProxyFactory().getCachedMethods()) {
-                    final MethodIdentifier viewMethodIdentifier = MethodIdentifier.getIdentifierForMethod(viewMethod);
-                    for (final StatefulRemoveMethod removeMethod : removeMethods) {
-                        if (removeMethod.methodIdentifier.equals(viewMethodIdentifier)) {
+        view.getConfigurators().add((context, componentConfiguration, description, configuration) -> {
+            final StatefulComponentDescription statefulComponentDescription = (StatefulComponentDescription) componentConfiguration.getComponentDescription();
+            final Collection<StatefulRemoveMethod> removeMethods = statefulComponentDescription.getRemoveMethods();
+            if (removeMethods.isEmpty()) {
+                return;
+            }
+            for (final Method viewMethod : configuration.getProxyFactory().getCachedMethods()) {
+                final MethodIdentifier viewMethodIdentifier = MethodIdentifier.getIdentifierForMethod(viewMethod);
+                for (final StatefulRemoveMethod removeMethod : removeMethods) {
+                    if (removeMethod.methodIdentifier.equals(viewMethodIdentifier)) {
 
-                            //we do not want to add this if it is the Ejb(Local)Object.remove() method, as that is handed elsewhere
-                            final boolean object = EJBObject.class.isAssignableFrom(configuration.getViewClass()) || EJBLocalObject.class.isAssignableFrom(configuration.getViewClass());
-                            if (!object || !viewMethodIdentifier.getName().equals("remove") || viewMethodIdentifier.getParameterTypes().length != 0) {
-                                configuration.addViewInterceptor(viewMethod, new ImmediateInterceptorFactory(new StatefulRemoveInterceptor(removeMethod.retainIfException)), InterceptorOrder.View.SESSION_REMOVE_INTERCEPTOR);
-                            }
-                            break;
+                        //we do not want to add this if it is the Ejb(Local)Object.remove() method, as that is handed elsewhere
+                        final boolean object = EJBObject.class.isAssignableFrom(configuration.getViewClass()) || EJBLocalObject.class.isAssignableFrom(configuration.getViewClass());
+                        if (!object || !viewMethodIdentifier.getName().equals("remove") || viewMethodIdentifier.getParameterTypes().length != 0) {
+                            configuration.addViewInterceptor(viewMethod, new ImmediateInterceptorFactory(new StatefulRemoveInterceptor(removeMethod.retainIfException)), InterceptorOrder.View.SESSION_REMOVE_INTERCEPTOR);
                         }
+                        break;
                     }
                 }
             }

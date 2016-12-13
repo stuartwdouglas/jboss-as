@@ -22,7 +22,6 @@
 package org.jboss.as.txn.ee.concurrency;
 
 import org.jboss.as.ee.component.Attachments;
-import org.jboss.as.ee.component.ComponentConfiguration;
 import org.jboss.as.ee.component.ComponentConfigurator;
 import org.jboss.as.ee.component.ComponentDescription;
 import org.jboss.as.ee.component.EEModuleDescription;
@@ -48,13 +47,10 @@ public class EEConcurrencyContextHandleFactoryProcessor implements DeploymentUni
         if (eeModuleDescription == null) {
             return;
         }
-        final ComponentConfigurator componentConfigurator = new ComponentConfigurator() {
-            @Override
-            public void configure(DeploymentPhaseContext context, ComponentDescription description, final ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                final TransactionLeakContextHandleFactory transactionLeakContextHandleFactory = new TransactionLeakContextHandleFactory();
-                context.addDependency(TransactionManagerService.SERVICE_NAME, TransactionManager.class, transactionLeakContextHandleFactory);
-                configuration.getConcurrentContext().addFactory(transactionLeakContextHandleFactory);
-            }
+        final ComponentConfigurator componentConfigurator = (context, description, configuration) -> {
+            final TransactionLeakContextHandleFactory transactionLeakContextHandleFactory = new TransactionLeakContextHandleFactory();
+            context.addDependency(TransactionManagerService.SERVICE_NAME, TransactionManager.class, transactionLeakContextHandleFactory);
+            configuration.getConcurrentContext().addFactory(transactionLeakContextHandleFactory);
         };
         for (ComponentDescription componentDescription : eeModuleDescription.getComponentDescriptions()) {
             componentDescription.getConfigurators().add(componentConfigurator);

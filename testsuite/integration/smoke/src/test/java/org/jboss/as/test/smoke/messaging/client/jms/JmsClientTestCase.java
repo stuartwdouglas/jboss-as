@@ -37,9 +37,7 @@ import javax.jms.ConnectionFactory;
 import javax.jms.DeliveryMode;
 import javax.jms.Destination;
 import javax.jms.JMSException;
-import javax.jms.Message;
 import javax.jms.MessageConsumer;
-import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
@@ -108,17 +106,13 @@ public class JmsClientTestCase {
 
             // Set the async listener
             MessageConsumer consumer = consumerSession.createConsumer(destination);
-            consumer.setMessageListener(new MessageListener() {
-
-                @Override
-                public void onMessage(Message message) {
-                    TextMessage msg = (TextMessage) message;
-                    try {
-                        result.add(msg.getText());
-                        latch.countDown();
-                    } catch (JMSException e) {
-                        e.printStackTrace();
-                    }
+            consumer.setMessageListener(message -> {
+                TextMessage msg = (TextMessage) message;
+                try {
+                    result.add(msg.getText());
+                    latch.countDown();
+                } catch (JMSException e) {
+                    e.printStackTrace();
                 }
             });
 

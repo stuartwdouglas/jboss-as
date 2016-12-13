@@ -184,12 +184,7 @@ public class ApplicableMethodInformation<T> {
 
     private Method resolveRealMethod(final Method method) {
         if (method.isBridge() || method.isSynthetic()) {
-            Method[] declaredMethods =  WildFlySecurityManager.doUnchecked(new PrivilegedAction<Method[]>() {
-                @Override
-                public Method[] run() {
-                    return method.getDeclaringClass().getDeclaredMethods();
-                }
-            });
+            Method[] declaredMethods =  WildFlySecurityManager.doUnchecked((PrivilegedAction<Method[]>) () -> method.getDeclaringClass().getDeclaredMethods());
             for (Method m : declaredMethods) {
                 if (m.getName().equals(method.getName())
                         && m.getParameterTypes().length == method.getParameterTypes().length

@@ -64,16 +64,13 @@ public class JMSTopicService implements Service<Topic> {
     @Override
     public synchronized void start(final StartContext context) throws StartException {
         final JMSServerManager jmsManager = jmsServer.getValue();
-        final Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    jmsManager.createTopic(false, name, jndi);
-                    topic = new ActiveMQTopic(name);
-                    context.complete();
-                } catch (Throwable e) {
-                    context.failed(MessagingLogger.ROOT_LOGGER.failedToCreate(e, "queue"));
-                }
+        final Runnable task = () -> {
+            try {
+                jmsManager.createTopic(false, name, jndi);
+                topic = new ActiveMQTopic(name);
+                context.complete();
+            } catch (Throwable e) {
+                context.failed(MessagingLogger.ROOT_LOGGER.failedToCreate(e, "queue"));
             }
         };
         try {
@@ -88,17 +85,14 @@ public class JMSTopicService implements Service<Topic> {
     @Override
     public synchronized void stop(final StopContext context) {
         final JMSServerManager jmsManager = jmsServer.getValue();
-        final Runnable task = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    jmsManager.removeTopicFromBindingRegistry(name);
-                    topic = null;
-                } catch (Throwable e) {
-                    MessagingLogger.ROOT_LOGGER.failedToDestroy(e, "jms topic", name);
-                }
-                context.complete();
+        final Runnable task = () -> {
+            try {
+                jmsManager.removeTopicFromBindingRegistry(name);
+                topic = null;
+            } catch (Throwable e) {
+                MessagingLogger.ROOT_LOGGER.failedToDestroy(e, "jms topic", name);
             }
+            context.complete();
         };
         // JMS Server Manager uses locking which waits on service completion, use async to prevent starvation
         try {

@@ -49,12 +49,7 @@ public class ContextServiceImpl extends org.glassfish.enterprise.concurrent.Cont
     @Override
     public <T> T createContextualProxy(final T instance, final Map<String, String> executionProperties, final Class<T> intf) {
         if (WildFlySecurityManager.isChecking()) {
-            return AccessController.doPrivileged(new PrivilegedAction<T>() {
-                @Override
-                public T run() {
-                    return ContextServiceImpl.super.createContextualProxy(instance, executionProperties, intf);
-                }
-            });
+            return AccessController.doPrivileged((PrivilegedAction<T>) () -> ContextServiceImpl.super.createContextualProxy(instance, executionProperties, intf));
         } else {
             return super.createContextualProxy(instance, executionProperties, intf);
         }
@@ -63,12 +58,7 @@ public class ContextServiceImpl extends org.glassfish.enterprise.concurrent.Cont
     @Override
     public Object createContextualProxy(final Object instance, final Map<String, String> executionProperties, final Class<?>... interfaces) {
         if (WildFlySecurityManager.isChecking()) {
-            return AccessController.doPrivileged(new PrivilegedAction() {
-                @Override
-                public Object run() {
-                    return ContextServiceImpl.super.createContextualProxy(instance, executionProperties, interfaces);
-                }
-            });
+            return AccessController.doPrivileged((PrivilegedAction) () -> ContextServiceImpl.super.createContextualProxy(instance, executionProperties, interfaces));
         } else {
             return super.createContextualProxy(instance, executionProperties, interfaces);
         }

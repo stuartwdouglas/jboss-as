@@ -70,109 +70,93 @@ public final class AsyncFutureInterceptorFactory implements InterceptorFactory {
         final SessionBeanComponent component = (SessionBeanComponent) context.getContextData().get(Component.class);
 
         if (component.isSecurityDomainKnown()) {
-            return new Interceptor() {
-                @Override
-                public Object processInvocation(final InterceptorContext context) throws Exception {
-                    if (! context.isBlockingCaller()) {
-                        return context.proceed();
-                    }
-                    final InterceptorContext asyncInterceptorContext = context.clone();
-                    asyncInterceptorContext.putPrivateData(InvocationType.class, InvocationType.ASYNC);
-                    final CancellationFlag flag = new CancellationFlag();
-
-                    final SecurityDomain securityDomain = context.getPrivateData(SecurityDomain.class);
-                    final StartupCountdown.Frame frame = StartupCountdown.current();
-                    final SecurityIdentity currentIdentity = securityDomain.getCurrentSecurityIdentity();
-
-                    final Connection remoteConnection = getConnection();
-                    final AsyncInvocationTask task = new AsyncInvocationTask(flag) {
-                        @Override
-                        protected Object runInvocation() throws Exception {
-                            return currentIdentity.runAs(new Callable<Object>() {
-                                public Object call() throws Exception {
-                                    setConnection(remoteConnection);
-                                    StartupCountdown.restore(frame);
-                                    try {
-                                        return asyncInterceptorContext.proceed();
-                                    } finally {
-                                        StartupCountdown.restore(null);
-                                        clearConnection();
-                                    }
-                                }
-                            });
-                        }
-                    };
-                    asyncInterceptorContext.putPrivateData(CancellationFlag.class, flag);
-                    asyncInterceptorContext.setBlockingCaller(false);
-                    return execute(component, task);
+            return context12 -> {
+                if (! context12.isBlockingCaller()) {
+                    return context12.proceed();
                 }
-            };
-        } else {
-            return new Interceptor() {
-                @Override
-                public Object processInvocation(final InterceptorContext context) throws Exception {
-                    if (! context.isBlockingCaller()) {
-                        return context.proceed();
-                    }
-                    final InterceptorContext asyncInterceptorContext = context.clone();
-                    asyncInterceptorContext.putPrivateData(InvocationType.class, InvocationType.ASYNC);
-                    final CancellationFlag flag = new CancellationFlag();
-                    final SecurityContext securityContext;
-                    if (WildFlySecurityManager.isChecking()) {
-                        securityContext = AccessController.doPrivileged(new PrivilegedAction<SecurityContext>() {
-                            @Override
-                            public SecurityContext run() {
-                                return SecurityContextAssociation.getSecurityContext();
-                            }
-                        });
-                    } else {
-                        securityContext = SecurityContextAssociation.getSecurityContext();
-                    }
-                    // clone the original security context so that changes to the original security context in a separate (caller/unrelated) thread doesn't affect
-                    // the security context associated with the async invocation thread
-                    final SecurityContext clonedSecurityContext;
-                    if (securityContext instanceof JBossSecurityContext) {
-                        clonedSecurityContext = (SecurityContext) ((JBossSecurityContext) securityContext).clone();
-                    } else {
-                        // we can't do anything if it isn't a JBossSecurityContext so just use the original one
-                        clonedSecurityContext = securityContext;
-                    }
-                    final Connection remoteConnection = getConnection();
-                    final StartupCountdown.Frame frame = StartupCountdown.current();
-                    final AsyncInvocationTask task = new AsyncInvocationTask(flag) {
-                        @Override
-                        protected Object runInvocation() throws Exception {
-                            setSecurityContextOnAssociation(clonedSecurityContext);
+                final InterceptorContext asyncInterceptorContext = context12.clone();
+                asyncInterceptorContext.putPrivateData(InvocationType.class, InvocationType.ASYNC);
+                final CancellationFlag flag = new CancellationFlag();
+
+                final SecurityDomain securityDomain = context12.getPrivateData(SecurityDomain.class);
+                final StartupCountdown.Frame frame = StartupCountdown.current();
+                final SecurityIdentity currentIdentity = securityDomain.getCurrentSecurityIdentity();
+
+                final Connection remoteConnection = getConnection();
+                final AsyncInvocationTask task = new AsyncInvocationTask(flag) {
+                    @Override
+                    protected Object runInvocation() throws Exception {
+                        return currentIdentity.runAs((Callable<Object>) () -> {
                             setConnection(remoteConnection);
                             StartupCountdown.restore(frame);
                             try {
                                 return asyncInterceptorContext.proceed();
                             } finally {
                                 StartupCountdown.restore(null);
-                                try {
-                                    clearSecurityContextOnAssociation();
-                                } finally {
-                                    clearConnection();
-                                }
+                                clearConnection();
+                            }
+                        });
+                    }
+                };
+                asyncInterceptorContext.putPrivateData(CancellationFlag.class, flag);
+                asyncInterceptorContext.setBlockingCaller(false);
+                return execute(component, task);
+            };
+        } else {
+            return context1 -> {
+                if (! context1.isBlockingCaller()) {
+                    return context1.proceed();
+                }
+                final InterceptorContext asyncInterceptorContext = context1.clone();
+                asyncInterceptorContext.putPrivateData(InvocationType.class, InvocationType.ASYNC);
+                final CancellationFlag flag = new CancellationFlag();
+                final SecurityContext securityContext;
+                if (WildFlySecurityManager.isChecking()) {
+                    securityContext = AccessController.doPrivileged((PrivilegedAction<SecurityContext>) () -> SecurityContextAssociation.getSecurityContext());
+                } else {
+                    securityContext = SecurityContextAssociation.getSecurityContext();
+                }
+                // clone the original security context so that changes to the original security context in a separate (caller/unrelated) thread doesn't affect
+                // the security context associated with the async invocation thread
+                final SecurityContext clonedSecurityContext;
+                if (securityContext instanceof JBossSecurityContext) {
+                    clonedSecurityContext = (SecurityContext) ((JBossSecurityContext) securityContext).clone();
+                } else {
+                    // we can't do anything if it isn't a JBossSecurityContext so just use the original one
+                    clonedSecurityContext = securityContext;
+                }
+                final Connection remoteConnection = getConnection();
+                final StartupCountdown.Frame frame = StartupCountdown.current();
+                final AsyncInvocationTask task = new AsyncInvocationTask(flag) {
+                    @Override
+                    protected Object runInvocation() throws Exception {
+                        setSecurityContextOnAssociation(clonedSecurityContext);
+                        setConnection(remoteConnection);
+                        StartupCountdown.restore(frame);
+                        try {
+                            return asyncInterceptorContext.proceed();
+                        } finally {
+                            StartupCountdown.restore(null);
+                            try {
+                                clearSecurityContextOnAssociation();
+                            } finally {
+                                clearConnection();
                             }
                         }
-                    };
-                    asyncInterceptorContext.putPrivateData(CancellationFlag.class, flag);
-                    asyncInterceptorContext.setBlockingCaller(false);
-                    return execute(component, task);
-                }
+                    }
+                };
+                asyncInterceptorContext.putPrivateData(CancellationFlag.class, flag);
+                asyncInterceptorContext.setBlockingCaller(false);
+                return execute(component, task);
             };
         }
     }
 
     private void setConnection(final Connection remoteConnection) {
         if (WildFlySecurityManager.isChecking()) {
-            WildFlySecurityManager.doUnchecked(new PrivilegedAction<Void>() {
-                @Override
-                public Void run() {
-                    RemotingContext.setConnection(remoteConnection);
-                    return null;
-                }
+            WildFlySecurityManager.doUnchecked((PrivilegedAction<Void>) () -> {
+                RemotingContext.setConnection(remoteConnection);
+                return null;
             });
         } else {
             RemotingContext.setConnection(remoteConnection);
@@ -181,12 +165,9 @@ public final class AsyncFutureInterceptorFactory implements InterceptorFactory {
 
     private void clearConnection() {
         if (WildFlySecurityManager.isChecking()) {
-            WildFlySecurityManager.doUnchecked(new PrivilegedAction<Void>() {
-                @Override
-                public Void run() {
-                    RemotingContext.clear();
-                    return null;
-                }
+            WildFlySecurityManager.doUnchecked((PrivilegedAction<Void>) () -> {
+                RemotingContext.clear();
+                return null;
             });
         } else {
             RemotingContext.clear();
@@ -194,12 +175,7 @@ public final class AsyncFutureInterceptorFactory implements InterceptorFactory {
     }
     private Connection getConnection() {
         if(WildFlySecurityManager.isChecking()) {
-            return WildFlySecurityManager.doUnchecked(new PrivilegedAction<Connection>() {
-                @Override
-                public Connection run() {
-                    return RemotingContext.getConnection();
-                }
-            });
+            return WildFlySecurityManager.doUnchecked((PrivilegedAction<Connection>) () -> RemotingContext.getConnection());
         } else {
             return RemotingContext.getConnection();
         }
@@ -221,24 +197,16 @@ public final class AsyncFutureInterceptorFactory implements InterceptorFactory {
     }
 
     private static void setSecurityContextOnAssociation(final SecurityContext sc) {
-        AccessController.doPrivileged(new PrivilegedAction<Void>() {
-
-            @Override
-            public Void run() {
-                SecurityContextAssociation.setSecurityContext(sc);
-                return null;
-            }
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            SecurityContextAssociation.setSecurityContext(sc);
+            return null;
         });
     }
 
     private static void clearSecurityContextOnAssociation() {
-        AccessController.doPrivileged(new PrivilegedAction<Void>() {
-
-            @Override
-            public Void run() {
-                SecurityContextAssociation.clearSecurityContext();
-                return null;
-            }
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            SecurityContextAssociation.clearSecurityContext();
+            return null;
         });
     }
 }

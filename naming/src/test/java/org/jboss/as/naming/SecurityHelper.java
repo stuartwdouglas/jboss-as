@@ -110,12 +110,7 @@ public class SecurityHelper {
         ArrayList<JndiPermission> allPerms = new ArrayList<JndiPermission>(additionalRequiredPerms);
         allPerms.add(new JndiPermission(sn, action));
 
-        return runWithSecurityManager(new Callable<Object>() {
-            @Override
-            public Object call() throws Exception {
-                return performAction(action, namingContext, n, params);
-            }
-        }, getSecurityContextForJNDILookup(allPerms));
+        return runWithSecurityManager(() -> performAction(action, namingContext, n, params), getSecurityContextForJNDILookup(allPerms));
     }
 
     public static void testActionWithoutPermission(final int action,
@@ -129,12 +124,7 @@ public class SecurityHelper {
         allPerms.add(new JndiPermission(sn, not(action)));
 
         try {
-            runWithSecurityManager(new Callable<Object>() {
-                @Override
-                public Object call() throws Exception {
-                    return performAction(action, namingContext, n, params);
-                }
-            }, getSecurityContextForJNDILookup(allPerms));
+            runWithSecurityManager(() -> performAction(action, namingContext, n, params), getSecurityContextForJNDILookup(allPerms));
 
             fail("Naming operation " + action + " should not have been permitted");
         } catch (SecurityException e) {
@@ -206,12 +196,7 @@ public class SecurityHelper {
 
         try {
             //run the code to test with limited privs defined by the securityContext
-            return AccessController.doPrivileged(new PrivilegedExceptionAction<T>() {
-                @Override
-                public T run() throws Exception {
-                    return action.call();
-                }
-            }, securityContext);
+            return AccessController.doPrivileged((PrivilegedExceptionAction<T>) () -> action.call(), securityContext);
         } catch (PrivilegedActionException e) {
             throw e.getException();
         } finally {

@@ -118,12 +118,7 @@ public class ConcurrentContext {
             throw EeLogger.ROOT_LOGGER.factoryAlreadyExists(this, factoryName);
         }
         factoryMap.put(factoryName, factory);
-        final Comparator<ContextHandleFactory> comparator = new Comparator<ContextHandleFactory>() {
-            @Override
-            public int compare(ContextHandleFactory o1, ContextHandleFactory o2) {
-                return Integer.compare(o1.getChainPriority(),o2.getChainPriority());
-            }
-        };
+        final Comparator<ContextHandleFactory> comparator = (o1, o2) -> Integer.compare(o1.getChainPriority(),o2.getChainPriority());
         SortedSet<ContextHandleFactory> sortedSet = new TreeSet<>(comparator);
         sortedSet.addAll(factoryMap.values());
         factoryOrderedList = new ArrayList<>(sortedSet);
@@ -210,22 +205,14 @@ public class ConcurrentContext {
             if (sm == null) {
                 classLoader = currentThread().getContextClassLoader();
             } else {
-                classLoader = AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
-                    @Override
-                    public ClassLoader run() {
-                        return currentThread().getContextClassLoader();
-                    }
-                });
+                classLoader = AccessController.doPrivileged((PrivilegedAction<ClassLoader>) () -> currentThread().getContextClassLoader());
             }
             if (sm == null) {
                 currentThread().setContextClassLoader(module.getClassLoader());
             } else {
-                AccessController.doPrivileged(new PrivilegedAction<Object>() {
-                    @Override
-                    public Object run() {
-                        currentThread().setContextClassLoader(module.getClassLoader());
-                        return null;
-                    }
+                AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+                    currentThread().setContextClassLoader(module.getClassLoader());
+                    return null;
                 });
             }
             try {
@@ -253,12 +240,9 @@ public class ConcurrentContext {
                 if (sm == null) {
                     currentThread().setContextClassLoader(classLoader);
                 } else {
-                    AccessController.doPrivileged(new PrivilegedAction<Object>() {
-                        @Override
-                        public Object run() {
-                            currentThread().setContextClassLoader(classLoader);
-                            return null;
-                        }
+                    AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+                        currentThread().setContextClassLoader(classLoader);
+                        return null;
                     });
                 }
             }

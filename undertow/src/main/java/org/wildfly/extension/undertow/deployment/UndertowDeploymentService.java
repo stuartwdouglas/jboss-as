@@ -75,15 +75,12 @@ public class UndertowDeploymentService implements Service<UndertowDeploymentServ
             // servlet context initialization, startup servlet initialization lifecycles and such. Hence this needs to be done asynchronously
             // to prevent the MSC threads from blocking
             startContext.asynchronous();
-            serverExecutor.getValue().submit(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        startContext();
-                        startContext.complete();
-                    } catch (Throwable e) {
-                        startContext.failed(new StartException(e));
-                    }
+            serverExecutor.getValue().submit(() -> {
+                try {
+                    startContext();
+                    startContext.complete();
+                } catch (Throwable e) {
+                    startContext.failed(new StartException(e));
                 }
             });
         }
@@ -114,14 +111,11 @@ public class UndertowDeploymentService implements Service<UndertowDeploymentServ
         // The service stop can trigger the web app context destruction which involves blocking tasks like servlet context destruction, startup servlet
         // destruction lifecycles and such. Hence this needs to be done asynchronously to prevent the MSC threads from blocking
         stopContext.asynchronous();
-        serverExecutor.getValue().submit(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    stopContext();
-                } finally {
-                    stopContext.complete();
-                }
+        serverExecutor.getValue().submit(() -> {
+            try {
+                stopContext();
+            } finally {
+                stopContext.complete();
             }
         });
 

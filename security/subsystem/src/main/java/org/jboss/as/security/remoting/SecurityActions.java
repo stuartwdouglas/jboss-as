@@ -50,22 +50,11 @@ final class SecurityActions {
 
         Connection getConnection();
 
-        RemotingContextAssociationActions NON_PRIVILEGED = new RemotingContextAssociationActions() {
-
-            public Connection getConnection() {
-                return RemotingContext.getConnection();
-            }
-        };
+        RemotingContextAssociationActions NON_PRIVILEGED = () -> RemotingContext.getConnection();
 
         RemotingContextAssociationActions PRIVILEGED = new RemotingContextAssociationActions() {
 
-            private final PrivilegedAction<Connection> GET_CONNECTION_ACTION = new PrivilegedAction<Connection>() {
-
-                public Connection run() {
-                    return NON_PRIVILEGED.getConnection();
-                }
-
-            };
+            private final PrivilegedAction<Connection> GET_CONNECTION_ACTION = () -> NON_PRIVILEGED.getConnection();
 
             public Connection getConnection() {
                 return AccessController.doPrivileged(GET_CONNECTION_ACTION);

@@ -54,7 +54,6 @@ import org.wildfly.extension.undertow.filters.ExpressionFilterDefinition;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -185,15 +184,12 @@ public class WebMigrateOperation implements OperationStepHandler {
         // node containing the description (list of add operations) of the legacy subsystem
         final ModelNode legacyModelAddOps = new ModelNode();
         //we don't preserve order, instead we sort by address length
-        final Map<PathAddress, ModelNode> sortedMigrationOperations = new TreeMap<>(new Comparator<PathAddress>() {
-            @Override
-            public int compare(PathAddress o1, PathAddress o2) {
-                final int compare = Integer.compare(o1.size(), o2.size());
-                if (compare != 0) {
-                    return compare;
-                }
-                return o1.toString().compareTo(o2.toString());
+        final Map<PathAddress, ModelNode> sortedMigrationOperations = new TreeMap<>((o1, o2) -> {
+            final int compare = Integer.compare(o1.size(), o2.size());
+            if (compare != 0) {
+                return compare;
             }
+            return o1.toString().compareTo(o2.toString());
         });
 
         // invoke an OSH to describe the legacy messaging subsystem
@@ -203,87 +199,81 @@ public class WebMigrateOperation implements OperationStepHandler {
         addExtension(context, sortedMigrationOperations, describe, UNDERTOW_EXTENSION);
         addExtension(context, sortedMigrationOperations, describe, IO_EXTENSION);
 
-        context.addStep(new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                addDefaultResources(sortedMigrationOperations, legacyModelAddOps, warnings);
-                // transform the legacy add operations and put them in migrationOperations
-                ProcessType processType = context.getCallEnvironment().getProcessType();
-                boolean domainMode = processType != ProcessType.STANDALONE_SERVER && processType != ProcessType.SELF_CONTAINED;
-                PathAddress baseAddres;
-                if(domainMode) {
-                    baseAddres = pathAddress(operation.get(ADDRESS)).getParent();
-                } else {
-                    baseAddres = pathAddress();
+        context.addStep((context12, operation12) -> {
+            addDefaultResources(sortedMigrationOperations, legacyModelAddOps, warnings);
+            // transform the legacy add operations and put them in migrationOperations
+            ProcessType processType = context12.getCallEnvironment().getProcessType();
+            boolean domainMode = processType != ProcessType.STANDALONE_SERVER && processType != ProcessType.SELF_CONTAINED;
+            PathAddress baseAddres;
+            if(domainMode) {
+                baseAddres = pathAddress(operation12.get(ADDRESS)).getParent();
+            } else {
+                baseAddres = pathAddress();
+            }
+            //create the new IO subsystem
+            createIoSubsystem(context12, sortedMigrationOperations, baseAddres);
+
+            createWelcomeContentHandler(sortedMigrationOperations);
+
+            transformResources(context12, legacyModelAddOps, sortedMigrationOperations, warnings, domainMode);
+
+            fixAddressesForDomainMode(pathAddress(operation12.get(ADDRESS)), sortedMigrationOperations);
+
+            // put the /subsystem=web:remove operation
+            //we need the removes to be last, so we create a new linked hash map and add our sorted ops to it
+            LinkedHashMap<PathAddress, ModelNode> orderedMigrationOperations = new LinkedHashMap<>(sortedMigrationOperations);
+
+            removeWebSubsystem(orderedMigrationOperations, context12.getProcessType() == ProcessType.STANDALONE_SERVER, pathAddress(operation12.get(ADDRESS)));
+
+            if (describe) {
+                // :describe-migration operation
+
+                // for describe-migration operation, do nothing and return the list of operations that would
+                // be executed in the composite operation
+                final Collection<ModelNode> values = orderedMigrationOperations.values();
+                ModelNode result = new ModelNode();
+                if(!warnings.isEmpty()) {
+                    ModelNode rw = new ModelNode().setEmptyList();
+                    for (String warning : warnings) {
+                        rw.add(warning);
+                    }
+                    result.get(MIGRATION_WARNINGS).set(rw);
                 }
-                //create the new IO subsystem
-                createIoSubsystem(context, sortedMigrationOperations, baseAddres);
 
-                createWelcomeContentHandler(sortedMigrationOperations);
+                result.get(MIGRATION_OPERATIONS).set(values);
 
-                transformResources(context, legacyModelAddOps, sortedMigrationOperations, warnings, domainMode);
+                context12.getResult().set(result);
+            } else {
+                // :migrate operation
+                // invoke an OSH on a composite operation with all the migration operations
+                final Map<PathAddress, ModelNode> migrateOpResponses = migrateSubsystems(context12, orderedMigrationOperations);
 
-                fixAddressesForDomainMode(pathAddress(operation.get(ADDRESS)), sortedMigrationOperations);
-
-                // put the /subsystem=web:remove operation
-                //we need the removes to be last, so we create a new linked hash map and add our sorted ops to it
-                LinkedHashMap<PathAddress, ModelNode> orderedMigrationOperations = new LinkedHashMap<>(sortedMigrationOperations);
-
-                removeWebSubsystem(orderedMigrationOperations, context.getProcessType() == ProcessType.STANDALONE_SERVER, pathAddress(operation.get(ADDRESS)));
-
-                if (describe) {
-                    // :describe-migration operation
-
-                    // for describe-migration operation, do nothing and return the list of operations that would
-                    // be executed in the composite operation
-                    final Collection<ModelNode> values = orderedMigrationOperations.values();
-                    ModelNode result = new ModelNode();
-                    if(!warnings.isEmpty()) {
-                        ModelNode rw = new ModelNode().setEmptyList();
-                        for (String warning : warnings) {
-                            rw.add(warning);
+                context12.completeStep((resultAction, context1, operation1) -> {
+                    final ModelNode result = new ModelNode();
+                    ModelNode rw = new ModelNode().setEmptyList();
+                    for (String warning : warnings) {
+                        rw.add(warning);
+                    }
+                    result.get(MIGRATION_WARNINGS).set(rw);
+                    if (resultAction == OperationContext.ResultAction.ROLLBACK) {
+                        for (Map.Entry<PathAddress, ModelNode> entry : migrateOpResponses.entrySet()) {
+                            if (entry.getValue().hasDefined(FAILURE_DESCRIPTION)) {
+                                //we check for failure description, as every node has 'failed', but one
+                                //the real error has a failure description
+                                //we break when we find the first one, as there will only ever be one failure
+                                //as the op stops after the first failure
+                                ModelNode desc = new ModelNode();
+                                desc.get(OP).set(orderedMigrationOperations.get(entry.getKey()));
+                                desc.get(RESULT).set(entry.getValue());
+                                result.get(MIGRATION_ERROR).set(desc);
+                                break;
+                            }
                         }
-                        result.get(MIGRATION_WARNINGS).set(rw);
+                        context1.getFailureDescription().set(new ModelNode(WebLogger.ROOT_LOGGER.migrationFailed()));
                     }
 
-                    result.get(MIGRATION_OPERATIONS).set(values);
-
-                    context.getResult().set(result);
-                } else {
-                    // :migrate operation
-                    // invoke an OSH on a composite operation with all the migration operations
-                    final Map<PathAddress, ModelNode> migrateOpResponses = migrateSubsystems(context, orderedMigrationOperations);
-
-                    context.completeStep(new OperationContext.ResultHandler() {
-                        @Override
-                        public void handleResult(OperationContext.ResultAction resultAction, OperationContext context, ModelNode operation) {
-                            final ModelNode result = new ModelNode();
-                            ModelNode rw = new ModelNode().setEmptyList();
-                            for (String warning : warnings) {
-                                rw.add(warning);
-                            }
-                            result.get(MIGRATION_WARNINGS).set(rw);
-                            if (resultAction == OperationContext.ResultAction.ROLLBACK) {
-                                for (Map.Entry<PathAddress, ModelNode> entry : migrateOpResponses.entrySet()) {
-                                    if (entry.getValue().hasDefined(FAILURE_DESCRIPTION)) {
-                                        //we check for failure description, as every node has 'failed', but one
-                                        //the real error has a failure description
-                                        //we break when we find the first one, as there will only ever be one failure
-                                        //as the op stops after the first failure
-                                        ModelNode desc = new ModelNode();
-                                        desc.get(OP).set(orderedMigrationOperations.get(entry.getKey()));
-                                        desc.get(RESULT).set(entry.getValue());
-                                        result.get(MIGRATION_ERROR).set(desc);
-                                        break;
-                                    }
-                                }
-                                context.getFailureDescription().set(new ModelNode(WebLogger.ROOT_LOGGER.migrationFailed()));
-                            }
-
-                            context.getResult().set(result);
-                        }
-                    });
-                }
+                    context1.getResult().set(result);
+                });
             }
         }, MODEL);
     }

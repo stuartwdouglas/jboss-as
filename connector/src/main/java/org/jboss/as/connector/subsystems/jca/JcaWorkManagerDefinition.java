@@ -96,11 +96,7 @@ public class JcaWorkManagerDefinition extends SimpleResourceDefinition {
             protected void populateModel(final OperationContext context, final ModelNode operation, final Resource resource)
                     throws OperationFailedException {
                 super.populateModel(context, operation, resource);
-                context.addStep(new OperationStepHandler(){
-                    public void execute(OperationContext oc, ModelNode op) throws OperationFailedException {
-                        checkThreadPool(oc, op, WORKMANAGER_SHORT_RUNNING);
-                   }
-                }, MODEL);
+                context.addStep((oc, op) -> checkThreadPool(oc, op, WORKMANAGER_SHORT_RUNNING), MODEL);
             }
         };
         resourceRegistration.registerSubModel(
@@ -114,11 +110,7 @@ public class JcaWorkManagerDefinition extends SimpleResourceDefinition {
             protected void populateModel(final OperationContext context, final ModelNode operation, final Resource resource)
                     throws OperationFailedException {
                 super.populateModel(context, operation, resource);
-                context.addStep(new OperationStepHandler(){
-                    public void execute(OperationContext oc, ModelNode op) throws OperationFailedException {
-                        checkThreadPool(oc, op, WORKMANAGER_LONG_RUNNING);
-                   }
-                }, MODEL);
+                context.addStep((oc, op) -> checkThreadPool(oc, op, WORKMANAGER_LONG_RUNNING), MODEL);
             }
         };
         resourceRegistration.registerSubModel(

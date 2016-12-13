@@ -15,10 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import javax.websocket.ContainerProvider;
@@ -350,12 +348,7 @@ public abstract class RequestDumpingHandlerTestImpl {
 
             httpsConn.setDoOutput(false);
 
-            httpsConn.setHostnameVerifier(new HostnameVerifier() {
-                @Override
-                public boolean verify(String hostname, SSLSession session) {
-                    return true;
-                }
-            });
+            httpsConn.setHostnameVerifier((hostname, session) -> true);
 
             BufferedReader br = new BufferedReader(new InputStreamReader(httpsConn.getInputStream()));
 

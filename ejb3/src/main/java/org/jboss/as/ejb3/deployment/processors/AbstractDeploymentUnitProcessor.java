@@ -105,25 +105,17 @@ public abstract class AbstractDeploymentUnitProcessor implements DeploymentUnitP
         final SimpleSet<String> annotatedEJBs;
         if (appclient) {
             final List<ComponentDescription> additionalComponents = deploymentUnit.getAttachmentList(org.jboss.as.ee.component.Attachments.ADDITIONAL_RESOLVABLE_COMPONENTS);
-            annotatedEJBs = new SimpleSet<String>() {
-                @Override
-                public boolean contains(Object o) {
-                    for (final ComponentDescription component : additionalComponents) {
-                        if (component.getComponentName().equals(o)) {
-                            return true;
-                        }
+            annotatedEJBs = o -> {
+                for (final ComponentDescription component : additionalComponents) {
+                    if (component.getComponentName().equals(o)) {
+                        return true;
                     }
-                    return false;
                 }
+                return false;
             };
         } else {
             final EjbJarDescription ejbJarDescription = getEjbJarDescription(deploymentUnit);
-            annotatedEJBs = new SimpleSet<String>() {
-                @Override
-                public boolean contains(Object o) {
-                    return ejbJarDescription.hasComponent((String) o);
-                }
-            };
+            annotatedEJBs = o -> ejbJarDescription.hasComponent((String) o);
         }
         // process EJBs
         final EnterpriseBeansMetaData ejbs = ejbJarMetaData.getEnterpriseBeans();

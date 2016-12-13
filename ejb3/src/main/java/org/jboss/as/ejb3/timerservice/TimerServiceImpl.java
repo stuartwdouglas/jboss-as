@@ -1208,12 +1208,9 @@ public class TimerServiceImpl implements TimerService, Service<TimerService> {
                     executor.submit(delegate);
                 } else if(!queued) {
                     queued = true;
-                    controlPoint.queueTask(new Runnable() {
-                        @Override
-                        public void run() {
-                            queued = false;
-                            delegate.run();
-                        }
+                    controlPoint.queueTask(() -> {
+                        queued = false;
+                        delegate.run();
                     }, executor, -1, null, false);
                 } else {
                     EjbLogger.EJB3_INVOCATION_LOGGER.debug("Skipping timer invocation as existing request is already queued.");

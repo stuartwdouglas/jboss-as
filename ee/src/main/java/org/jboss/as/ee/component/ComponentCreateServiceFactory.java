@@ -40,9 +40,5 @@ public interface ComponentCreateServiceFactory {
     /**
      * The default, basic component create service factory.
      */
-    ComponentCreateServiceFactory BASIC = new ComponentCreateServiceFactory() {
-        public BasicComponentCreateService constructService(final ComponentConfiguration configuration) {
-            return new BasicComponentCreateService(configuration);
-        }
-    };
+    ComponentCreateServiceFactory BASIC = configuration -> new BasicComponentCreateService(configuration);
 }

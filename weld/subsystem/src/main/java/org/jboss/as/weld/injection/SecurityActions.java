@@ -38,11 +38,9 @@ final class SecurityActions {
         if (! WildFlySecurityManager.isChecking()) {
             object.setAccessible(true);
         } else {
-            doPrivileged(new PrivilegedAction<Object>() {
-                public Object run() {
-                    object.setAccessible(true);
-                    return null;
-                }
+            doPrivileged((PrivilegedAction<Object>) () -> {
+                object.setAccessible(true);
+                return null;
             });
         }
     }

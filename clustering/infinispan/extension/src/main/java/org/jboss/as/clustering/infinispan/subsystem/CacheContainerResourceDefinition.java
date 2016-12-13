@@ -43,9 +43,7 @@ import org.jboss.as.clustering.controller.validation.ParameterValidatorBuilder;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.CapabilityReferenceRecorder;
 import org.jboss.as.controller.ModelVersion;
-import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationDefinition;
-import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
@@ -226,35 +224,29 @@ public class CacheContainerResourceDefinition extends ChildResourceDefinition {
         }
 
         if (InfinispanModel.VERSION_3_0_0.requiresTransformation(version)) {
-            OperationTransformer addAliasTransformer = new OperationTransformer() {
-                @Override
-                public ModelNode transformOperation(ModelNode operation) {
-                    String attributeName = Operations.getAttributeName(operation);
-                    if (Attribute.ALIASES.getName().equals(attributeName)) {
-                        ModelNode value = Operations.getAttributeValue(operation);
-                        PathAddress address = Operations.getPathAddress(operation);
-                        ModelNode transformedOperation = Util.createOperation(ALIAS_ADD, address);
-                        transformedOperation.get(ALIAS.getName()).set(value);
-                        return transformedOperation;
-                    }
-                    return operation;
+            OperationTransformer addAliasTransformer = operation -> {
+                String attributeName = Operations.getAttributeName(operation);
+                if (Attribute.ALIASES.getName().equals(attributeName)) {
+                    ModelNode value = Operations.getAttributeValue(operation);
+                    PathAddress address = Operations.getPathAddress(operation);
+                    ModelNode transformedOperation = Util.createOperation(ALIAS_ADD, address);
+                    transformedOperation.get(ALIAS.getName()).set(value);
+                    return transformedOperation;
                 }
+                return operation;
             };
             builder.addRawOperationTransformationOverride(ListOperations.LIST_ADD_DEFINITION.getName(), new SimpleOperationTransformer(addAliasTransformer));
 
-            OperationTransformer removeAliasTransformer = new OperationTransformer() {
-                @Override
-                public ModelNode transformOperation(ModelNode operation) {
-                    String attributeName = Operations.getAttributeName(operation);
-                    if (Attribute.ALIASES.getName().equals(attributeName)) {
-                        ModelNode value = Operations.getAttributeValue(operation);
-                        PathAddress address = Operations.getPathAddress(operation);
-                        ModelNode transformedOperation = Util.createOperation(ALIAS_REMOVE, address);
-                        transformedOperation.get(ALIAS.getName()).set(value);
-                        return transformedOperation;
-                    }
-                    return operation;
+            OperationTransformer removeAliasTransformer = operation -> {
+                String attributeName = Operations.getAttributeName(operation);
+                if (Attribute.ALIASES.getName().equals(attributeName)) {
+                    ModelNode value = Operations.getAttributeValue(operation);
+                    PathAddress address = Operations.getPathAddress(operation);
+                    ModelNode transformedOperation = Util.createOperation(ALIAS_REMOVE, address);
+                    transformedOperation.get(ALIAS.getName()).set(value);
+                    return transformedOperation;
                 }
+                return operation;
             };
             builder.addRawOperationTransformationOverride(ListOperations.LIST_REMOVE_DEFINITION.getName(), new SimpleOperationTransformer(removeAliasTransformer));
         }
@@ -304,24 +296,18 @@ public class CacheContainerResourceDefinition extends ChildResourceDefinition {
         new SimpleResourceRegistration(descriptor, handler).register(registration);
 
         // Translate legacy add-alias operation to list-add operation
-        OperationStepHandler addAliasHandler = new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode legacyOperation) {
-                String value = legacyOperation.get(ALIAS.getName()).asString();
-                ModelNode operation = Operations.createListAddOperation(context.getCurrentAddress(), Attribute.ALIASES, value);
-                context.addStep(operation, ListOperations.LIST_ADD_HANDLER, context.getCurrentStage());
-            }
+        OperationStepHandler addAliasHandler = (context, legacyOperation) -> {
+            String value = legacyOperation.get(ALIAS.getName()).asString();
+            ModelNode operation = Operations.createListAddOperation(context.getCurrentAddress(), Attribute.ALIASES, value);
+            context.addStep(operation, ListOperations.LIST_ADD_HANDLER, context.getCurrentStage());
         };
         registration.registerOperationHandler(ALIAS_ADD, addAliasHandler);
 
         // Translate legacy remove-alias operation to list-remove operation
-        OperationStepHandler removeAliasHandler = new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode legacyOperation) throws OperationFailedException {
-                String value = legacyOperation.get(ALIAS.getName()).asString();
-                ModelNode operation = Operations.createListRemoveOperation(context.getCurrentAddress(), Attribute.ALIASES, value);
-                context.addStep(operation, ListOperations.LIST_REMOVE_HANDLER, context.getCurrentStage());
-            }
+        OperationStepHandler removeAliasHandler = (context, legacyOperation) -> {
+            String value = legacyOperation.get(ALIAS.getName()).asString();
+            ModelNode operation = Operations.createListRemoveOperation(context.getCurrentAddress(), Attribute.ALIASES, value);
+            context.addStep(operation, ListOperations.LIST_REMOVE_HANDLER, context.getCurrentStage());
         };
         registration.registerOperationHandler(ALIAS_REMOVE, removeAliasHandler);
 

@@ -156,15 +156,11 @@ public class JMXPropertyEditorsTestCase {
     public void testAtomicBoolean() throws Exception {
         try {
             deployer.deploy("AtomicBoolean");
-            performTest("AtomicBoolean", new AtomicBoolean(true), new Comparator() {
+            performTest("AtomicBoolean", new AtomicBoolean(true), (o1, o2) -> {
+                AtomicBoolean a1 = (AtomicBoolean) o1;
+                AtomicBoolean a2 = (AtomicBoolean) o2;
 
-                @Override
-                public int compare(Object o1, Object o2) {
-                    AtomicBoolean a1 = (AtomicBoolean) o1;
-                    AtomicBoolean a2 = (AtomicBoolean) o2;
-
-                    return a1.get() == a2.get() ? 0 : 1;
-                }
+                return a1.get() == a2.get() ? 0 : 1;
             });
         } finally {
 
@@ -192,15 +188,11 @@ public class JMXPropertyEditorsTestCase {
     public void testAtomicInteger() throws Exception {
         try {
             deployer.deploy("AtomicInteger");
-            performTest("AtomicInteger", new AtomicInteger(3), new Comparator() {
+            performTest("AtomicInteger", new AtomicInteger(3), (o1, o2) -> {
+                AtomicInteger a1 = (AtomicInteger) o1;
+                AtomicInteger a2 = (AtomicInteger) o2;
 
-                @Override
-                public int compare(Object o1, Object o2) {
-                    AtomicInteger a1 = (AtomicInteger) o1;
-                    AtomicInteger a2 = (AtomicInteger) o2;
-
-                    return a1.get() == a2.get() ? 0 : 1;
-                }
+                return a1.get() == a2.get() ? 0 : 1;
             });
         } finally {
 
@@ -228,15 +220,11 @@ public class JMXPropertyEditorsTestCase {
     public void testAtomicLong() throws Exception {
         try {
             deployer.deploy("AtomicLong");
-            performTest("AtomicLong", new AtomicLong(2), new Comparator() {
+            performTest("AtomicLong", new AtomicLong(2), (o1, o2) -> {
+                AtomicLong a1 = (AtomicLong) o1;
+                AtomicLong a2 = (AtomicLong) o2;
 
-                @Override
-                public int compare(Object o1, Object o2) {
-                    AtomicLong a1 = (AtomicLong) o1;
-                    AtomicLong a2 = (AtomicLong) o2;
-
-                    return a1.get() == a2.get() ? 0 : 1;
-                }
+                return a1.get() == a2.get() ? 0 : 1;
             });
         } finally {
 
@@ -345,14 +333,10 @@ public class JMXPropertyEditorsTestCase {
     public void testBooleanArray() throws Exception {
         try {
             deployer.deploy("BooleanArray");
-            performTest("BooleanArray", new boolean[] { true, false }, new Comparator() {
-
-                @Override
-                public int compare(Object o1, Object o2) {
-                    boolean[] b1 = (boolean[]) o1;
-                    boolean[] b2 = (boolean[]) o2;
-                    return Arrays.equals(b1, b2) ? 0 : 1;
-                }
+            performTest("BooleanArray", new boolean[] { true, false }, (o1, o2) -> {
+                boolean[] b1 = (boolean[]) o1;
+                boolean[] b2 = (boolean[]) o2;
+                return Arrays.equals(b1, b2) ? 0 : 1;
             });
         } finally {
 
@@ -407,14 +391,10 @@ public class JMXPropertyEditorsTestCase {
     public void testByteArray() throws Exception {
         try {
             deployer.deploy("ByteArray");
-            performTest("ByteArray", new byte[] { 1, 2, 3 }, new Comparator() {
-
-                @Override
-                public int compare(Object o1, Object o2) {
-                    byte[] b1 = (byte[]) o1;
-                    byte[] b2 = (byte[]) o2;
-                    return Arrays.equals(b1, b2) ? 0 : 1;
-                }
+            performTest("ByteArray", new byte[] { 1, 2, 3 }, (o1, o2) -> {
+                byte[] b1 = (byte[]) o1;
+                byte[] b2 = (byte[]) o2;
+                return Arrays.equals(b1, b2) ? 0 : 1;
             });
         } finally {
 
@@ -470,14 +450,10 @@ public class JMXPropertyEditorsTestCase {
     public void testCharacterArray() throws Exception {
         try {
             deployer.deploy("CharacterArray");
-            performTest("CharacterArray", new char[] { 'R', 'R', 'X' }, new Comparator() {
-
-                @Override
-                public int compare(Object o1, Object o2) {
-                    char[] a1 = (char[]) o1;
-                    char[] a2 = (char[]) o2;
-                    return Arrays.equals(a1, a2) ? 0 : 1;
-                }
+            performTest("CharacterArray", new char[] { 'R', 'R', 'X' }, (o1, o2) -> {
+                char[] a1 = (char[]) o1;
+                char[] a2 = (char[]) o2;
+                return Arrays.equals(a1, a2) ? 0 : 1;
             });
         } finally {
 
@@ -534,14 +510,10 @@ public class JMXPropertyEditorsTestCase {
     public void testClassArray() throws Exception {
         try {
             deployer.deploy("ClassArray");
-            performTest("ClassArray", new Class[] { String.class, List.class }, new Comparator() {
-
-                @Override
-                public int compare(Object o1, Object o2) {
-                    Class[] a1 = (Class[]) o1;
-                    Class[] a2 = (Class[]) o2;
-                    return Arrays.equals(a1, a2) ? 0 : 1;
-                }
+            performTest("ClassArray", new Class[] { String.class, List.class }, (o1, o2) -> {
+                Class[] a1 = (Class[]) o1;
+                Class[] a2 = (Class[]) o2;
+                return Arrays.equals(a1, a2) ? 0 : 1;
             });
         } finally {
 
@@ -722,14 +694,10 @@ public class JMXPropertyEditorsTestCase {
     public void testFloatArray() throws Exception {
         try {
             deployer.deploy("FloatArray");
-            performTest("FloatArray", new float[] { 1.5f, 2.5f }, new Comparator() {
-
-                @Override
-                public int compare(Object o1, Object o2) {
-                    float[] a1 = (float[]) o1;
-                    float[] a2 = (float[]) o2;
-                    return Arrays.equals(a1, a2) ? 0 : 1;
-                }
+            performTest("FloatArray", new float[] { 1.5f, 2.5f }, (o1, o2) -> {
+                float[] a1 = (float[]) o1;
+                float[] a2 = (float[]) o2;
+                return Arrays.equals(a1, a2) ? 0 : 1;
             });
         } finally {
 
@@ -787,15 +755,11 @@ public class JMXPropertyEditorsTestCase {
         try {
             deployer.deploy("InetAddressArray");
             performTest("InetAddressArray", new InetAddress[] { InetAddress.getByAddress(new byte[] { 10, 10, 10, 1 }),
-                    InetAddress.getByName("localhost") }, new Comparator() {
-
-                @Override
-                public int compare(Object o1, Object o2) {
-                    InetAddress[] a1 = (InetAddress[]) o1;
-                    InetAddress[] a2 = (InetAddress[]) o2;
-                    return Arrays.equals(a1, a2) ? 0 : 1;
-                }
-            });
+                    InetAddress.getByName("localhost") }, (o1, o2) -> {
+                        InetAddress[] a1 = (InetAddress[]) o1;
+                        InetAddress[] a2 = (InetAddress[]) o2;
+                        return Arrays.equals(a1, a2) ? 0 : 1;
+                    });
         } finally {
 
             try {
@@ -851,14 +815,10 @@ public class JMXPropertyEditorsTestCase {
     public void testIntegerArray() throws Exception {
         try {
             deployer.deploy("IntegerArray");
-            performTest("IntegerArray", new int[] { 1, 5, 4 }, new Comparator() {
-
-                @Override
-                public int compare(Object o1, Object o2) {
-                    int[] a1 = (int[]) o1;
-                    int[] a2 = (int[]) o2;
-                    return Arrays.equals(a1, a2) ? 0 : 1;
-                }
+            performTest("IntegerArray", new int[] { 1, 5, 4 }, (o1, o2) -> {
+                int[] a1 = (int[]) o1;
+                int[] a2 = (int[]) o2;
+                return Arrays.equals(a1, a2) ? 0 : 1;
             });
         } finally {
 
@@ -943,14 +903,10 @@ public class JMXPropertyEditorsTestCase {
     public void testLongArray() throws Exception {
         try {
             deployer.deploy("LongArray");
-            performTest("LongArray", new long[] { 14, 15 }, new Comparator() {
-
-                @Override
-                public int compare(Object o1, Object o2) {
-                    long[] a1 = (long[]) o1;
-                    long[] a2 = (long[]) o2;
-                    return Arrays.equals(a1, a2) ? 0 : 1;
-                }
+            performTest("LongArray", new long[] { 14, 15 }, (o1, o2) -> {
+                long[] a1 = (long[]) o1;
+                long[] a2 = (long[]) o2;
+                return Arrays.equals(a1, a2) ? 0 : 1;
             });
         } finally {
 
@@ -1208,30 +1164,25 @@ public class JMXPropertyEditorsTestCase {
             props.put("prop2", "HAHA");
             props.put("env", System.getenv(USER_SYS_PROP));
             // props also dont override equals...
-            performTest("Properties", props, new Comparator() {
-
-                @Override
-                public int compare(Object o1, Object o2) {
-                    Properties p1 = (Properties) o1;
-                    Properties p2 = (Properties) o2;
-                    if (p1.size() != p2.size()) {
-                        return 1;
-                    }
-                    if(!p1.keySet().containsAll(p2.keySet())){
-                        return 1;
-                    }
-
-                    Set<Object> keys1 = p1.keySet();
-                    for(Object key:keys1){
-                        Object v1 = p1.get(key);
-                        Object v2 = p2.get(key);
-                        if(!v1.equals(v2)){
-                            return 1;
-                        }
-                    }
-                    return 0;
+            performTest("Properties", props, (o1, o2) -> {
+                Properties p1 = (Properties) o1;
+                Properties p2 = (Properties) o2;
+                if (p1.size() != p2.size()) {
+                    return 1;
+                }
+                if(!p1.keySet().containsAll(p2.keySet())){
+                    return 1;
                 }
 
+                Set<Object> keys1 = p1.keySet();
+                for(Object key:keys1){
+                    Object v1 = p1.get(key);
+                    Object v2 = p2.get(key);
+                    if(!v1.equals(v2)){
+                        return 1;
+                    }
+                }
+                return 0;
             });
         } finally {
 
@@ -1288,14 +1239,10 @@ public class JMXPropertyEditorsTestCase {
     public void testShortArray() throws Exception {
         try {
             deployer.deploy("ShortArray");
-            performTest("ShortArray", new short[] { 1, 20 }, new Comparator() {
-
-                @Override
-                public int compare(Object o1, Object o2) {
-                    short[] a1 = (short[]) o1;
-                    short[] a2 = (short[]) o2;
-                    return Arrays.equals(a1, a2) ? 0 : 1;
-                }
+            performTest("ShortArray", new short[] { 1, 20 }, (o1, o2) -> {
+                short[] a1 = (short[]) o1;
+                short[] a2 = (short[]) o2;
+                return Arrays.equals(a1, a2) ? 0 : 1;
             });
         } finally {
 
@@ -1324,14 +1271,10 @@ public class JMXPropertyEditorsTestCase {
     public void testStringArray() throws Exception {
         try {
             deployer.deploy("StringArray");
-            performTest("StringArray", new String[] { "1", "20" }, new Comparator() {
-
-                @Override
-                public int compare(Object o1, Object o2) {
-                    String[] a1 = (String[]) o1;
-                    String[] a2 = (String[]) o2;
-                    return Arrays.equals(a1, a2) ? 0 : 1;
-                }
+            performTest("StringArray", new String[] { "1", "20" }, (o1, o2) -> {
+                String[] a1 = (String[]) o1;
+                String[] a2 = (String[]) o2;
+                return Arrays.equals(a1, a2) ? 0 : 1;
             });
         } finally {
 

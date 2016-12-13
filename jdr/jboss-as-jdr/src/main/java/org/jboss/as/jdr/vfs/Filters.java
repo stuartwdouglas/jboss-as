@@ -40,39 +40,28 @@ public class Filters {
     public static final VirtualFileFilter TRUE = MatchAllVirtualFileFilter.INSTANCE;
 
     public static VirtualFileFilter not(final VirtualFileFilter filter) {
-        return new VirtualFileFilter() {
-            @Override
-            public boolean accepts(VirtualFile file) {
-                return !filter.accepts(file);
-            }
-        };
+        return file -> !filter.accepts(file);
     }
 
     public static VirtualFileFilter and(final VirtualFileFilter... filters) {
-        return new VirtualFileFilter() {
-            @Override
-            public boolean accepts(VirtualFile file) {
-                for(VirtualFileFilter f: filters) {
-                    if(!f.accepts(file)){
-                        return false;
-                    }
+        return file -> {
+            for(VirtualFileFilter f: filters) {
+                if(!f.accepts(file)){
+                    return false;
                 }
-                return true;
             }
+            return true;
         };
     }
 
     public static VirtualFileFilter or(final VirtualFileFilter... filters) {
-        return new VirtualFileFilter() {
-            @Override
-            public boolean accepts(VirtualFile file) {
-                for(VirtualFileFilter f: filters) {
-                    if(f.accepts(file)){
-                        return true;
-                    }
+        return file -> {
+            for(VirtualFileFilter f: filters) {
+                if(f.accepts(file)){
+                    return true;
                 }
-                return false;
             }
+            return false;
         };
     }
 
@@ -103,12 +92,7 @@ public class Filters {
     }
 
     public static VirtualFileFilter suffix(final String s){
-        return new VirtualFileFilter() {
-            @Override
-            public boolean accepts(VirtualFile file) {
-                return file.getPathName().endsWith(s);
-            }
-        };
+        return file -> file.getPathName().endsWith(s);
     }
 
     public interface BlacklistFilter extends VirtualFileFilter {

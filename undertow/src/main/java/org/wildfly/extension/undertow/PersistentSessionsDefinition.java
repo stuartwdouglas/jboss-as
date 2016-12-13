@@ -26,7 +26,6 @@ import io.undertow.servlet.api.SessionPersistenceManager;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PersistentResourceDefinition;
 import org.jboss.as.controller.RestartParentResourceAddHandler;
@@ -105,18 +104,11 @@ class PersistentSessionsDefinition extends PersistentResourceDefinition {
         public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {
             super.execute(context, operation);
             if (requiresRuntime(context)) {
-                context.addStep(new OperationStepHandler() {
-                    public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {
-                        performRuntime(context, operation, operation);
+                context.addStep((context12, operation12) -> {
+                    performRuntime(context12, operation12, operation12);
 
 
-                        context.completeStep(new OperationContext.RollbackHandler() {
-                            @Override
-                            public void handleRollback(OperationContext context, ModelNode operation) {
-                                rollbackRuntime(context, operation, operation);
-                            }
-                        });
-                    }
+                    context12.completeStep((context1, operation1) -> rollbackRuntime(context1, operation1, operation1));
                 }, OperationContext.Stage.RUNTIME);
             }
             context.stepCompleted();

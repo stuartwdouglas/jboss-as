@@ -111,11 +111,9 @@ public class FileTimerPersistence implements TimerPersistence, Service<FileTimer
     @Override
     public void start(final StartContext context) {
         if (WildFlySecurityManager.isChecking()) {
-            WildFlySecurityManager.doUnchecked(new PrivilegedAction<Void>() {
-                public Void run() {
-                    doStart();
-                    return null;
-                }
+            WildFlySecurityManager.doUnchecked((PrivilegedAction<Void>) () -> {
+                doStart();
+                return null;
             });
         } else {
             doStart();
@@ -166,12 +164,9 @@ public class FileTimerPersistence implements TimerPersistence, Service<FileTimer
     @Override
     public void addTimer(final TimerImpl TimerImpl) {
         if(WildFlySecurityManager.isChecking()) {
-            WildFlySecurityManager.doUnchecked(new PrivilegedAction<Object>() {
-                @Override
-                public Object run() {
-                    persistTimer(TimerImpl, true);
-                    return null;
-                }
+            WildFlySecurityManager.doUnchecked((PrivilegedAction<Object>) () -> {
+                persistTimer(TimerImpl, true);
+                return null;
             });
         } else {
             persistTimer(TimerImpl, true);
@@ -181,12 +176,9 @@ public class FileTimerPersistence implements TimerPersistence, Service<FileTimer
     @Override
     public void persistTimer(final TimerImpl TimerImpl) {
         if(WildFlySecurityManager.isChecking()) {
-            WildFlySecurityManager.doUnchecked(new PrivilegedAction<Object>() {
-                @Override
-                public Object run() {
-                    persistTimer(TimerImpl, false);
-                    return null;
-                }
+            WildFlySecurityManager.doUnchecked((PrivilegedAction<Object>) () -> {
+                persistTimer(TimerImpl, false);
+                return null;
             });
         } else {
             persistTimer(TimerImpl, false);
@@ -285,10 +277,7 @@ public class FileTimerPersistence implements TimerPersistence, Service<FileTimer
 
     @Override
     public Closeable registerChangeListener(String timedObjectId, TimerChangeListener listener) {
-        return new Closeable() {
-            @Override
-            public void close() throws IOException {
-            }
+        return () -> {
         };
     }
 
@@ -447,31 +436,29 @@ public class FileTimerPersistence implements TimerPersistence, Service<FileTimer
 
         @Override
         public void afterCompletion(final int status) {
-            doPrivileged(new PrivilegedAction<Void>() {
-                public Void run() {
-                    if (timer == null) {
-                        return null;
-                    }
-                    try {
-                        lock.lock();
-                        if (status == Status.STATUS_COMMITTED) {
-                            final Map<String, TimerImpl> map = getTimers(timer.getTimedObjectId(), timer.getTimerService());
-                            if (timer.getState() == TimerState.CANCELED ||
-                                    timer.getState() == TimerState.EXPIRED) {
-                                map.remove(timer.getId());
-                            } else {
-                                if (newTimer || map.containsKey(timer.getId())) {
-                                    //if an existing timer is not in the map it has been cancelled by another thread
-                                    map.put(timer.getId(), timer);
-                                }
-                            }
-                            writeFile(timer);
-                        }
-                    } finally {
-                        lock.unlock();
-                    }
+            doPrivileged((PrivilegedAction<Void>) () -> {
+                if (timer == null) {
                     return null;
                 }
+                try {
+                    lock.lock();
+                    if (status == Status.STATUS_COMMITTED) {
+                        final Map<String, TimerImpl> map = getTimers(timer.getTimedObjectId(), timer.getTimerService());
+                        if (timer.getState() == TimerState.CANCELED ||
+                                timer.getState() == TimerState.EXPIRED) {
+                            map.remove(timer.getId());
+                        } else {
+                            if (newTimer || map.containsKey(timer.getId())) {
+                                //if an existing timer is not in the map it has been cancelled by another thread
+                                map.put(timer.getId(), timer);
+                            }
+                        }
+                        writeFile(timer);
+                    }
+                } finally {
+                    lock.unlock();
+                }
+                return null;
             });
         }
 

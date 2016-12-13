@@ -154,12 +154,7 @@ public class EjbInvocationStatisticsTestCase {
     private void validateWaitTimeStatistic(final EJBComponentType type, final Class<?> beanClass) throws Exception {
         final String name = beanClass.getSimpleName();
         final BusinessInterface bean = (BusinessInterface) context.lookup("ejb:/" + MODULE_NAME + "//" + name + "!" + BusinessInterface.class.getName() + (type == EJBComponentType.STATEFUL ? "?stateful" : ""));
-        final Runnable invocationRunnable = new Runnable() {
-            @Override
-            public void run() {
-                bean.doIt();
-            }
-        };
+        final Runnable invocationRunnable = () -> bean.doIt();
 
         // perform 4 invocations at once
         ExecutorService threadPool = Executors.newFixedThreadPool(4);

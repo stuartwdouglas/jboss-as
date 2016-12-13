@@ -180,12 +180,7 @@ public abstract class AbstractEJBComponentRuntimeHandler<T extends EJBComponent>
             final Pool<?> pool = componentType.getPool(component);
             final int oldSize = pool.getMaxSize();
             componentType.getPool(component).setMaxSize(newSize);
-            context.completeStep(new OperationContext.RollbackHandler() {
-                @Override
-                public void handleRollback(OperationContext context, ModelNode operation) {
-                    pool.setMaxSize(oldSize);
-                }
-            });
+            context.completeStep((context1, operation1) -> pool.setMaxSize(oldSize));
         } else {
             // Bug; we were registered for an attribute but there is no code for handling it
             throw EjbLogger.ROOT_LOGGER.unknownAttribute(attributeName);

@@ -60,12 +60,7 @@ public class SessionExpirationScheduler implements Scheduler {
     }
 
     private static ThreadFactory createThreadFactory() {
-        return AccessController.doPrivileged(new PrivilegedAction<ThreadFactory>() {
-            @Override
-            public ThreadFactory run() {
-                return new JBossThreadFactory(new ThreadGroup(SessionExpirationScheduler.class.getSimpleName()), Boolean.FALSE, null, "%G - %t", null, null);
-            }
-        });
+        return AccessController.doPrivileged((PrivilegedAction<ThreadFactory>) () -> new JBossThreadFactory(new ThreadGroup(SessionExpirationScheduler.class.getSimpleName()), Boolean.FALSE, null, "%G - %t", null, null));
     }
 
     private static ScheduledExecutorService createScheduledExecutor(ThreadFactory factory) {

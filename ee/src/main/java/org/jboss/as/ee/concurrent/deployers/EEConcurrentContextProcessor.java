@@ -1,7 +1,6 @@
 package org.jboss.as.ee.concurrent.deployers;
 
 import org.jboss.as.ee.component.Attachments;
-import org.jboss.as.ee.component.ComponentConfiguration;
 import org.jboss.as.ee.component.ComponentConfigurator;
 import org.jboss.as.ee.component.ComponentDescription;
 import org.jboss.as.ee.component.ComponentNamingMode;
@@ -73,23 +72,20 @@ public class EEConcurrentContextProcessor implements DeploymentUnitProcessor {
     }
 
     private void processComponentDescription(final ComponentDescription componentDescription) {
-        final ComponentConfigurator componentConfigurator = new ComponentConfigurator() {
-            @Override
-            public void configure(DeploymentPhaseContext context, ComponentDescription description, final ComponentConfiguration configuration) throws DeploymentUnitProcessingException {
-                final ConcurrentContext concurrentContext = configuration.getConcurrentContext();
-                // setup context
-                setupConcurrentContext(concurrentContext, description.getApplicationName(), description.getModuleName(), description.getComponentName(), configuration.getModuleClassLoader(), configuration.getNamespaceContextSelector(), context.getDeploymentUnit(), context.getServiceTarget());
-                // add the interceptor which manages the concurrent context
-                final ConcurrentContextInterceptor interceptor = new ConcurrentContextInterceptor(concurrentContext);
-                final InterceptorFactory interceptorFactory = new ImmediateInterceptorFactory(interceptor);
-                configuration.addPostConstructInterceptor(interceptorFactory, InterceptorOrder.ComponentPostConstruct.CONCURRENT_CONTEXT);
-                configuration.addPreDestroyInterceptor(interceptorFactory, InterceptorOrder.ComponentPreDestroy.CONCURRENT_CONTEXT);
-                if (description.isPassivationApplicable()) {
-                    configuration.addPrePassivateInterceptor(interceptorFactory, InterceptorOrder.ComponentPassivation.CONCURRENT_CONTEXT);
-                    configuration.addPostActivateInterceptor(interceptorFactory, InterceptorOrder.ComponentPassivation.CONCURRENT_CONTEXT);
-                }
-                configuration.addComponentInterceptor(interceptorFactory, InterceptorOrder.Component.CONCURRENT_CONTEXT, false);
+        final ComponentConfigurator componentConfigurator = (context, description, configuration) -> {
+            final ConcurrentContext concurrentContext = configuration.getConcurrentContext();
+            // setup context
+            setupConcurrentContext(concurrentContext, description.getApplicationName(), description.getModuleName(), description.getComponentName(), configuration.getModuleClassLoader(), configuration.getNamespaceContextSelector(), context.getDeploymentUnit(), context.getServiceTarget());
+            // add the interceptor which manages the concurrent context
+            final ConcurrentContextInterceptor interceptor = new ConcurrentContextInterceptor(concurrentContext);
+            final InterceptorFactory interceptorFactory = new ImmediateInterceptorFactory(interceptor);
+            configuration.addPostConstructInterceptor(interceptorFactory, InterceptorOrder.ComponentPostConstruct.CONCURRENT_CONTEXT);
+            configuration.addPreDestroyInterceptor(interceptorFactory, InterceptorOrder.ComponentPreDestroy.CONCURRENT_CONTEXT);
+            if (description.isPassivationApplicable()) {
+                configuration.addPrePassivateInterceptor(interceptorFactory, InterceptorOrder.ComponentPassivation.CONCURRENT_CONTEXT);
+                configuration.addPostActivateInterceptor(interceptorFactory, InterceptorOrder.ComponentPassivation.CONCURRENT_CONTEXT);
             }
+            configuration.addComponentInterceptor(interceptorFactory, InterceptorOrder.Component.CONCURRENT_CONTEXT, false);
         };
         componentDescription.getConfigurators().add(componentConfigurator);
     }

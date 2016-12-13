@@ -58,15 +58,12 @@ public class RemotingProfileAdd extends AbstractAddStepHandler {
     @Override
     protected void performRuntime(final OperationContext context,final ModelNode operation,final ModelNode model)
             throws OperationFailedException {
-        context.addStep(new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                // Install another RUNTIME handler to actually install the services. This will run after the
-                // RUNTIME handler for any child resources. Doing this will ensure that child resource handlers don't
-                // see the installed services and can just ignore doing any RUNTIME stage work
-                context.addStep(ServiceInstallStepHandler.INSTANCE, OperationContext.Stage.RUNTIME);
-                context.stepCompleted();
-            }
+        context.addStep((context1, operation1) -> {
+            // Install another RUNTIME handler to actually install the services. This will run after the
+            // RUNTIME handler for any child resources. Doing this will ensure that child resource handlers don't
+            // see the installed services and can just ignore doing any RUNTIME stage work
+            context1.addStep(ServiceInstallStepHandler.INSTANCE, OperationContext.Stage.RUNTIME);
+            context1.stepCompleted();
         }, OperationContext.Stage.RUNTIME);
     }
 

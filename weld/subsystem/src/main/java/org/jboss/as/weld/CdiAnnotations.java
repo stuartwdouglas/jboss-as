@@ -25,7 +25,6 @@ import java.util.Set;
 
 import org.jboss.as.weld.discovery.AnnotationType;
 import org.jboss.jandex.DotName;
-import org.jboss.weld.util.Function;
 import org.jboss.weld.util.collections.ImmutableSet;
 import org.jboss.weld.util.collections.Iterables;
 
@@ -200,11 +199,7 @@ public enum CdiAnnotations {
     public static final Set<DotName> BUILT_IN_SCOPE_NAMES = ImmutableSet.<DotName>of(DEPENDENT.getDotName(), REQ_SCOPED.getDotName(), CONV_SCOPED.getDotName(), SESS_SCOPED.getDotName(), APP_SCOPED.getDotName(), SINGLETON.getDotName());
 
     public static final Set<AnnotationType> BUILT_IN_SCOPES = ImmutableSet
-            .copyOf(Iterables.transform(BUILT_IN_SCOPE_NAMES, new Function<DotName, AnnotationType>() {
-                public AnnotationType apply(DotName input) {
-                    return new AnnotationType(input, true);
-                }
-            }));
+            .copyOf(Iterables.transform(BUILT_IN_SCOPE_NAMES, input -> new AnnotationType(input, true)));
 
     public static final Set<AnnotationType> BEAN_DEFINING_ANNOTATIONS = ImmutableSet.of(
             new AnnotationType(DotName.createComponentized(Constants.JAVAX_INTERCEPTOR, "Interceptor"), false), asAnnotationType(DECORATOR, false),

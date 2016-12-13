@@ -53,11 +53,9 @@ public class ClearWorkManagerStatisticsHandler implements OperationStepHandler {
     public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
 
         if (context.isNormalServer()) {
-            context.addStep(new OperationStepHandler() {
-                public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                    wm.getStatistics().clear();
-                    context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
-                }
+            context.addStep((context1, operation1) -> {
+                wm.getStatistics().clear();
+                context1.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
             }, OperationContext.Stage.RUNTIME);
         }
         context.stepCompleted();

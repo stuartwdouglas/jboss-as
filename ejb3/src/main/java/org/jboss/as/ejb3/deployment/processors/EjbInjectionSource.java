@@ -145,12 +145,9 @@ public class EjbInjectionSource extends InjectionSource {
                             final EJBComponentDescription componentDescription = (EJBComponentDescription) description.getComponentDescription();
                             final EEModuleDescription moduleDescription = componentDescription.getModuleDescription();
                             final String earApplicationName = moduleDescription.getEarApplicationName();
-                            final Value<ClassLoader> viewClassLoader = new Value<ClassLoader>() {
-                                @Override
-                                public ClassLoader getValue() throws IllegalStateException, IllegalArgumentException {
-                                    final Module module = deploymentUnit.getAttachment(Attachments.MODULE);
-                                    return module != null ? module.getClassLoader() : null;
-                                }
+                            final Value<ClassLoader> viewClassLoader = () -> {
+                                final Module module = deploymentUnit.getAttachment(Attachments.MODULE);
+                                return module != null ? module.getClassLoader() : null;
                             };
                             remoteFactory = new RemoteViewManagedReferenceFactory(earApplicationName, moduleDescription.getModuleName(), moduleDescription.getDistinctName(), componentDescription.getComponentName(), description.getViewClassName(), componentDescription.isStateful(), viewClassLoader);
                         }

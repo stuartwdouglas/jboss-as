@@ -24,7 +24,6 @@ package org.jboss.as.ee.component;
 
 import org.jboss.as.ee.logging.EeLogger;
 import org.jboss.as.naming.ImmediateManagedReference;
-import org.jboss.as.naming.ManagedReference;
 import org.jboss.as.naming.ManagedReferenceFactory;
 import org.jboss.as.naming.deployment.ContextNames;
 import org.jboss.as.server.deployment.DeploymentPhaseContext;
@@ -111,27 +110,21 @@ public final class LookupInjectionSource extends InjectionSource {
                 final ManagedReferenceFactory managedReferenceFactory;
                 if (URL_SCHEMES.contains(scheme)) {
                     // a Java EE Standard Resource Manager Connection Factory for URLs, using lookup to define value of URL, inject factory that creates URL instances
-                    managedReferenceFactory = new ManagedReferenceFactory() {
-                        @Override
-                        public ManagedReference getReference() {
-                            try {
-                                return new ImmediateManagedReference(new URL(lookupName));
-                            } catch (MalformedURLException e) {
-                                throw new RuntimeException(e);
-                            }
+                    managedReferenceFactory = () -> {
+                        try {
+                            return new ImmediateManagedReference(new URL(lookupName));
+                        } catch (MalformedURLException e) {
+                            throw new RuntimeException(e);
                         }
                     };
                 } else {
                     // lookup for a non java jndi resource, inject factory which does a true jndi lookup
-                    managedReferenceFactory = new ManagedReferenceFactory() {
-                        @Override
-                        public ManagedReference getReference() {
-                            try {
-                                return new ImmediateManagedReference(new InitialContext().lookup(lookupName));
-                            } catch (NamingException e) {
-                                EeLogger.ROOT_LOGGER.tracef(e, "failed to lookup %s", lookupName);
-                                return null;
-                            }
+                    managedReferenceFactory = () -> {
+                        try {
+                            return new ImmediateManagedReference(new InitialContext().lookup(lookupName));
+                        } catch (NamingException e) {
+                            EeLogger.ROOT_LOGGER.tracef(e, "failed to lookup %s", lookupName);
+                            return null;
                         }
                     };
                 }

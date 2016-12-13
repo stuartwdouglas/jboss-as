@@ -167,14 +167,12 @@ public class EjbRemoveUnitTestCase {
 
         final CountedSession counted = countedHome.create();
 
-        Runnable runnable = new Runnable() {
-            public void run() {
-                try {
-                    // introduce 250ms delay
-                    counted.doSomethingSync(233);
-                } catch (RemoteException e) {
-                    // ignore
-                }
+        Runnable runnable = () -> {
+            try {
+                // introduce 250ms delay
+                counted.doSomethingSync(233);
+            } catch (RemoteException e) {
+                // ignore
             }
         };
 

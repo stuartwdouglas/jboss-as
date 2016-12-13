@@ -24,7 +24,6 @@ package org.wildfly.extension.picketlink.idm.model;
 
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
-import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.RestartParentResourceRemoveHandler;
 import org.jboss.as.controller.operations.common.Util;
@@ -53,17 +52,14 @@ public class IdentityStoreRemoveStepHandler extends RestartParentResourceRemoveH
 
         super.updateModel(context, operation);
 
-        context.addStep(new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) throws OperationFailedException {
-                PathAddress address = context.getCurrentAddress();
-                String configurationName = address.getElement(address.size() - 2).getValue();
-                String partitionManagerName = address.getElement(address.size() - 3).getValue();
-                String identityStoreName = address.getLastElement().getValue();
+        context.addStep((context1, operation1) -> {
+            PathAddress address = context1.getCurrentAddress();
+            String configurationName = address.getElement(address.size() - 2).getValue();
+            String partitionManagerName = address.getElement(address.size() - 3).getValue();
+            String identityStoreName = address.getLastElement().getValue();
 
-                context.removeService(PartitionManagerService.createIdentityStoreServiceName(partitionManagerName, configurationName, identityStoreName));
-                context.completeStep(OperationContext.ResultHandler.NOOP_RESULT_HANDLER);
-            }
+            context1.removeService(PartitionManagerService.createIdentityStoreServiceName(partitionManagerName, configurationName, identityStoreName));
+            context1.completeStep(OperationContext.ResultHandler.NOOP_RESULT_HANDLER);
         }, OperationContext.Stage.RUNTIME);
     }
 

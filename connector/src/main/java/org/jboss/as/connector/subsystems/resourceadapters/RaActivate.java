@@ -58,26 +58,21 @@ public class RaActivate implements OperationStepHandler {
         }
 
         if (context.isNormalServer()) {
-            context.addStep(new OperationStepHandler() {
-                public void execute(final OperationContext context, ModelNode operation) throws OperationFailedException {
+            context.addStep((context12, operation12) -> {
 
-                    ServiceName restartedServiceName = RaOperationUtil.restartIfPresent(context, archiveOrModuleName, idName);
+                ServiceName restartedServiceName = RaOperationUtil.restartIfPresent(context12, archiveOrModuleName, idName);
 
-                    if (restartedServiceName == null) {
-                        RaOperationUtil.activate(context, idName, archiveOrModuleName);
-                    }
-                    context.completeStep(new OperationContext.RollbackHandler() {
-                        @Override
-                        public void handleRollback(OperationContext context, ModelNode operation) {
-                            try {
-                                RaOperationUtil.removeIfActive(context, archiveOrModuleName, idName);
-                            } catch (OperationFailedException e) {
-
-                            }
-
-                        }
-                    });
+                if (restartedServiceName == null) {
+                    RaOperationUtil.activate(context12, idName, archiveOrModuleName);
                 }
+                context12.completeStep((context1, operation1) -> {
+                    try {
+                        RaOperationUtil.removeIfActive(context1, archiveOrModuleName, idName);
+                    } catch (OperationFailedException e) {
+
+                    }
+
+                });
             }, OperationContext.Stage.RUNTIME);
         }
         context.stepCompleted();

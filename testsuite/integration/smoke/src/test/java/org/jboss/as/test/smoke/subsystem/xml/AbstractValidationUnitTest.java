@@ -175,44 +175,38 @@ public class AbstractValidationUnitTest {
         }
     }
 
-    static final EntityResolver DEFAULT_ENTITY_RESOLVER = new EntityResolver() {
-        @Override
-        public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
-            if (systemId == null)
-                fail("Failed to resolve schema: systemId is null");
-            int lastSlash = systemId.lastIndexOf('/');
-            if (lastSlash > 0)
-                systemId = systemId.substring(lastSlash + 1);
-            URL xsdUrl = discoverXsd(systemId);
-            return new InputSource(xsdUrl.openStream());
-        }
+    static final EntityResolver DEFAULT_ENTITY_RESOLVER = (publicId, systemId) -> {
+        if (systemId == null)
+            fail("Failed to resolve schema: systemId is null");
+        int lastSlash = systemId.lastIndexOf('/');
+        if (lastSlash > 0)
+            systemId = systemId.substring(lastSlash + 1);
+        URL xsdUrl = discoverXsd(systemId);
+        return new InputSource(xsdUrl.openStream());
     };
 
-    static final LSResourceResolver DEFAULT_RESOURCE_RESOLVER = new LSResourceResolver() {
-        @Override
-        public LSInput resolveResource(String type, String namespaceURI, String publicId, String systemId, String baseURI) {
-            final DOMImplementationLS impl;
-            try {
-                impl = (DOMImplementationLS) DOMImplementationRegistry.newInstance().getDOMImplementation("LS");
-            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
-                throw new RuntimeException("could not create LS input" ,e);
-            }
-            LSInput input = impl.createLSInput();
-
-            final URL url;
-            if (NAMESPACE_MAP.containsKey(systemId)) {
-                url = discoverXsd(NAMESPACE_MAP.get(systemId));
-            } else {
-                url = discoverXsd(systemId);
-            }
-            try {
-                input.setByteStream(url.openStream());
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-
-            return input;
+    static final LSResourceResolver DEFAULT_RESOURCE_RESOLVER = (type, namespaceURI, publicId, systemId, baseURI) -> {
+        final DOMImplementationLS impl;
+        try {
+            impl = (DOMImplementationLS) DOMImplementationRegistry.newInstance().getDOMImplementation("LS");
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+            throw new RuntimeException("could not create LS input" ,e);
         }
+        LSInput input = impl.createLSInput();
+
+        final URL url;
+        if (NAMESPACE_MAP.containsKey(systemId)) {
+            url = discoverXsd(NAMESPACE_MAP.get(systemId));
+        } else {
+            url = discoverXsd(systemId);
+        }
+        try {
+            input.setByteStream(url.openStream());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return input;
     };
 
     /**

@@ -52,7 +52,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.StringReader;
-import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -85,11 +84,7 @@ public class TestServlet extends HttpServlet {
         final KeySelector ks = new KeySelector() {
             @Override
             public KeySelectorResult select(KeyInfo keyInfo, Purpose purpose, AlgorithmMethod method, XMLCryptoContext context) throws KeySelectorException {
-                return new KeySelectorResult() {
-                    public Key getKey() {
-                        return publicKey;
-                    }
-                };
+                return () -> publicKey;
             }
         };
 

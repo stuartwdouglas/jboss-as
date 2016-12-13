@@ -28,7 +28,6 @@ import org.jboss.as.ee.component.EEModuleDescription;
 import org.jboss.as.ee.structure.DeploymentType;
 import org.jboss.as.ee.structure.DeploymentTypeMarker;
 import org.jboss.as.naming.ManagedReference;
-import org.jboss.as.naming.ManagedReferenceFactory;
 import org.jboss.as.naming.ServiceBasedNamingStore;
 import org.jboss.as.naming.deployment.ContextNames;
 import org.jboss.as.naming.service.BinderService;
@@ -85,21 +84,16 @@ public class InstanceNameBindingProcessor implements DeploymentUnitProcessor {
             .addDependency(ServerEnvironmentService.SERVICE_NAME, ServerEnvironment.class, new Injector<ServerEnvironment>() {
                 @Override
                 public void inject(final ServerEnvironment serverEnvironment) throws InjectionException {
-                    instanceNameService.getManagedObjectInjector().inject(new ManagedReferenceFactory() {
+                    instanceNameService.getManagedObjectInjector().inject(() -> new ManagedReference() {
                         @Override
-                        public ManagedReference getReference() {
-                            return new ManagedReference() {
-                                @Override
-                                public void release() {
+                        public void release() {
 
-                                }
+                        }
 
-                                @Override
-                                public Object getInstance() {
-                                    final String nodeName = serverEnvironment.getNodeName();
-                                    return nodeName == null ? "" : nodeName;
-                                }
-                            };
+                        @Override
+                        public Object getInstance() {
+                            final String nodeName = serverEnvironment.getNodeName();
+                            return nodeName == null ? "" : nodeName;
                         }
                     });
                 }

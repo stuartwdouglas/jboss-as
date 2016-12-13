@@ -46,43 +46,37 @@ public class SecurityContextInterceptor implements Interceptor {
     private final String policyContextID;
 
     public SecurityContextInterceptor(final SecurityContextInterceptorHolder holder) {
-        this.pushAction = new PrivilegedAction<Void>() {
-            @Override
-            public Void run() {
-                holder.securityManager.push(holder.securityDomain);
-                try {
-                    if (holder.skipAuthentication == false) {
-                        holder.securityManager.authenticate(holder.runAs, holder.runAsPrincipal, holder.extraRoles);
-                    }
-                    if (holder.principalVsRolesMap != null) {
-                        SecurityRolesAssociation.setSecurityRoles(holder.principalVsRolesMap);
-                    }
-                } catch (Throwable t) {
-                    // undo the push actions on failure
-                    if (holder.principalVsRolesMap != null) {
-                        // clear the threadlocal
-                        SecurityRolesAssociation.setSecurityRoles(null);
-                    }
-                    holder.securityManager.pop();
-
-                    if (t instanceof SecurityException) {
-                        throw new EJBAccessException(t.getMessage());
-                    }
-                    throw t;
+        this.pushAction = () -> {
+            holder.securityManager.push(holder.securityDomain);
+            try {
+                if (holder.skipAuthentication == false) {
+                    holder.securityManager.authenticate(holder.runAs, holder.runAsPrincipal, holder.extraRoles);
                 }
-                return null;
-            }
-        };
-        this.popAction = new PrivilegedAction<Void>() {
-            @Override
-            public Void run() {
                 if (holder.principalVsRolesMap != null) {
-                    // Clear the threadlocal
+                    SecurityRolesAssociation.setSecurityRoles(holder.principalVsRolesMap);
+                }
+            } catch (Throwable t) {
+                // undo the push actions on failure
+                if (holder.principalVsRolesMap != null) {
+                    // clear the threadlocal
                     SecurityRolesAssociation.setSecurityRoles(null);
                 }
                 holder.securityManager.pop();
-                return null;
+
+                if (t instanceof SecurityException) {
+                    throw new EJBAccessException(t.getMessage());
+                }
+                throw t;
             }
+            return null;
+        };
+        this.popAction = () -> {
+            if (holder.principalVsRolesMap != null) {
+                // Clear the threadlocal
+                SecurityRolesAssociation.setSecurityRoles(null);
+            }
+            holder.securityManager.pop();
+            return null;
         };
         this.policyContextID = holder.policyContextID;
     }

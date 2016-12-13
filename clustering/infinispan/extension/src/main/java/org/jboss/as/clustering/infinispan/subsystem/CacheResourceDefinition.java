@@ -40,16 +40,13 @@ import org.jboss.as.clustering.controller.validation.ParameterValidatorBuilder;
 import org.jboss.as.controller.AbstractAttributeDefinitionBuilder;
 import org.jboss.as.controller.AttributeDefinition;
 import org.jboss.as.controller.ModelVersion;
-import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.SimpleAttributeDefinitionBuilder;
 import org.jboss.as.controller.SimpleMapAttributeDefinition;
 import org.jboss.as.controller.registry.AttributeAccess;
 import org.jboss.as.controller.registry.ManagementResourceRegistration;
-import org.jboss.as.controller.registry.Resource;
 import org.jboss.as.controller.services.path.PathManager;
-import org.jboss.as.controller.transform.ResourceTransformationContext;
 import org.jboss.as.controller.transform.ResourceTransformer;
 import org.jboss.as.controller.transform.description.DiscardAttributeChecker;
 import org.jboss.as.controller.transform.description.RejectAttributeChecker;
@@ -168,23 +165,20 @@ public class CacheResourceDefinition extends ChildResourceDefinition {
 
         if (InfinispanModel.VERSION_3_0_0.requiresTransformation(version)) {
             // Set batching=true if transaction mode=BATCH
-            ResourceTransformer batchingTransformer = new ResourceTransformer() {
-                @Override
-                public void transformResource(ResourceTransformationContext context, PathAddress address, Resource resource) throws OperationFailedException {
-                    PathAddress transactionAddress = address.append(TransactionResourceDefinition.PATH);
-                    try {
-                        ModelNode transaction = context.readResourceFromRoot(transactionAddress).getModel();
-                        if (transaction.hasDefined(TransactionResourceDefinition.Attribute.MODE.getName())) {
-                            ModelNode mode = transaction.get(TransactionResourceDefinition.Attribute.MODE.getName());
-                            if ((mode.getType() == ModelType.STRING) && (TransactionMode.valueOf(mode.asString()) == TransactionMode.BATCH)) {
-                                resource.getModel().get(DeprecatedAttribute.BATCHING.getName()).set(true);
-                            }
+            ResourceTransformer batchingTransformer = (context, address, resource) -> {
+                PathAddress transactionAddress = address.append(TransactionResourceDefinition.PATH);
+                try {
+                    ModelNode transaction = context.readResourceFromRoot(transactionAddress).getModel();
+                    if (transaction.hasDefined(TransactionResourceDefinition.Attribute.MODE.getName())) {
+                        ModelNode mode = transaction.get(TransactionResourceDefinition.Attribute.MODE.getName());
+                        if ((mode.getType() == ModelType.STRING) && (TransactionMode.valueOf(mode.asString()) == TransactionMode.BATCH)) {
+                            resource.getModel().get(DeprecatedAttribute.BATCHING.getName()).set(true);
                         }
-                    } catch (NoSuchElementException e) {
-                        // Ignore, nothing to convert
                     }
-                    context.addTransformedResource(PathAddress.EMPTY_ADDRESS, resource).processChildren(resource);
+                } catch (NoSuchElementException e) {
+                    // Ignore, nothing to convert
                 }
+                context.addTransformedResource(PathAddress.EMPTY_ADDRESS, resource).processChildren(resource);
             };
             builder.setCustomResourceTransformer(batchingTransformer);
         }

@@ -52,66 +52,64 @@ public class JndiViewOperation implements OperationStepHandler {
         final ModelNode resultNode = context.getResult();
 
         if (context.isNormalServer()) {
-            context.addStep(new OperationStepHandler() {
-                public void execute(final OperationContext context, final ModelNode operation) throws OperationFailedException {
-                    final ServiceRegistry serviceRegistry = context.getServiceRegistry(false);
+            context.addStep((context1, operation1) -> {
+                final ServiceRegistry serviceRegistry = context1.getServiceRegistry(false);
 
-                    final ModelNode contextsNode = resultNode.get("java: contexts");
+                final ModelNode contextsNode = resultNode.get("java: contexts");
 
-                    final ServiceController<?> javaContextService = serviceRegistry.getService(ContextNames.JAVA_CONTEXT_SERVICE_NAME);
-                    final NamingStore javaContextNamingStore = NamingStore.class.cast(javaContextService.getValue());
-                    try {
-                        addEntries(contextsNode.get("java:"), new NamingContext(javaContextNamingStore, null));
-                    } catch (NamingException e) {
-                        throw new OperationFailedException(e, new ModelNode().set(NamingLogger.ROOT_LOGGER.failedToReadContextEntries("java:")));
-                    }
-
-                    final ServiceController<?> jbossContextService = serviceRegistry.getService(ContextNames.JBOSS_CONTEXT_SERVICE_NAME);
-                    final NamingStore jbossContextNamingStore = NamingStore.class.cast(jbossContextService.getValue());
-                    try {
-                        addEntries(contextsNode.get("java:jboss"), new NamingContext(jbossContextNamingStore, null));
-                    } catch (NamingException e) {
-                        throw new OperationFailedException(e, new ModelNode().set(NamingLogger.ROOT_LOGGER.failedToReadContextEntries("java:jboss")));
-                    }
-
-                    final ServiceController<?> exportedContextService = serviceRegistry.getService(ContextNames.EXPORTED_CONTEXT_SERVICE_NAME);
-                    final NamingStore exportedContextNamingStore = NamingStore.class.cast(exportedContextService.getValue());
-                    try {
-                        addEntries(contextsNode.get("java:jboss/exported"), new NamingContext(exportedContextNamingStore, null));
-                    } catch (NamingException e) {
-                        throw new OperationFailedException(e, new ModelNode().set(NamingLogger.ROOT_LOGGER.failedToReadContextEntries("java:jboss/exported")));
-                    }
-
-                    final ServiceController<?> globalContextService = serviceRegistry.getService(ContextNames.GLOBAL_CONTEXT_SERVICE_NAME);
-                    final NamingStore globalContextNamingStore = NamingStore.class.cast(globalContextService.getValue());
-                    try {
-                        addEntries(contextsNode.get("java:global"), new NamingContext(globalContextNamingStore, null));
-                    } catch (NamingException e) {
-                        throw new OperationFailedException(e, new ModelNode().set(NamingLogger.ROOT_LOGGER.failedToReadContextEntries("java:global")));
-                    }
-
-                    final ServiceController<?> extensionRegistryController = serviceRegistry.getService(JndiViewExtensionRegistry.SERVICE_NAME);
-                    if(extensionRegistryController != null) {
-                        final JndiViewExtensionRegistry extensionRegistry = JndiViewExtensionRegistry.class.cast(extensionRegistryController.getValue());
-
-                        for (JndiViewExtension extension : extensionRegistry.getExtensions()) {
-                            extension.execute(new JndiViewExtensionContext() {
-                                public OperationContext getOperationContext() {
-                                    return context;
-                                }
-
-                                public ModelNode getResult() {
-                                    return resultNode;
-                                }
-
-                                public void addEntries(ModelNode current, Context context) throws NamingException{
-                                    JndiViewOperation.this.addEntries(current, context);
-                                }
-                            });
-                        }
-                    }
-                    context.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
+                final ServiceController<?> javaContextService = serviceRegistry.getService(ContextNames.JAVA_CONTEXT_SERVICE_NAME);
+                final NamingStore javaContextNamingStore = NamingStore.class.cast(javaContextService.getValue());
+                try {
+                    addEntries(contextsNode.get("java:"), new NamingContext(javaContextNamingStore, null));
+                } catch (NamingException e) {
+                    throw new OperationFailedException(e, new ModelNode().set(NamingLogger.ROOT_LOGGER.failedToReadContextEntries("java:")));
                 }
+
+                final ServiceController<?> jbossContextService = serviceRegistry.getService(ContextNames.JBOSS_CONTEXT_SERVICE_NAME);
+                final NamingStore jbossContextNamingStore = NamingStore.class.cast(jbossContextService.getValue());
+                try {
+                    addEntries(contextsNode.get("java:jboss"), new NamingContext(jbossContextNamingStore, null));
+                } catch (NamingException e) {
+                    throw new OperationFailedException(e, new ModelNode().set(NamingLogger.ROOT_LOGGER.failedToReadContextEntries("java:jboss")));
+                }
+
+                final ServiceController<?> exportedContextService = serviceRegistry.getService(ContextNames.EXPORTED_CONTEXT_SERVICE_NAME);
+                final NamingStore exportedContextNamingStore = NamingStore.class.cast(exportedContextService.getValue());
+                try {
+                    addEntries(contextsNode.get("java:jboss/exported"), new NamingContext(exportedContextNamingStore, null));
+                } catch (NamingException e) {
+                    throw new OperationFailedException(e, new ModelNode().set(NamingLogger.ROOT_LOGGER.failedToReadContextEntries("java:jboss/exported")));
+                }
+
+                final ServiceController<?> globalContextService = serviceRegistry.getService(ContextNames.GLOBAL_CONTEXT_SERVICE_NAME);
+                final NamingStore globalContextNamingStore = NamingStore.class.cast(globalContextService.getValue());
+                try {
+                    addEntries(contextsNode.get("java:global"), new NamingContext(globalContextNamingStore, null));
+                } catch (NamingException e) {
+                    throw new OperationFailedException(e, new ModelNode().set(NamingLogger.ROOT_LOGGER.failedToReadContextEntries("java:global")));
+                }
+
+                final ServiceController<?> extensionRegistryController = serviceRegistry.getService(JndiViewExtensionRegistry.SERVICE_NAME);
+                if(extensionRegistryController != null) {
+                    final JndiViewExtensionRegistry extensionRegistry = JndiViewExtensionRegistry.class.cast(extensionRegistryController.getValue());
+
+                    for (JndiViewExtension extension : extensionRegistry.getExtensions()) {
+                        extension.execute(new JndiViewExtensionContext() {
+                            public OperationContext getOperationContext() {
+                                return context1;
+                            }
+
+                            public ModelNode getResult() {
+                                return resultNode;
+                            }
+
+                            public void addEntries(ModelNode current, Context context1) throws NamingException{
+                                JndiViewOperation.this.addEntries(current, context1);
+                            }
+                        });
+                    }
+                }
+                context1.completeStep(OperationContext.RollbackHandler.NOOP_ROLLBACK_HANDLER);
             }, OperationContext.Stage.RUNTIME);
         } else {
             throw new OperationFailedException(NamingLogger.ROOT_LOGGER.jndiViewNotAvailable());

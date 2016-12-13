@@ -106,52 +106,32 @@ public class HibernateEntityCacheStatistics extends HibernateAbstractStatistics 
         }
         return null;
     }
-    private Operation getEntityCacheRegionName = new Operation() {
-        @Override
-        public Object invoke(Object... args) {
-            return getStatisticName(args);
-        }
+    private Operation getEntityCacheRegionName = args -> getStatisticName(args);
+
+
+    private Operation entityCacheHitCount = args -> {
+        org.hibernate.stat.SecondLevelCacheStatistics statistics = getStatistics(getEntityManagerFactoryAccess(args),  getPathAddress(args));
+        return Long.valueOf(statistics != null ? statistics.getHitCount() : 0);
     };
 
-
-    private Operation entityCacheHitCount = new Operation() {
-        @Override
-        public Object invoke(Object... args) {
-            org.hibernate.stat.SecondLevelCacheStatistics statistics = getStatistics(getEntityManagerFactoryAccess(args),  getPathAddress(args));
-            return Long.valueOf(statistics != null ? statistics.getHitCount() : 0);
-        }
+    private Operation entityCacheMissCount = args -> {
+        org.hibernate.stat.SecondLevelCacheStatistics statistics = getStatistics(getEntityManagerFactoryAccess(args),  getPathAddress(args));
+        return Long.valueOf(statistics != null ? statistics.getMissCount() : 0);
     };
 
-    private Operation entityCacheMissCount = new Operation() {
-        @Override
-        public Object invoke(Object... args) {
-            org.hibernate.stat.SecondLevelCacheStatistics statistics = getStatistics(getEntityManagerFactoryAccess(args),  getPathAddress(args));
-            return Long.valueOf(statistics != null ? statistics.getMissCount() : 0);
-        }
+    private Operation entityCachePutCount = args -> {
+        org.hibernate.stat.SecondLevelCacheStatistics statistics = getStatistics(getEntityManagerFactoryAccess(args),  getPathAddress(args));
+        return Long.valueOf(statistics != null ? statistics.getPutCount() : 0);
     };
 
-    private Operation entityCachePutCount = new Operation() {
-        @Override
-        public Object invoke(Object... args) {
-            org.hibernate.stat.SecondLevelCacheStatistics statistics = getStatistics(getEntityManagerFactoryAccess(args),  getPathAddress(args));
-            return Long.valueOf(statistics != null ? statistics.getPutCount() : 0);
-        }
+    private Operation entityCacheSizeInMemory = args -> {
+        org.hibernate.stat.SecondLevelCacheStatistics statistics = getStatistics(getEntityManagerFactoryAccess(args),  getPathAddress(args));
+        return Long.valueOf(statistics != null ? statistics.getSizeInMemory() : 0);
     };
 
-    private Operation entityCacheSizeInMemory = new Operation() {
-        @Override
-        public Object invoke(Object... args) {
-            org.hibernate.stat.SecondLevelCacheStatistics statistics = getStatistics(getEntityManagerFactoryAccess(args),  getPathAddress(args));
-            return Long.valueOf(statistics != null ? statistics.getSizeInMemory() : 0);
-        }
-    };
-
-    private Operation entityCacheCountInMemory = new Operation() {
-        @Override
-        public Object invoke(Object... args) {
-            org.hibernate.stat.SecondLevelCacheStatistics statistics = getStatistics(getEntityManagerFactoryAccess(args),  getPathAddress(args));
-            return Long.valueOf(statistics != null ? statistics.getElementCountInMemory() : 0);
-        }
+    private Operation entityCacheCountInMemory = args -> {
+        org.hibernate.stat.SecondLevelCacheStatistics statistics = getStatistics(getEntityManagerFactoryAccess(args),  getPathAddress(args));
+        return Long.valueOf(statistics != null ? statistics.getElementCountInMemory() : 0);
     };
 
 }

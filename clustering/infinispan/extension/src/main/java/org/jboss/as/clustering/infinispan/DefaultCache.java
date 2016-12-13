@@ -47,12 +47,7 @@ public class DefaultCache<K, V> extends AbstractDelegatingAdvancedCache<K, V> {
     private final Set<Flag> flags;
 
     DefaultCache(final EmbeddedCacheManager manager, final Batcher<? extends Batch> batcher, final AdvancedCache<K, V> cache, final Set<Flag> flags) {
-        super(cache, new AdvancedCacheWrapper<K, V>() {
-            @Override
-            public AdvancedCache<K, V> wrap(AdvancedCache<K, V> cache) {
-                return new DefaultCache<>(manager, batcher, cache, flags);
-            }
-        });
+        super(cache, cache1 -> new DefaultCache<>(manager, batcher, cache1, flags));
         this.manager = manager;
         this.batcher = batcher;
         this.flags = flags;

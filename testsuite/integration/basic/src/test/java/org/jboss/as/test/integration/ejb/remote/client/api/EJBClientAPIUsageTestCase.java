@@ -379,20 +379,16 @@ public class EJBClientAPIUsageTestCase {
         final NonSerialiazableResponseRemote proxy = EJBClient.createProxy(locator);
 
 
-        Callable<Object> task = new Callable<Object>() {
-
-            @Override
-            public Object call() throws Exception {
-                try {
-                    proxy.nonSerializable();
-                    Assert.fail();
-                } catch (Exception e) {
-                    logger.trace("expected " + e);
-                }
-                Thread.sleep(1000);
-                Assert.assertEquals("hello", proxy.serializable());
-                return null;
+        Callable<Object> task = () -> {
+            try {
+                proxy.nonSerializable();
+                Assert.fail();
+            } catch (Exception e) {
+                logger.trace("expected " + e);
             }
+            Thread.sleep(1000);
+            Assert.assertEquals("hello", proxy.serializable());
+            return null;
         };
         final ExecutorService executor = Executors.newFixedThreadPool(10);
         try {

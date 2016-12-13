@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -69,17 +68,14 @@ public class SimpleServlet extends HttpServlet {
         final CountDownLatch latch = new CountDownLatch(1);
         final Future<String>[] futures = new Future[2];
         for (int i = 0; i < futures.length; i++) {
-            futures[i] = executor.submit(new Callable<String>() {
-                @Override
-                public String call() throws Exception {
-                    try {
-                        return bean.echo(latch, msg);
-                    }
-                    finally {
-                        // the second concurrent call will throw ConcurrentAccessException
-                        // so now we make the first call proceed
-                        latch.countDown();
-                    }
+            futures[i] = executor.submit(() -> {
+                try {
+                    return bean.echo(latch, msg);
+                }
+                finally {
+                    // the second concurrent call will throw ConcurrentAccessException
+                    // so now we make the first call proceed
+                    latch.countDown();
                 }
             });
         }

@@ -281,12 +281,7 @@ public class ClientCompatibilityUnitTestCase {
         try {
             final Object client = factory.invoke(null, host, port);
 
-            final InvocationHandler invocationHandler = new InvocationHandler() {
-                @Override
-                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-                    return method.invoke(client, args);
-                }
-            };
+            final InvocationHandler invocationHandler = (proxy, method, args) -> method.invoke(client, args);
             final Class<?>[] interfaces = new Class<?>[]{ModelControllerClient.class};
             return (ModelControllerClient) Proxy.newProxyInstance(classLoader, interfaces, invocationHandler);
         } catch (InvocationTargetException e) {

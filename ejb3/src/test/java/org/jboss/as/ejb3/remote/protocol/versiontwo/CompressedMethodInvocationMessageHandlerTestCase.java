@@ -43,7 +43,6 @@ import org.jboss.marshalling.Marshalling;
 import org.jboss.marshalling.MarshallingConfiguration;
 import org.jboss.marshalling.river.RiverMarshallerFactory;
 import org.jboss.msc.value.InjectedValue;
-import org.jboss.msc.value.Value;
 import org.jboss.remoting3.Channel;
 import org.jboss.remoting3.MessageOutputStream;
 import org.junit.Before;
@@ -208,12 +207,7 @@ public class CompressedMethodInvocationMessageHandlerTestCase {
         Mockito.when(componentView.getPrivateData(CompressedMethodsInformation.class)).thenReturn(CompressionHintViewConfigurator.getCompressedMethodsInformation(iface));
 
         final InjectedValue<ComponentView> value = new InjectedValue<ComponentView>();
-        value.setValue(new Value<ComponentView>() {
-            @Override
-            public ComponentView getValue() throws IllegalStateException, IllegalArgumentException {
-                return componentView;
-            }
-        });
+        value.setValue(() -> componentView);
         return value;
     }
 

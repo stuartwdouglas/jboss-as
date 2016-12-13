@@ -102,24 +102,18 @@ public class StorePropertyResourceDefinition extends ChildResourceDefinition {
         };
         this.registerRemoveOperation(registration, removeHandler);
 
-        OperationStepHandler readHandler = new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) {
-                PathAddress address = context.getCurrentAddress().getParent();
-                String key = context.getCurrentAddressValue();
-                ModelNode getOperation = Operations.createMapGetOperation(address, StoreResourceDefinition.Attribute.PROPERTIES, key);
-                context.addStep(getOperation, MapOperations.MAP_GET_HANDLER, context.getCurrentStage());
-            }
+        OperationStepHandler readHandler = (context, operation) -> {
+            PathAddress address = context.getCurrentAddress().getParent();
+            String key = context.getCurrentAddressValue();
+            ModelNode getOperation = Operations.createMapGetOperation(address, StoreResourceDefinition.Attribute.PROPERTIES, key);
+            context.addStep(getOperation, MapOperations.MAP_GET_HANDLER, context.getCurrentStage());
         };
-        OperationStepHandler writeHandler = new OperationStepHandler() {
-            @Override
-            public void execute(OperationContext context, ModelNode operation) {
-                PathAddress address = context.getCurrentAddress().getParent();
-                String key = context.getCurrentAddressValue();
-                String value = Operations.getAttributeValue(operation).asString();
-                ModelNode putOperation = Operations.createMapPutOperation(address, StoreResourceDefinition.Attribute.PROPERTIES, key, value);
-                context.addStep(putOperation, MapOperations.MAP_PUT_HANDLER, context.getCurrentStage());
-            }
+        OperationStepHandler writeHandler = (context, operation) -> {
+            PathAddress address = context.getCurrentAddress().getParent();
+            String key = context.getCurrentAddressValue();
+            String value = Operations.getAttributeValue(operation).asString();
+            ModelNode putOperation = Operations.createMapPutOperation(address, StoreResourceDefinition.Attribute.PROPERTIES, key, value);
+            context.addStep(putOperation, MapOperations.MAP_PUT_HANDLER, context.getCurrentStage());
         };
         registration.registerReadWriteAttribute(VALUE, readHandler, writeHandler);
     }

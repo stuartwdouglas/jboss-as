@@ -132,12 +132,9 @@ public class ChannelCommandDispatcherFactory implements CommandDispatcherFactory
                 if (context == null) return NoSuchService.INSTANCE;
                 @SuppressWarnings("unchecked")
                 Command<Object, Object> command = (Command<Object, Object>) unmarshaller.readObject();
-                Callable<Optional<Object>> task = new Callable<Optional<Object>>() {
-                    @Override
-                    public Optional<Object> call() throws Exception {
-                        // Wrap in an Optional, since command execution might return null
-                        return Optional.ofNullable(command.execute(context.orElse(null)));
-                    }
+                Callable<Optional<Object>> task = () -> {
+                    // Wrap in an Optional, since command execution might return null
+                    return Optional.ofNullable(command.execute(context.orElse(null)));
                 };
                 return this.executor.execute(task).orElse(Optional.of(NoSuchService.INSTANCE)).orElse(null);
             }

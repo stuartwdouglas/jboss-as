@@ -102,12 +102,7 @@ public class WeldEjbInjectionServices extends AbstractResourceInjectionServices 
         }
         if (!ejb.lookup().equals("")) {
             if (ejb.lookup().startsWith("ejb:")) {
-                return new ResourceReferenceFactory<Object>() {
-                    @Override
-                    public ResourceReference<Object> createResource() {
-                        return new SimpleResourceReference<Object>(doLookup(ejb.lookup(), null));
-                    }
-                };
+                return () -> new SimpleResourceReference<Object>(doLookup(ejb.lookup(), null));
             }
             return handleServiceLookup(ejb.lookup(), injectionPoint);
         } else {
@@ -117,12 +112,7 @@ public class WeldEjbInjectionServices extends AbstractResourceInjectionServices 
             } else {
 
                 final String proposedName = getEjbBindLocation(injectionPoint);
-                return new ResourceReferenceFactory<Object>() {
-                    @Override
-                    public ResourceReference<Object> createResource() {
-                        return new SimpleResourceReference<Object>(doLookup(proposedName, null));
-                    }
-                };
+                return () -> new SimpleResourceReference<Object>(doLookup(proposedName, null));
             }
         }
     }
@@ -215,28 +205,25 @@ public class WeldEjbInjectionServices extends AbstractResourceInjectionServices 
     }
 
     protected ResourceReferenceFactory<Object> createLazyResourceReferenceFactory(final ViewDescription viewDescription) {
-        return new ResourceReferenceFactory<Object>() {
-            @Override
-            public ResourceReference<Object> createResource() {
-                final ManagedReference instance;
-                try {
-                    final ServiceController<?> controller = serviceRegistry.getRequiredService(viewDescription.getServiceName());
-                    final ComponentView view = (ComponentView) controller.getValue();
-                    instance = view.createInstance();
-                    return new ResourceReference<Object>() {
-                        @Override
-                        public Object getInstance() {
-                            return instance.getInstance();
-                        }
+        return () -> {
+            final ManagedReference instance;
+            try {
+                final ServiceController<?> controller = serviceRegistry.getRequiredService(viewDescription.getServiceName());
+                final ComponentView view = (ComponentView) controller.getValue();
+                instance = view.createInstance();
+                return new ResourceReference<Object>() {
+                    @Override
+                    public Object getInstance() {
+                        return instance.getInstance();
+                    }
 
-                        @Override
-                        public void release() {
-                            instance.release();
-                        }
-                    };
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+                    @Override
+                    public void release() {
+                        instance.release();
+                    }
+                };
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
         };
     }

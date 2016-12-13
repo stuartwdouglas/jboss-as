@@ -96,11 +96,7 @@ public class SimpleSecurityManager implements ServerSecurityManager {
     private ISecurityManagement securityManagement = null;
 
     private PrivilegedAction<SecurityContext> securityContext() {
-        return new PrivilegedAction<SecurityContext>() {
-            public SecurityContext run() {
-                return SecurityContextAssociation.getSecurityContext();
-            }
-        };
+        return () -> SecurityContextAssociation.getSecurityContext();
     }
 
     private SecurityContext establishSecurityContext(final String securityDomain) {
@@ -451,12 +447,7 @@ public class SimpleSecurityManager implements ServerSecurityManager {
         if (System.getSecurityManager() == null) {
             return context.getSubjectInfo();
         }
-        return AccessController.doPrivileged(new PrivilegedAction<SubjectInfo>() {
-            @Override
-            public SubjectInfo run() {
-                return context.getSubjectInfo();
-            }
-        });
+        return AccessController.doPrivileged((PrivilegedAction<SubjectInfo>) () -> context.getSubjectInfo());
     }
 
     private Map<String, Set<String>> setSecurityRolesAssociation(Map<String, Set<String>> mappedRoles) {

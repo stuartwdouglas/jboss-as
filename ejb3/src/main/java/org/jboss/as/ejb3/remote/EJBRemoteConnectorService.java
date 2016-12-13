@@ -54,7 +54,6 @@ import org.jboss.msc.service.StartException;
 import org.jboss.msc.service.StopContext;
 import org.jboss.msc.value.InjectedValue;
 import org.jboss.remoting3.Channel;
-import org.jboss.remoting3.CloseHandler;
 import org.jboss.remoting3.Endpoint;
 import org.jboss.remoting3.MessageInputStream;
 import org.jboss.remoting3.MessageOutputStream;
@@ -181,12 +180,9 @@ public class EJBRemoteConnectorService implements Service<EJBRemoteConnectorServ
             final ChannelAssociation channelAssociation = new ChannelAssociation(channel);
 
             EjbLogger.REMOTE_LOGGER.tracef("Welcome %s to the %s channel", channel, EJB_CHANNEL_NAME);
-            channel.addCloseHandler(new CloseHandler<Channel>() {
-                @Override
-                public void handleClose(Channel closed, IOException exception) {
-                    // do nothing
-                    EjbLogger.REMOTE_LOGGER.tracef("channel %s closed", closed);
-                }
+            channel.addCloseHandler((closed, exception) -> {
+                // do nothing
+                EjbLogger.REMOTE_LOGGER.tracef("channel %s closed", closed);
             });
             // send the server version and supported marshalling types to the client
             try {
