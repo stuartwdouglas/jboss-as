@@ -35,6 +35,7 @@ import org.jboss.as.controller.PathElement;
 import org.jboss.as.controller.client.helpers.domain.DomainClient;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.Util;
+import org.jboss.as.ejb3.subsystem.EJB3Extension;
 import org.jboss.as.test.integration.domain.mixed.DomainAdjuster;
 import org.jboss.dmr.ModelNode;
 import org.wildfly.extension.elytron.ElytronExtension;
@@ -52,6 +53,7 @@ public class DomainAdjuster700 extends DomainAdjuster {
 
         removeHTTPSListener(profileAddress, list);
         list.addAll(removeElytron(profileAddress.append(SUBSYSTEM, ElytronExtension.SUBSYSTEM_NAME)));
+        list.addAll(adjustEjb3(profileAddress.append(SUBSYSTEM, EJB3Extension.SUBSYSTEM_NAME)));
 
         return list;
     }
@@ -80,5 +82,11 @@ public class DomainAdjuster700 extends DomainAdjuster {
         return list;
     }
 
+    private List<ModelNode> adjustEjb3(final PathAddress subsystem) throws Exception {
+        final List<ModelNode> list = new ArrayList<>();
+        list.add(
+                createRemoveOperation(subsystem.append("service","remote-http")));
+        return list;
+    }
 
 }

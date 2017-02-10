@@ -28,7 +28,7 @@
            xmlns:threads="urn:jboss:domain:threads:1.1"
            elementFormDefault="qualified"
            attributeFormDefault="unqualified"
-           version="4.0">
+           version="5.0">
 
     <xs:import namespace="urn:jboss:domain:threads:1.1" schemaLocation="jboss-as-threads_1_1.xsd"/>
 
@@ -51,6 +51,7 @@
             <xs:element name="async" type="asyncType" minOccurs="0" maxOccurs="1"/>
             <xs:element name="timer-service" type="timerServiceType" minOccurs="0" maxOccurs="1"/>
             <xs:element name="remote" type="remoteType" minOccurs="0" maxOccurs="1"/>
+            <xs:element name="remote-http" type="remoteHttpType" minOccurs="0" maxOccurs="1"/>
             <xs:element name="thread-pools" type="threadPoolsType" minOccurs="0" maxOccurs="1"/>
             <xs:element name="iiop" type="iiopType" minOccurs="0" maxOccurs="1"/>
             <xs:element name="in-vm-remote-interface-invocation" type="in-vm-remote-interface-invocationType"
@@ -97,6 +98,10 @@
         <xs:attribute name="thread-pool-name" type="xs:token" use="required"/>
         <xs:attribute name="cluster" type="xs:string" use="optional"/>
         <xs:attribute name="execute-in-worker" type="xs:boolean" use="optional" default="true"/>
+    </xs:complexType>
+
+    <xs:complexType name="remoteHttpType">
+        <xs:attribute name="thread-pool-name" type="xs:token" use="optional"/>
     </xs:complexType>
 
     <xs:complexType name="profilesType">
@@ -531,7 +536,6 @@
         </xs:annotation>
         <xs:attribute name="value" type="xs:string"/>
     </xs:complexType>
-
 
     <xs:complexType name="disable-default-ejb-permissionsType">
         <xs:annotation>

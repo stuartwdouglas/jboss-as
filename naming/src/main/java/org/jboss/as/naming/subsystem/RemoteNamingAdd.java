@@ -21,16 +21,17 @@
  */
 package org.jboss.as.naming.subsystem;
 
+import io.undertow.server.handlers.PathHandler;
 import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.naming.NamingStore;
 import org.jboss.as.naming.deployment.ContextNames;
+import org.jboss.as.naming.remote.HttpRemoteNamingServerService;
 import org.jboss.as.naming.remote.RemoteNamingServerService;
 import org.jboss.as.remoting.RemotingServices;
 import org.jboss.dmr.ModelNode;
 import org.jboss.msc.service.ServiceBuilder;
-import org.jboss.msc.service.ServiceController;
 import org.jboss.remoting3.Endpoint;
 import org.wildfly.naming.client.remote.RemoteNamingService;
 
@@ -42,8 +43,10 @@ import org.wildfly.naming.client.remote.RemoteNamingService;
 public class RemoteNamingAdd extends AbstractAddStepHandler {
 
     static final RemoteNamingAdd INSTANCE = new RemoteNamingAdd();
+    private static final String UNDERTOW_HTTP_INVOKER_CAPABILITY_NAME = "org.wildfly.undertow.http-invoker";
 
     private RemoteNamingAdd() {
+        super(RemoteNamingResourceDefinition.REMOTE_NAMING_CAPABILITY);
     }
 
     @Override
@@ -59,8 +62,15 @@ public class RemoteNamingAdd extends AbstractAddStepHandler {
         final ServiceBuilder<RemoteNamingService> builder = context.getServiceTarget().addService(RemoteNamingServerService.SERVICE_NAME, remoteNamingServerService);
         builder.addDependency(RemotingServices.SUBSYSTEM_ENDPOINT, Endpoint.class, remoteNamingServerService.getEndpointInjector())
                 .addDependency(ContextNames.EXPORTED_CONTEXT_SERVICE_NAME, NamingStore.class, remoteNamingServerService.getNamingStoreInjector())
-                .setInitialMode(ServiceController.Mode.ACTIVE)
                 .install();
+
+        if(context.hasOptionalCapability(UNDERTOW_HTTP_INVOKER_CAPABILITY_NAME, RemoteNamingResourceDefinition.REMOTE_NAMING_CAPABILITY.getName(), null)) {
+            HttpRemoteNamingServerService httpRemoteNamingServerService = new HttpRemoteNamingServerService();
+            context.getServiceTarget().addService(HttpRemoteNamingServerService.SERVICE_NAME, httpRemoteNamingServerService)
+                    .addDependency(context.getCapabilityServiceName(UNDERTOW_HTTP_INVOKER_CAPABILITY_NAME, PathHandler.class), PathHandler.class, httpRemoteNamingServerService.getPathHandlerInjectedValue())
+                    .addDependency(ContextNames.EXPORTED_CONTEXT_SERVICE_NAME, NamingStore.class, httpRemoteNamingServerService.getNamingStore())
+                    .install();
+        }
     }
 
 

@@ -290,6 +290,9 @@ public class EJB3SubsystemRootResourceDefinition extends SimpleResourceDefinitio
         // subsystem=ejb3/service=remote
         subsystemRegistration.registerSubModel(EJB3RemoteResourceDefinition.INSTANCE);
 
+        // subsystem=ejb3/service=remote-http
+        subsystemRegistration.registerSubModel(EJB3RemoteHttpResourceDefinition.INSTANCE);
+
         // subsystem=ejb3/service=async
         subsystemRegistration.registerSubModel(EJB3AsyncResourceDefinition.INSTANCE);
 
@@ -403,6 +406,7 @@ public class EJB3SubsystemRootResourceDefinition extends SimpleResourceDefinitio
         builder.getAttributeBuilder().setDiscard(new DiscardAttributeChecker.DiscardAttributeValueChecker(new ModelNode(false)), EJB3SubsystemRootResourceDefinition.ENABLE_GRACEFUL_TXN_SHUTDOWN);
         builder.getAttributeBuilder().addRejectCheck(RejectAttributeChecker.DEFINED, EJB3SubsystemRootResourceDefinition.ENABLE_GRACEFUL_TXN_SHUTDOWN);
 
+        builder.rejectChildResource(EJB3SubsystemModel.REMOTE_HTTP_SERVICE_PATH);
         TransformationDescription.Tools.register(builder.build(), subsystemRegistration, VERSION_4_0_0);
     }
 

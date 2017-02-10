@@ -191,6 +191,14 @@ public class EJB3SubsystemXMLPersister implements XMLElementWriter<SubsystemMars
 
             writer.writeEndElement();
         }
+        // write the remote-http element
+        if (model.hasDefined(SERVICE) && model.get(SERVICE).hasDefined(REMOTE_HTTP)) {
+            ModelNode remoteHttp = model.get(SERVICE).get(REMOTE_HTTP);
+            writer.writeStartElement(EJB3SubsystemXMLElement.REMOTE_HTTP.getLocalName());
+            EJB3RemoteHttpResourceDefinition.THREAD_POOL_NAME.marshallAsAttribute(remoteHttp, false, writer);
+            writer.writeEndElement();
+        }
+
 
         // thread-pools
         if (model.hasDefined(THREAD_POOL)) {

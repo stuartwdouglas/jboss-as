@@ -99,6 +99,8 @@ public enum EJB3SubsystemXMLElement {
     DELIVERY_GROUPS("delivery-groups"),
     DELIVERY_GROUP("delivery-group"),
 
+    REMOTE_HTTP(EJB3SubsystemModel.REMOTE_HTTP),
+
     // Elytron integration
     APPLICATION_SECURITY_DOMAIN("application-security-domain"),
     APPLICATION_SECURITY_DOMAINS("application-security-domains"),

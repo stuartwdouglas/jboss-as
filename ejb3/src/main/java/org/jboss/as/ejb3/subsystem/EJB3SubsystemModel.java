@@ -94,6 +94,7 @@ public interface EJB3SubsystemModel {
     String OUTBOUND_CONNECTION_REF= "outbound-connection-ref";
     String CONNECT_TIMEOUT= "connect-timeout";
     String CLIENT_MAPPINGS_CLUSTER_NAME = "cluster";
+    String REMOTE_HTTP = "remote-http";
 
     String TIMER = "timer";
     String TIMER_SERVICE = "timer-service";
@@ -137,6 +138,7 @@ public interface EJB3SubsystemModel {
     String STATIC_URLS = "static-urls";
 
     PathElement REMOTE_SERVICE_PATH = PathElement.pathElement(SERVICE, REMOTE);
+    PathElement REMOTE_HTTP_SERVICE_PATH = PathElement.pathElement(SERVICE, REMOTE_HTTP);
     PathElement ASYNC_SERVICE_PATH = PathElement.pathElement(SERVICE, ASYNC);
     PathElement TIMER_PATH = PathElement.pathElement(TIMER);
     PathElement TIMER_SERVICE_PATH = PathElement.pathElement(SERVICE, TIMER_SERVICE);
@@ -155,6 +157,7 @@ public interface EJB3SubsystemModel {
     String REFERENCING_DEPLOYMENTS = "referencing-deployments";
     String SECURITY_DOMAIN = "security-domain";
     String ENABLE_JACC = "enable-jacc";
+    String HTTP_AUTHENTICATION_FACTORY = "http-authentication-factory";
 
     PathElement IDENTITY_PATH = PathElement.pathElement(SERVICE, IDENTITY);
 }

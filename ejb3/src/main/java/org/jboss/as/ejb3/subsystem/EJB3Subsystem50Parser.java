@@ -34,6 +34,7 @@ import static org.jboss.as.controller.parsing.ParseUtils.unexpectedAttribute;
 import static org.jboss.as.controller.parsing.ParseUtils.unexpectedElement;
 import static org.jboss.as.ejb3.subsystem.EJB3SubsystemModel.APPLICATION_SECURITY_DOMAIN;
 import static org.jboss.as.ejb3.subsystem.EJB3SubsystemModel.IDENTITY;
+import static org.jboss.as.ejb3.subsystem.EJB3SubsystemModel.REMOTE_HTTP;
 import static org.jboss.as.ejb3.subsystem.EJB3SubsystemModel.SERVICE;
 
 import java.util.Collections;
@@ -54,6 +55,8 @@ import org.jboss.staxmapper.XMLExtendedStreamReader;
  *
  * @author <a href="mailto:darran.lofthouse@jboss.com">Darran Lofthouse</a>
  * @author <a href="mailto:tadamski@redhat.com">Tomasz Adamski</a>
+ * Parser for ejb3:5.0 namespace.
+ *
  */
 public class EJB3Subsystem50Parser extends EJB3Subsystem40Parser {
 
@@ -70,6 +73,10 @@ public class EJB3Subsystem50Parser extends EJB3Subsystem40Parser {
         switch (element) {
             case APPLICATION_SECURITY_DOMAINS: {
                 parseApplicationSecurityDomains(reader, operations);
+                break;
+            }
+            case REMOTE_HTTP: {
+                parseRemoteHttp(reader, operations);
                 break;
             }
             case IDENTITY: {
@@ -105,7 +112,7 @@ public class EJB3Subsystem50Parser extends EJB3Subsystem40Parser {
                 }
             }
         }
-        if (! applicationSecurityDomainFound) {
+        if (!applicationSecurityDomainFound) {
             throw missingRequiredElement(reader, Collections.singleton(EJB3SubsystemXMLElement.APPLICATION_SECURITY_DOMAIN.getLocalName()));
         }
     }
@@ -138,6 +145,26 @@ public class EJB3Subsystem50Parser extends EJB3Subsystem40Parser {
         requireNoContent(reader);
         final PathAddress address = this.getEJB3SubsystemAddress().append(PathElement.pathElement(APPLICATION_SECURITY_DOMAIN, applicationSecurityDomain));
         operation.get(OP_ADDR).set(address.toModelNode());
+        operations.add(operation);
+    }
+
+    protected void parseRemoteHttp(XMLExtendedStreamReader reader, List<ModelNode> operations) throws XMLStreamException {
+        final int count = reader.getAttributeCount();
+        final PathAddress ejb3RemoteHttpServiceAddress = SUBSYSTEM_PATH.append(SERVICE, REMOTE_HTTP);
+        ModelNode operation = Util.createAddOperation(ejb3RemoteHttpServiceAddress);
+        for (int i = 0; i < count; i++) {
+            requireNoNamespaceAttribute(reader, i);
+            final String value = reader.getAttributeValue(i);
+            final EJB3SubsystemXMLAttribute attribute = EJB3SubsystemXMLAttribute.forName(reader.getAttributeLocalName(i));
+            switch (attribute) {
+                case THREAD_POOL_NAME:
+                    EJB3RemoteHttpResourceDefinition.THREAD_POOL_NAME.parseAndSetParameter(value, operation, reader);
+                    break;
+                default:
+                    throw unexpectedAttribute(reader, i);
+            }
+        }
+        requireNoContent(reader);
         operations.add(operation);
     }
 

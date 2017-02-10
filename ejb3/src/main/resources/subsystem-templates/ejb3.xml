@@ -36,6 +36,7 @@
                <option name="MAX_OUTBOUND_MESSAGES" value="1234" type="remoting"/>
            </channel-creation-options>
        </remote>
+       <remote-http/>
        <thread-pools>
            <thread-pool name="default">
                <max-threads count="10"/>
