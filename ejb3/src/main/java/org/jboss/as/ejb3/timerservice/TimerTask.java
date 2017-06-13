@@ -100,41 +100,41 @@ public class TimerTask<T extends TimerImpl> implements Runnable {
                 Date now = new Date();
                 EJB3_TIMER_LOGGER.debugf("Timer task invoked at: %s for timer %s", now, timer);
 
-                // If a retry thread is in progress, we don't want to allow another
-                // interval to execute until the retry is complete. See JIRA-1926.
-                if (timer.isInRetry()) {
-                    EJB3_TIMER_LOGGER.skipInvokeTimeoutDuringRetry(timer, now);
-                    // compute the next timeout, See JIRA AS7-2995.
-                    timer.setNextTimeout(calculateNextTimeout(timer));
-                    timerService.persistTimer(timer, false);
-                    scheduleTimeoutIfRequired(timer);
-                    return;
-                }
-
-                // Check whether the timer is running local
-                // If the recurring timer running longer than the interval is, we don't want to allow another
-                // execution until it is complete. See JIRA AS7-3119
-                if (timer.getState() == TimerState.IN_TIMEOUT || timer.getState() == TimerState.RETRY_TIMEOUT) {
-                    EJB3_TIMER_LOGGER.skipOverlappingInvokeTimeout(timer, now);
-                    timer.setNextTimeout(this.calculateNextTimeout(timer));
-                    timerService.persistTimer(timer, false);
-                    scheduleTimeoutIfRequired(timer);
-                    return;
-                }
-
-                // Check whether we want to run the timer
-                if (!timerService.shouldRun(timer)) {
-                    EJB3_TIMER_LOGGER.debugf("Skipping execution of timer for %s as it is being run on another node or the execution is suppressed by configuration", timer.getTimedObjectId());
-                    timer.setNextTimeout(calculateNextTimeout(timer));
-                    scheduleTimeoutIfRequired(timer);
-                    return;
-                }
-
-                //we lock the timer for this check, because if a cancel is in progress then
-                //we do not want to do the isActive check, but wait for the cancelling transaction to finish
-                //one way or another
                 timer.lock();
                 try {
+                    // If a retry thread is in progress, we don't want to allow another
+                    // interval to execute until the retry is complete. See JIRA-1926.
+                    if (timer.isInRetry()) {
+                        EJB3_TIMER_LOGGER.skipInvokeTimeoutDuringRetry(timer, now);
+                        // compute the next timeout, See JIRA AS7-2995.
+                        timer.setNextTimeout(calculateNextTimeout(timer));
+                        timerService.persistTimer(timer, false);
+                        scheduleTimeoutIfRequired(timer);
+                        return;
+                    }
+
+                    // Check whether the timer is running local
+                    // If the recurring timer running longer than the interval is, we don't want to allow another
+                    // execution until it is complete. See JIRA AS7-3119
+                    if (timer.getState() == TimerState.IN_TIMEOUT || timer.getState() == TimerState.RETRY_TIMEOUT) {
+                        EJB3_TIMER_LOGGER.skipOverlappingInvokeTimeout(timer, now);
+                        timer.setNextTimeout(this.calculateNextTimeout(timer));
+                        timerService.persistTimer(timer, false);
+                        scheduleTimeoutIfRequired(timer);
+                        return;
+                    }
+
+                    // Check whether we want to run the timer
+                    if (!timerService.shouldRun(timer)) {
+                        EJB3_TIMER_LOGGER.debugf("Skipping execution of timer for %s as it is being run on another node or the execution is suppressed by configuration", timer.getTimedObjectId());
+                        timer.setNextTimeout(calculateNextTimeout(timer));
+                        scheduleTimeoutIfRequired(timer);
+                        return;
+                    }
+
+                    //we lock the timer for this check, because if a cancel is in progress then
+                    //we do not want to do the isActive check, but wait for the cancelling transaction to finish
+                    //one way or another
                     if (!timer.isActive()) {
                         EJB3_TIMER_LOGGER.debug("Timer is not active, skipping this scheduled execution at: " + now + "for " + timer);
                         return;
