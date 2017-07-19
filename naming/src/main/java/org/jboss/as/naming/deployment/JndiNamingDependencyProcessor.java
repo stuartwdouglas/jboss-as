@@ -21,7 +21,10 @@
  */
 package org.jboss.as.naming.deployment;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.jboss.as.controller.capability.CapabilityServiceSupport;
 import org.jboss.as.naming.service.NamingService;
@@ -30,6 +33,7 @@ import org.jboss.as.server.deployment.DeploymentPhaseContext;
 import org.jboss.as.server.deployment.DeploymentUnit;
 import org.jboss.as.server.deployment.DeploymentUnitProcessingException;
 import org.jboss.as.server.deployment.DeploymentUnitProcessor;
+import org.jboss.msc.service.Service;
 import org.jboss.msc.service.ServiceBuilder;
 import org.jboss.msc.service.ServiceName;
 
@@ -46,6 +50,16 @@ public class JndiNamingDependencyProcessor implements DeploymentUnitProcessor {
     private static final ServiceName JNDI_DEPENDENCY_SERVICE = ServiceName.of("jndiDependencyService");
 
 
+    private static final ServiceName JNDI_DEPENDENCY_INDIRECTION_SERVICE = ServiceName.of("jndiDependencyIndirectionService");
+
+    /**
+     * MSC has a limit of at most 16383 dependencies. In some situations we can have more that this, so we create an intermediate dependency service
+     * for every 10000 dependencies.
+     *
+     * This situation mostly happens when there is a very large number of EJB's in a deployment.
+     */
+    private static final int MAX_DEPENDENCIES = 10000;
+
     @Override
     public void deploy(final DeploymentPhaseContext phaseContext) throws DeploymentUnitProcessingException {
 
@@ -56,13 +70,33 @@ public class JndiNamingDependencyProcessor implements DeploymentUnitProcessor {
         //not shut down before the deployment is undeployed when the container is shut down
         phaseContext.addToAttachmentList(Attachments.NEXT_PHASE_DEPS, namingStoreServiceName);
 
-        List<ServiceName> dependencies = deploymentUnit.getAttachmentList(Attachments.JNDI_DEPENDENCIES);
+        Set<ServiceName> dependencies = new HashSet<>(deploymentUnit.getAttachmentList(Attachments.JNDI_DEPENDENCIES));
+        if(deploymentUnit.getParent() != null) {
+            dependencies.addAll(deploymentUnit.getParent().getAttachment(Attachments.JNDI_DEPENDENCIES));
+        }
         final ServiceName serviceName = serviceName(deploymentUnit.getServiceName());
         final ServiceBuilder<?> serviceBuilder = phaseContext.getServiceTarget().addService(serviceName, new RuntimeBindReleaseService());
-        serviceBuilder.addDependencies(dependencies);
-        if(deploymentUnit.getParent() != null) {
-            serviceBuilder.addDependencies(deploymentUnit.getParent().getAttachment(Attachments.JNDI_DEPENDENCIES));
+        List<ServiceName> indirectDependencies = new ArrayList<>();
+        int i = 0, count = 0;
+        ServiceName indirect = null;
+        ServiceBuilder<Void> indirectBuilder = null;
+        for(ServiceName dep : dependencies) {
+            if(i % MAX_DEPENDENCIES == 0) {
+                if(indirectBuilder != null) {
+                    indirectBuilder.install();
+                }
+                indirect = serviceName.append(JNDI_DEPENDENCY_INDIRECTION_SERVICE).append(Integer.toString(count++));
+                indirectBuilder = phaseContext.getServiceTarget().addService(indirect, Service.NULL);
+                indirectDependencies.add(indirect);
+            }
+            indirectBuilder.addDependency(dep);
+            ++i;
         }
+        if(indirectBuilder != null) {
+            indirectBuilder.install();
+        }
+        serviceBuilder.addDependencies(indirectDependencies);
+
         serviceBuilder.addDependency(namingStoreServiceName);
         serviceBuilder.install();
     }
