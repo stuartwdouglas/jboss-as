@@ -58,7 +58,7 @@ public class ServletResourceManager implements ResourceManager {
             this.externalOverlays = new ResourceManager[externalOverlays.size()];
             for (int i = 0; i < externalOverlays.size(); ++i) {
                 String path = externalOverlays.get(i);
-                PathResourceManager pr = new PathResourceManager(Paths.get(path), TRANSFER_MIN_SIZE, true, followSymlink, !disableFileWatchService);
+                PathResourceManager pr = new PathResourceManager(Paths.get(path).normalize(), TRANSFER_MIN_SIZE, true, followSymlink, !disableFileWatchService);
                 this.externalOverlays[i] = pr;
             }
         }
