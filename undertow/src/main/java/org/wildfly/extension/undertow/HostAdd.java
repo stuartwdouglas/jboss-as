@@ -95,6 +95,7 @@ class HostAdd extends AbstractAddStepHandler {
         final ServiceBuilder<Host> builder = context.getCapabilityServiceTarget().addCapability(HostDefinition.HOST_CAPABILITY, service)
                 .addCapabilityRequirement(Capabilities.CAPABILITY_SERVER, Server.class, service.getServerInjection(), serverName)
                 .addCapabilityRequirement(Capabilities.CAPABILITY_UNDERTOW, UndertowService.class, service.getUndertowService())
+                .addCapabilityRequirement(Capabilities.CAPABILITY_HANDLER_WRAPPER, HandlerWrapperService.class, service.getHandlerWrapperServiceInjectedValue())
                 .addDependency(SuspendController.SERVICE_NAME, SuspendController.class, service.getSuspendControllerInjectedValue())
                 .addDependency(ControlledProcessStateService.SERVICE_NAME, ControlledProcessStateService.class, service.getControlledProcessStateServiceInjectedValue());
 

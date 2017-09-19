@@ -22,6 +22,7 @@
 
 package org.wildfly.extension.undertow;
 
+import static org.wildfly.extension.undertow.Capabilities.CAPABILITY_HANDLER_WRAPPER;
 import static org.wildfly.extension.undertow.Capabilities.CAPABILITY_HTTP_INVOKER;
 
 import java.util.Arrays;
@@ -59,6 +60,9 @@ class UndertowRootDefinition extends PersistentResourceDefinition {
 
     static final RuntimeCapability<Void> HTTP_INVOKER_RUNTIME_CAPABILITY =
             RuntimeCapability.Builder.of(CAPABILITY_HTTP_INVOKER, false, PathHandler.class)
+                    .build();
+    static final RuntimeCapability<Void> HANDLER_WRAPPER_RUNTIME_CAPABILITY =
+            RuntimeCapability.Builder.of(CAPABILITY_HANDLER_WRAPPER, false, HandlerWrapperService.class)
                     .build();
 
     protected static final SimpleAttributeDefinition DEFAULT_SERVLET_CONTAINER =
@@ -137,6 +141,7 @@ class UndertowRootDefinition extends PersistentResourceDefinition {
         super.registerCapabilities(resourceRegistration);
         resourceRegistration.registerCapability(UNDERTOW_CAPABILITY);
         resourceRegistration.registerCapability(HTTP_INVOKER_RUNTIME_CAPABILITY);
+        resourceRegistration.registerCapability(HANDLER_WRAPPER_RUNTIME_CAPABILITY);
     }
 
     @Override

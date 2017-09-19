@@ -86,6 +86,8 @@
         <version.com.fasterxml.jackson>2.8.9</version.com.fasterxml.jackson>
         <version.com.github.relaxng>2011.1</version.com.github.relaxng>
         <version.com.google.guava>20.0</version.com.google.guava>
+        <version.com.google.protobuf>3.3.1</version.com.google.protobuf>
+        <version.com.google.instrumentation>0.4.3</version.com.google.instrumentation>
         <version.com.h2database>1.4.193</version.com.h2database>
         <version.com.microsoft.azure>5.0.0</version.com.microsoft.azure>
         <version.com.sun.faces>2.2.13.SP4</version.com.sun.faces>
@@ -103,6 +105,7 @@
         <version.groovy-all>2.4.7</version.groovy-all>
         <version.httpunit>1.7.2</version.httpunit>
         <version.io.netty>4.1.9.Final</version.io.netty>
+        <version.io.undertow.grpc>1.0.0.Alpha1-SNAPSHOT</version.io.undertow.grpc>
         <version.io.undertow.jastow>2.0.2.Final</version.io.undertow.jastow>
         <version.io.undertow.js>1.0.2.Final</version.io.undertow.js>
         <version.javax.activation>1.1.1</version.javax.activation>
@@ -265,6 +268,7 @@
         <!-- Location relative to root that will be used for the cached legacy classpaths used by subsystem-test and core-model-test-->
         <org.jboss.model.test.classpath.cache>target/model-test-classpath-cache</org.jboss.model.test.classpath.cache>
         <version.com.github.spullara.mustache>0.9.4</version.com.github.spullara.mustache>
+        <version.io.grpc>1.5.0</version.io.grpc>
     </properties>
 
     <modules>
@@ -282,6 +286,7 @@
         <module>ee</module>
         <module>ejb3</module>
         <module>feature-pack</module>
+        <module>grpc</module>
         <module>iiop-openjdk</module>
         <module>jaxrs</module>
         <module>jdr</module>
@@ -1135,6 +1140,18 @@
 
             <dependency>
                 <groupId>org.wildfly</groupId>
+                <artifactId>wildfly-grpc</artifactId>
+                <version>${project.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>*</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>org.wildfly</groupId>
                 <artifactId>wildfly-iiop-openjdk</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1494,6 +1511,32 @@
                     <exclusion>
                         <groupId>com.google.code.findbugs</groupId>
                         <artifactId>jsr305</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${version.com.google.protobuf}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.google.instrumentation</groupId>
+                <artifactId>instrumentation-api</artifactId>
+                <version>${version.com.google.instrumentation}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.grpc</groupId>
+                        <artifactId>grpc-context</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.google.errorprone</groupId>
+                        <artifactId>error_prone_annotations</artifactId>
                     </exclusion>
                 </exclusions>
             </dependency>
@@ -4739,9 +4782,163 @@
              </dependency>
 
             <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-core</artifactId>
+                <version>${version.io.grpc}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.errorprone</groupId>
+                        <artifactId>error_prone_annotations</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.google.instrumentation</groupId>
+                        <artifactId>instrumentation-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.grpc</groupId>
+                        <artifactId>grpc-context</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-context</artifactId>
+                <version>${version.io.grpc}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.errorprone</groupId>
+                        <artifactId>error_prone_annotations</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.google.instrumentation</groupId>
+                        <artifactId>instrumentation-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.grpc</groupId>
+                        <artifactId>grpc-context</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.google.code.findbugs</groupId>
+                        <artifactId>jsr305</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-protobuf</artifactId>
+                <version>${version.io.grpc}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.protobuf</groupId>
+                        <artifactId>protobuf-java</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.google.protobuf</groupId>
+                        <artifactId>protobuf-java-util</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.google.api.grpc</groupId>
+                        <artifactId>proto-google-common-protos</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.grpc</groupId>
+                        <artifactId>grpc-protobuf-lite</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-protobuf-lite</artifactId>
+                <version>${version.io.grpc}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.protobuf</groupId>
+                        <artifactId>protobuf-java</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.google.protobuf</groupId>
+                        <artifactId>protobuf-java-lite</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.google.protobuf</groupId>
+                        <artifactId>protobuf-lite</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.google.protobuf</groupId>
+                        <artifactId>protobuf-java-util</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.google.api.grpc</groupId>
+                        <artifactId>proto-google-common-protos</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.grpc</groupId>
+                        <artifactId>grpc-protobuf</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>io.grpc</groupId>
+                <artifactId>grpc-stub</artifactId>
+                <version>${version.io.grpc}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.google.protobuf</groupId>
+                        <artifactId>protobuf-java</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.grpc</groupId>
+                        <artifactId>grpc-protobuf</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.grpc</groupId>
+                        <artifactId>grpc-core</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-all</artifactId>
                 <version>${version.io.netty}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.undertow.grpc</groupId>
+                <artifactId>undertow-grpc</artifactId>
+                <version>${version.io.undertow.grpc}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>io.grpc</groupId>
+                        <artifactId>grpc-protobuf</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.grpc</groupId>
+                        <artifactId>grpc-core</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.grpc</groupId>
+                        <artifactId>grpc-stub</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>io.undertow</groupId>
+                        <artifactId>undertow-core</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.jboss.xnio</groupId>
+                        <artifactId>xnio-api</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.jboss.xnio</groupId>
+                        <artifactId>xnio-nio</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>

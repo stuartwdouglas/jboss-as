@@ -31,7 +31,7 @@ import org.jboss.msc.service.StopContext;
 import io.undertow.server.handlers.PathHandler;
 
 /**
- * Service that exposes the Wildfly
+ * Service that exposes the Wildfly HTTP invoker
  *
  * @author Stuart Douglas
  */

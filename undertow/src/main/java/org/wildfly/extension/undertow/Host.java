@@ -37,6 +37,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 import io.undertow.Handlers;
 import io.undertow.security.api.AuthenticationMechanism;
+import io.undertow.server.HandlerWrapper;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.server.handlers.PathHandler;
@@ -78,9 +79,12 @@ public class Host implements Service<Host>, FilterLocation {
     private final InjectedValue<ControlledProcessStateService> controlledProcessStateServiceInjectedValue = new InjectedValue<>();
     private volatile GateHandlerWrapper gateHandlerWrapper;
     private final DefaultResponseCodeHandler defaultHandler;
+    private final List<HandlerWrapper> outerWrappers = new CopyOnWriteArrayList<>();
 
     private final InjectedValue<SuspendController> suspendControllerInjectedValue = new InjectedValue<>();
+    private final InjectedValue<HandlerWrapperService> handlerWrapperServiceInjectedValue = new InjectedValue<>();
 
+    private final Runnable handlerWrapperNotifier = () -> rootHandler = null;
 
     ServerActivity suspendListener = new ServerActivity() {
         @Override
@@ -127,6 +131,7 @@ public class Host implements Service<Host>, FilterLocation {
 
     @Override
     public void start(StartContext context) throws StartException {
+        handlerWrapperServiceInjectedValue.getValue().addNotifier(handlerWrapperNotifier);
         suspendControllerInjectedValue.getValue().registerActivity(suspendListener);
         if(suspendControllerInjectedValue.getValue().getState() == SuspendController.State.RUNNING) {
             defaultHandler.setSuspended(false);
@@ -157,6 +162,10 @@ public class Host implements Service<Host>, FilterLocation {
         AccessLogService logService = accessLogService;
         HttpHandler rootHandler = pathHandler;
 
+        for(HandlerWrapper wrapper : handlerWrapperServiceInjectedValue.getValue().getHandlerWrappers()) {
+            rootHandler = wrapper.wrap(rootHandler);
+        }
+
         ArrayList<UndertowFilter> filters = new ArrayList<>(this.filters);
 
         //handle options * requests
@@ -173,6 +182,9 @@ public class Host implements Service<Host>, FilterLocation {
         if(gateHandlerWrapper != null) {
             rootHandler = gateHandlerWrapper.wrap(rootHandler);
         }
+        for(HandlerWrapper w : outerWrappers) {
+            rootHandler = w.wrap(rootHandler);
+        }
         return rootHandler;
     }
 
@@ -186,6 +198,18 @@ public class Host implements Service<Host>, FilterLocation {
         }
         UndertowLogger.ROOT_LOGGER.hostStopping(name);
         suspendControllerInjectedValue.getValue().unRegisterActivity(suspendListener);
+        outerWrappers.clear();
+        handlerWrapperServiceInjectedValue.getValue().removeNotifier(handlerWrapperNotifier);
+    }
+
+    public void addHandlerWrapper(HandlerWrapper wrapper) {
+        outerWrappers.add(wrapper);
+        rootHandler = null;
+    }
+
+    public void removeHandleWrapper(HandlerWrapper wrapper) {
+        outerWrappers.remove(wrapper);
+        rootHandler = null;
     }
 
     @Override
@@ -208,6 +232,10 @@ public class Host implements Service<Host>, FilterLocation {
 
     protected InjectedValue<UndertowService> getUndertowService() {
         return undertowService;
+    }
+
+    InjectedValue<HandlerWrapperService> getHandlerWrapperServiceInjectedValue() {
+        return handlerWrapperServiceInjectedValue;
     }
 
     public Set<String> getAllAliases() {

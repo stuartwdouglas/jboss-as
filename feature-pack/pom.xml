@@ -219,6 +219,15 @@
         </dependency>
 
         <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.instrumentation</groupId>
+            <artifactId>instrumentation-api</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
         </dependency>
@@ -1096,6 +1105,28 @@
             </exclusions>
         </dependency>
 
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-context</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-protobuf-lite</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-stub</artifactId>
+        </dependency>
         <!--
             Netty 4
             io.netty:netty-all is for Netty 4.x versions
@@ -1103,6 +1134,11 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>io.undertow.grpc</groupId>
+            <artifactId>undertow-grpc</artifactId>
         </dependency>
 
         <dependency>
@@ -2576,11 +2612,20 @@
             </exclusions>
         </dependency>
 
-
-
         <dependency>
             <groupId>org.wildfly</groupId>
             <artifactId>wildfly-ejb3</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.wildfly</groupId>
+            <artifactId>wildfly-grpc</artifactId>
             <exclusions>
                 <exclusion>
                     <groupId>*</groupId>

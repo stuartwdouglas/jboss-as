@@ -22,6 +22,7 @@
 
 package org.wildfly.extension.undertow;
 
+import static org.wildfly.extension.undertow.UndertowRootDefinition.HANDLER_WRAPPER_RUNTIME_CAPABILITY;
 import static org.wildfly.extension.undertow.UndertowRootDefinition.HTTP_INVOKER_RUNTIME_CAPABILITY;
 
 import java.util.function.Predicate;
@@ -147,6 +148,10 @@ class UndertowSubsystemAdd extends AbstractBoottimeAddStepHandler {
 
         context.getCapabilityServiceTarget()
                 .addCapability(HTTP_INVOKER_RUNTIME_CAPABILITY, new RemoteHttpInvokerService())
+                .install();
+
+        context.getCapabilityServiceTarget()
+                .addCapability(HANDLER_WRAPPER_RUNTIME_CAPABILITY, new HandlerWrapperService())
                 .install();
     }
 

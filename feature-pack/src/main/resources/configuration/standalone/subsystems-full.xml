@@ -11,6 +11,7 @@
         <subsystem supplement="full">ee.xml</subsystem>
         <subsystem supplement="full">ejb3.xml</subsystem>
         <subsystem supplement="standalone-wildfly">elytron.xml</subsystem>
+        <subsystem>grpc.xml</subsystem>
         <subsystem>io.xml</subsystem>
         <subsystem>infinispan.xml</subsystem>
         <subsystem>iiop-openjdk.xml</subsystem>
