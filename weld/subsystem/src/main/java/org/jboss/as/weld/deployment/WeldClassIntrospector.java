@@ -11,6 +11,7 @@ import javax.enterprise.inject.Any;
 import javax.enterprise.inject.spi.Bean;
 import javax.enterprise.inject.spi.BeanManager;
 import javax.enterprise.inject.spi.InjectionTarget;
+import javax.enterprise.util.AnnotationLiteral;
 
 import org.jboss.as.ee.component.EEClassIntrospector;
 import org.jboss.as.naming.ManagedReference;
@@ -40,6 +41,12 @@ public class WeldClassIntrospector implements EEClassIntrospector, Service<EECla
     private final InjectedValue<BeanManager> beanManager = new InjectedValue<>();
 
     private final ConcurrentMap<Class<?>, InjectionTarget<?>> injectionTargets = new ConcurrentHashMap<>();
+
+    private static class AnyLiteral extends AnnotationLiteral<Any> implements Any {
+
+    }
+
+    private static final AnyLiteral ANY_LITERAL = new AnyLiteral();
 
     public static void install(final DeploymentUnit deploymentUnit, final ServiceTarget serviceTarget) {
         final WeldClassIntrospector introspector = new WeldClassIntrospector();
@@ -77,7 +84,7 @@ public class WeldClassIntrospector implements EEClassIntrospector, Service<EECla
         }
         final BeanManagerImpl beanManager = BeanManagerProxy.unwrap(this.beanManager.getValue());
         Bean<?> bean = null;
-        Set<Bean<?>> beans = new HashSet<>(beanManager.getBeans(clazz, Any.Literal.INSTANCE));
+        Set<Bean<?>> beans = new HashSet<>(beanManager.getBeans(clazz, ANY_LITERAL));
         Iterator<Bean<?>> it = beans.iterator();
         //we may have resolved some sub-classes
         //go through and remove them from the bean set
