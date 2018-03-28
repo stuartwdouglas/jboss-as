@@ -269,6 +269,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.fakereplace</groupId>
+            <artifactId>fakereplace</artifactId>
+            <version>1.0.0.Alpha6-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-core</artifactId>
             <exclusions>
@@ -467,11 +473,6 @@
                     <artifactId>*</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>jboss.jaxbintros</groupId>
-            <artifactId>jboss-jaxb-intros</artifactId>
         </dependency>
 
         <dependency>
