@@ -24,6 +24,7 @@ package org.jboss.as.test.integration.ejb.stateful.passivation;
 
 import static org.jboss.as.test.shared.integration.ejb.security.PermissionUtils.createPermissionsXmlAsset;
 
+import java.security.SecureRandom;
 import java.util.PropertyPermission;
 
 import javax.ejb.NoSuchEJBException;
@@ -67,6 +68,25 @@ public class PassivationTestCase {
         return jar;
     }
 
+    interface TestCase {
+        void run() throws Exception;
+    }
+
+    @Test
+    public void runThemAll() throws Exception {
+        SecureRandom r = new SecureRandom();
+        TestCase[] tests = {this::testPassivationMaxSize, this::testPassivationDDOverrideBean, this::testPassivationDisabledBean, this::testPassivationEnabledBean, this::testPassivationFailure};
+        for(int i = 0; i < 10000; ++i) {
+            try {
+                tests[r.nextInt(5)].run();
+            } catch (Throwable e) {
+                throw new RuntimeException("Failed on run " + i, e);
+            }
+        }
+
+
+    }
+
     @Test
     public void testPassivationMaxSize() throws Exception {
         PassivationInterceptor.reset();
@@ -104,6 +124,7 @@ public class PassivationTestCase {
                 Assert.assertTrue(remote2.isPersistenceContextSame());
                 Assert.assertEquals("Super", remote2.getSuperEmployee().getName());
                 Assert.assertEquals("bar", remote2.getManagedBeanMessage());
+                remote2.removeEntity(1);
             }
         }
         Assert.assertTrue("invalid: " + PassivationInterceptor.getPrePassivateTarget(), PassivationInterceptor.getPrePassivateTarget() instanceof TestPassivationBean);

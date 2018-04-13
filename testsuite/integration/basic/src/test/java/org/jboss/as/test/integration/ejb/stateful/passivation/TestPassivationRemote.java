@@ -50,6 +50,8 @@ public interface TestPassivationRemote extends AutoCloseable {
 
     void addEntity(int id, String name);
 
+    public void removeEntity(final int id);
+
     Employee getSuperEmployee();
 
     /**
