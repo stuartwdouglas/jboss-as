@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
+<?xml version="1.0" encoding="UTF-8"?><!--
   ~ JBoss, Home of Professional Open Source.
   ~ Copyright 2017, Red Hat, Inc., and individual contributors
   ~ as indicated by the @author tags. See the copyright.txt file in the
@@ -19,8 +18,7 @@
   ~ License along with this software; if not, write to the Free
   ~ Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
   ~ 02110-1301 USA, or see the FSF site: http://www.fsf.org.
-  -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  --><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
@@ -126,8 +124,8 @@
         <maven.min.version>3.3.1</maven.min.version>
 
         <!-- Modularized JDK support (various workarounds) - activated via profile -->
-        <modular.jdk.args></modular.jdk.args>
-        <modular.jdk.props></modular.jdk.props>
+        <modular.jdk.args/>
+        <modular.jdk.props/>
 
         <!--
             See ChildFirstClassLoaderBuilder in model-test for the explanation of the org.jboss.model.test.cache.root and org.jboss.model.test.classpath.cache properties.
@@ -143,10 +141,10 @@
         <server.output.dir.prefix>wildfly</server.output.dir.prefix>
         <!-- Version suffix that is appended to directories. Default is the maven GAV version but this can be edited to use a short form version -->
         <server.output.dir.version>${project.version}</server.output.dir.version>
-        <surefire.extra.args></surefire.extra.args>
+        <surefire.extra.args/>
 
         <!-- Surefire args -->
-        <surefire.jpda.args></surefire.jpda.args>
+        <surefire.jpda.args/>
         <surefire.system.args>${modular.jdk.args} ${modular.jdk.props} -ea -Duser.region=US -Duser.language=en -XX:MaxMetaspaceSize=256m ${surefire.jpda.args} ${surefire.extra.args} ${surefire.jacoco.args}</surefire.system.args>
         <version.asciidoctor.plugin>1.5.6</version.asciidoctor.plugin>
         <!-- use older version of checkstyle as otherwise lots of checks fail -->
@@ -314,7 +312,7 @@
                         <includeTestSourceDirectory>true</includeTestSourceDirectory>
                         <excludes>**/*$logger.java,**/*$bundle.java</excludes>
                         <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
-                        <useFile></useFile>
+                        <useFile/>
                     </configuration>
                 </plugin>
 
@@ -417,7 +415,7 @@
                                             <exclude>xml-apis:xml-apis</exclude>
                                         </excludes>
                                     </bannedDependencies>
-                                    <dependencyConvergence></dependencyConvergence>
+                                    <dependencyConvergence/>
                                 </rules>
                             </configuration>
                         </execution>
@@ -443,7 +441,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -456,7 +454,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -469,7 +467,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -482,7 +480,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -497,7 +495,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -510,7 +508,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -526,7 +524,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -542,7 +540,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                                 <pluginExecution>
@@ -555,7 +553,7 @@
                                         </goals>
                                     </pluginExecutionFilter>
                                     <action>
-                                        <ignore></ignore>
+                                        <ignore/>
                                     </action>
                                 </pluginExecution>
                             </pluginExecutions>
@@ -612,9 +610,9 @@
                         <sourceHighlighter>coderay</sourceHighlighter>
                         <attributes>
                             <icons>font</icons>
-                            <pagenums></pagenums>
+                            <pagenums/>
                             <version>${project.version}</version>
-                            <idprefix></idprefix>
+                            <idprefix/>
                             <idseparator>-</idseparator>
                             <allow-uri-read>true</allow-uri-read>
                             <wildflyVersion>13</wildflyVersion>
@@ -654,7 +652,31 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
             </plugin>
-        </plugins>
+        
+      <plugin>
+        <groupId>io.fabric8</groupId>
+        <artifactId>fabric8-maven-plugin</artifactId>
+        <version>3.5.38</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>resource</goal>
+              <goal>build</goal>
+            </goals>
+          </execution>
+        </executions>
+      
+        <configuration>
+          <resources>
+            <labels>
+              <all>
+                <space>test</space>
+              </all>
+            </labels>
+          </resources>
+        </configuration>
+      </plugin>
+    </plugins>
     </build>
 
     <!-- Profiles -->
@@ -816,31 +838,31 @@
                                 <inherited>false</inherited>
                                 <configuration>
                                     <target>
-                                        <taskdef classname="org.jacoco.ant.ReportTask" name="report"></taskdef>
+                                        <taskdef classname="org.jacoco.ant.ReportTask" name="report"/>
                                         <echo>Creating JaCoCo test coverage reports...</echo>
-                                        <mkdir dir="${basedir}/target/coverage-report"></mkdir>
+                                        <mkdir dir="${basedir}/target/coverage-report"/>
                                         <report>
                                             <executiondata>
                                                 <fileset dir="${basedir}">
-                                                    <include name="**/target/jacoco.exec"></include>
+                                                    <include name="**/target/jacoco.exec"/>
                                                 </fileset>
                                             </executiondata>
                                             <structure name="AS 7 project">
                                                 <classfiles>
                                                     <fileset dir="${jboss.dist}/modules">
-                                                        <include name="**/*.jar"></include>
+                                                        <include name="**/*.jar"/>
                                                         <!-- Excludes solve "Can't add different class with same name: ..." -->
                                                         <!-- We have 2.x in main. -->
-                                                        <exclude name="com/sun/jsf-impl/1.*/**/*"></exclude>
+                                                        <exclude name="com/sun/jsf-impl/1.*/**/*"/>
                                                         <!--  Wildfly-3383 - com/sun/codemodel vs. /1.0/com/sun/codemodel -->
-                                                        <exclude name="com/sun/xml/**/*"></exclude>
-                                                        <exclude name="javax/faces/api/1.2/**/*"></exclude>
+                                                        <exclude name="com/sun/xml/**/*"/>
+                                                        <exclude name="javax/faces/api/1.2/**/*"/>
                                                         <!-- Wildfly-3390 -->
-                                                        <exclude name="org/apache/commons/beanutils/**/*"></exclude>
+                                                        <exclude name="org/apache/commons/beanutils/**/*"/>
                                                         <!-- others -->
-                                                        <exclude name="**/jipijapa-hibernate4-3/**/*"></exclude>
-                                                        <exclude name="**/hornetq-core-client*"></exclude>
-                                                        <exclude name="**/jboss-marshalling*"></exclude>
+                                                        <exclude name="**/jipijapa-hibernate4-3/**/*"/>
+                                                        <exclude name="**/hornetq-core-client*"/>
+                                                        <exclude name="**/jboss-marshalling*"/>
                                                         <!-- Wildfly-3389 -->
                                                     </fileset>
                                                 </classfiles>
@@ -852,235 +874,235 @@
                                                          done
                                                     -->
                                                     <fileset dir="appclient/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="batch-jberet/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="bean-validation/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/api/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/common/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/ee/infinispan/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/ee/spi/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/ejb/infinispan/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/ejb/spi/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/infinispan/extension/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/infinispan/spi/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/jgroups/api/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/jgroups/extension/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/jgroups/spi/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/marshalling/api/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/marshalling/infinispan/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/marshalling/jboss/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/marshalling/spi/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/server/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/service/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/singleton/api/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/singleton/extension/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/spi/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/web/api/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/web/infinispan/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/web/spi/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="clustering/web/undertow/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="connector/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="ee/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="ejb3/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="iiop-openjdk/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="jaxrs/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="jdr/jboss-as-jdr/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="jpa/eclipselink/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="jpa/hibernate4_1/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="jpa/hibernate4_3/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="jpa/hibernate5/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="jpa/openjpa/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="jpa/spi/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="jpa/subsystem/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="jsf/injection/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="jsf/subsystem/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="jsr77/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="legacy/cmp/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="legacy/configadmin/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="legacy/jacorb/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="legacy/jaxr/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="legacy/messaging/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="legacy/web/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="mail/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="messaging-activemq/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="mod_cluster/extension/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="mod_cluster/undertow/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="naming/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="picketlink/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="pojo/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="rts/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="sar/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="security/api/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="security/subsystem/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="system-jmx/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="testsuite/shared/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="transactions/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="undertow/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="web-common/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="webservices/server-integration/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="weld/bean-validation/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="weld/common/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="weld/ejb/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="weld/jpa/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="weld/spi/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="weld/subsystem/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="weld/transactions/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="weld/webservices/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                     <fileset dir="xts/src/main/java">
-                                                        <include name="**/*.java"></include>
+                                                        <include name="**/*.java"/>
                                                     </fileset>
                                                 </sourcefiles>
                                             </structure>
-                                            <html destdir="${basedir}/target/coverage-report/html"></html>
-                                            <xml destfile="${basedir}/target/coverage-report/coverage-report.xml"></xml>
-                                            <csv destfile="${basedir}/target/coverage-report/coverage-report.csv"></csv>
+                                            <html destdir="${basedir}/target/coverage-report/html"/>
+                                            <xml destfile="${basedir}/target/coverage-report/coverage-report.xml"/>
+                                            <csv destfile="${basedir}/target/coverage-report/coverage-report.csv"/>
                                         </report>
                                     </target>
                                 </configuration>
@@ -1106,7 +1128,7 @@
                 </property>
             </activation>
             <properties>
-                <surefire.jacoco.args></surefire.jacoco.args>
+                <surefire.jacoco.args/>
             </properties>
         </profile>
     </profiles>
