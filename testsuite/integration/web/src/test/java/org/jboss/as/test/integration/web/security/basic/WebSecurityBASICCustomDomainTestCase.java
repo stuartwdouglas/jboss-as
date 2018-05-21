@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,8 +37,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.apache.http.HttpEntity;
@@ -63,7 +60,6 @@ import org.jboss.as.arquillian.container.ManagementClient;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.as.controller.client.OperationBuilder;
-import org.jboss.as.controller.client.helpers.ClientConstants;
 import org.jboss.as.controller.descriptions.ModelDescriptionConstants;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.test.categories.CommonCriteria;
@@ -74,11 +70,9 @@ import org.jboss.logging.Logger;
 import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.asset.StringAsset;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-import org.xnio.IoUtils;
 
 /**
  * Unit Test the BASIC authentication
@@ -105,199 +99,52 @@ public class WebSecurityBASICCustomDomainTestCase {
 
         @Override
         public void setup(ManagementClient managementClient, String containerId) throws Exception {
-            try {
-                // Force WildFly to create the default application.keystore
-                try (CloseableHttpClient httpclient = HttpClients.custom()
-                        .build()) {
-                    HttpGet httpget = new HttpGet(HTTPS_HOST);
-                    httpclient.execute(httpget);
-                } catch (Exception ignored) {
-                }
-
-                UserManager.addApplicationUser(APPLICATION_USER, APPLICATION_PASSWORD, WILDFLY_HOME);
-                UserManager.addRoleToApplicationUser(APPLICATION_USER, APPLICATION_ROLE, WILDFLY_HOME);
-
-                domainAddress = PathAddress.pathAddress().append("subsystem", "undertow")
-                        .append("application-security-domain", SECURITY_DOMAIN);
-
-                final ModelNode compositeOp = new ModelNode();
-                compositeOp.get(ModelDescriptionConstants.OP).set(ModelDescriptionConstants.COMPOSITE);
-                compositeOp.get(ModelDescriptionConstants.OP_ADDR).setEmptyList();
-
-                ModelNode steps = compositeOp.get(ModelDescriptionConstants.STEPS);
-
-                // /subsystem=elytron/security-domain=EjbDomain:add(default-realm=UsersRoles, realms=[{realm=UsersRoles}])
-                ModelNode addDomain = Util.createAddOperation(domainAddress);
-                addDomain.get("http-authentication-factory").set("application-http-authentication");
-                steps.add(addDomain);
-
-                applyUpdate(managementClient.getControllerClient(), compositeOp, false);
-
-                ModelNode operation = new ModelNode();
-                operation.get(ModelDescriptionConstants.OP_ADDR).setEmptyList();
-                operation.get(ModelDescriptionConstants.OP).set(ModelDescriptionConstants.READ_ATTRIBUTE_OPERATION);
-                operation.get(ModelDescriptionConstants.NAME).set("server-state");
-                applyUpdate(managementClient.getControllerClient(), operation, false);
-
-
-                //executeReloadAndWaitForCompletion(managementClient.getControllerClient());
-
-            } catch (Exception e) {
-                System.out.println("*** BasicSecurityDomainSetup.setup() err");
-                e.printStackTrace();
+            // Force WildFly to create the default application.keystore
+            try (CloseableHttpClient httpclient = HttpClients.custom()
+                    .build()) {
+                HttpGet httpget = new HttpGet(HTTPS_HOST);
+                httpclient.execute(httpget);
+            } catch (Exception ignored) {
             }
-            System.out.println("*** BasicSecurityDomainSetup.setup() end");
-        }
 
-        public static void executeReload(ModelControllerClient client, boolean adminOnly) {
-            ModelNode operation = new ModelNode();
-            operation.get(ModelDescriptionConstants.OP_ADDR).setEmptyList();
-            operation.get(ModelDescriptionConstants.OP).set("reload");
-            operation.get("admin-only").set(adminOnly);
+            UserManager.addApplicationUser(APPLICATION_USER, APPLICATION_PASSWORD, WILDFLY_HOME);
+            UserManager.addRoleToApplicationUser(APPLICATION_USER, APPLICATION_ROLE, WILDFLY_HOME);
 
-            executeReload(client, operation);
-        }
+            ModelNode op = new ModelNode();
+            op.get(ModelDescriptionConstants.OP_ADDR).set(PathAddress.parseCLIStyleAddress("/subsystem=elytron/properties-realm=ApplicationRealm").toModelNode());
+            op.get(ModelDescriptionConstants.OP).set("load");
+            applyUpdate(managementClient.getControllerClient(), op, false);
 
-        /** Default time, in ms, to wait for reload to complete. */
-        public static final int TIMEOUT = 100000;
+            domainAddress = PathAddress.pathAddress().append("subsystem", "undertow")
+                    .append("application-security-domain", SECURITY_DOMAIN);
 
-        /**
-         * Executes a {@code reload} operation and waits the {@link #TIMEOUT default timeout} for the reload to complete.
-         *
-         * @param client
-         *            the client to use for the request. Cannot be {@code null}
-         *
-         * @throws AssertionError
-         *             if the reload does not complete within the timeout
-         */
-        public static void executeReloadAndWaitForCompletion(ModelControllerClient client) {
-            executeReloadAndWaitForCompletion(client, TIMEOUT);
-        }
+            final ModelNode compositeOp = new ModelNode();
+            compositeOp.get(ModelDescriptionConstants.OP).set(ModelDescriptionConstants.COMPOSITE);
+            compositeOp.get(ModelDescriptionConstants.OP_ADDR).setEmptyList();
 
-        /**
-         * Executes a {@code reload} operation and waits a configurable maximum time for the reload to complete.
-         *
-         * @param client
-         *            the client to use for the request. Cannot be {@code null}
-         * @param timeout
-         *            maximum time to wait for the reload to complete, in milliseconds
-         *
-         * @throws AssertionError
-         *             if the reload does not complete within the specified timeout
-         */
-        public static void executeReloadAndWaitForCompletion(ModelControllerClient client, int timeout) {
-            executeReloadAndWaitForCompletion(client, timeout, false, null, -1);
-        }
+            ModelNode steps = compositeOp.get(ModelDescriptionConstants.STEPS);
 
-        /**
-         * @return The server address of node0
-         */
-        public static String getServerAddress() {
-            String address = System.getProperty("management.address");
-            if (address == null) {
-                address = System.getProperty("node0");
-            }
-            if (address != null) {
-                return formatPossibleIpv6Address(address);
-            }
-            return "localhost";
-        }
+            // /subsystem=elytron/security-domain=EjbDomain:add(default-realm=UsersRoles, realms=[{realm=UsersRoles}])
+            ModelNode addDomain = Util.createAddOperation(domainAddress);
+            addDomain.get("http-authentication-factory").set("application-http-authentication");
+            steps.add(addDomain);
 
-        /**
-         * @return The server port for node0
-         */
-        public static int getServerPort() {
-            // this here is just fallback logic for older testsuite code that wasn't updated to newer property names
-            return Integer.getInteger("management.port", Integer.getInteger("as.managementPort", 9990));
-        }
+            applyUpdate(managementClient.getControllerClient(), compositeOp, false);
 
-        public static String formatPossibleIpv6Address(String address) {
-            if (address == null) {
-                return address;
-            }
-            if (!address.contains(":")) {
-                return address;
-            }
-            if (address.startsWith("[") && address.endsWith("]")) {
-                return address;
-            }
-            return "[" + address + "]";
-        }
-
-        /**
-         * Executes a {@code reload} operation, optionally putting the server into {@code admin-only} running mode, and
-         * waits a configurable maximum time for the reload to complete.
-         *
-         * @param client
-         *            the client to use for the request. Cannot be {@code null}
-         * @param timeout
-         *            maximum time to wait for the reload to complete, in milliseconds
-         * @param adminOnly
-         *            if {@code true}, the server will be reloaded in admin-only mode
-         * @param serverAddress
-         *            if {@code null}, use {@code TestSuiteEnvironment.getServerAddress()} to create the
-         *            ModelControllerClient
-         * @param serverPort
-         *            if {@code -1}, use {@code TestSuiteEnvironment.getServerPort()} to create the ModelControllerClient
-         *
-         * @throws AssertionError
-         *             if the reload does not complete within the specified timeout
-         */
-        public static void executeReloadAndWaitForCompletion(ModelControllerClient client, int timeout, boolean adminOnly,
-                String serverAddress, int serverPort) {
-            executeReload(client, adminOnly);
-            waitForLiveServerToReload(timeout, "remote+http", serverAddress != null ? serverAddress : getServerAddress(),
-                    serverPort != -1 ? serverPort : getServerPort());
-        }
-
-        private static void waitForLiveServerToReload(int timeout, String protocol, String serverAddress, int serverPort) {
-            long start = System.currentTimeMillis();
             ModelNode operation = new ModelNode();
             operation.get(ModelDescriptionConstants.OP_ADDR).setEmptyList();
             operation.get(ModelDescriptionConstants.OP).set(ModelDescriptionConstants.READ_ATTRIBUTE_OPERATION);
             operation.get(ModelDescriptionConstants.NAME).set("server-state");
-            while (System.currentTimeMillis() - start < timeout) {
-                // do the sleep before we check, as the attribute state may not change instantly
-                // also reload generally takes longer than 100ms anyway
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                }
-                try {
-                    ModelControllerClient liveClient = ModelControllerClient.Factory.create(protocol, serverAddress,
-                            serverPort);
-                    try {
-                        ModelNode result = liveClient.execute(operation);
-                        if ("running".equals(result.get(ModelDescriptionConstants.RESULT).asString())) {
-                            return;
-                        }
-                    } catch (IOException e) {
-                    } finally {
-                        IoUtils.safeClose(liveClient);
-                    }
-                } catch (UnknownHostException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            Assert.fail("Live Server did not reload in the imparted time.");
-        }
+            applyUpdate(managementClient.getControllerClient(), operation, false);
 
-        public static void executeReload(ModelControllerClient client, ModelNode reloadOp) {
-            try {
-                ModelNode result = client.execute(reloadOp);
-                Assert.assertEquals(ModelDescriptionConstants.SUCCESS, result.get(ClientConstants.OUTCOME).asString());
-            } catch (IOException e) {
-                final Throwable cause = e.getCause();
-                if (!(cause instanceof ExecutionException) && !(cause instanceof CancellationException)) {
-                    throw new RuntimeException(e);
-                } // else ignore, this might happen if the channel gets closed before we got the response
-            }
+
+            System.out.println("*** BasicSecurityDomainSetup.setup() end");
         }
 
         static void applyUpdate(final ModelControllerClient client, ModelNode update, boolean allowFailure)
                 throws IOException {
             ModelNode result = client.execute(new OperationBuilder(update).build());
-            System.out.println("management op result = "+ result);
+            System.out.println("management op result = " + result);
             if (result.hasDefined("outcome") && (allowFailure || "success".equals(result.get("outcome").asString()))) {
                 return;
             } else if (result.hasDefined("failure-description")) {
@@ -326,7 +173,7 @@ public class WebSecurityBASICCustomDomainTestCase {
         }
 
         public static void addApplicationUser(String userName, String password, Path jbossHome) {
-            System.out.println("*** props = "+ jbossHome.resolve("standalone/configuration/application-users.properties"));
+            System.out.println("*** props = " + jbossHome.resolve("standalone/configuration/application-users.properties"));
             addUser(userName, "ApplicationRealm", password, jbossHome.resolve("standalone/configuration/application-users.properties"));
         }
 
@@ -336,7 +183,7 @@ public class WebSecurityBASICCustomDomainTestCase {
 
         private static void addUser(String userName, String realm, String password, Path propertiesFile) {
             Properties properties = readPropertiesFile(propertiesFile);
-            System.out.println("*** props = "+ properties);
+            System.out.println("*** props = " + properties);
             properties.put(userName, encryptPassword(userName, password, realm));
             writePropertiesFile(properties, propertiesFile);
         }
@@ -380,7 +227,7 @@ public class WebSecurityBASICCustomDomainTestCase {
         private static void revokeRoleFromUser(String userName, String role, Path propertiesFile) {
             Properties properties = readPropertiesFile(propertiesFile);
             String roles = properties.getProperty(userName);
-            if (roles != null && ! roles.isEmpty()) {
+            if (roles != null && !roles.isEmpty()) {
                 List<String> roleList = new ArrayList<>(Arrays.asList(roles.split(",")));
                 roleList.remove(role);
                 if (roleList.isEmpty()) {
