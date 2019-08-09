@@ -24,10 +24,12 @@ package org.jboss.as.ejb3.deployment.processors;
 import static java.security.AccessController.doPrivileged;
 
 import java.net.URI;
+import java.security.AccessController;
 import java.security.GeneralSecurityException;
 import java.security.PrivilegedAction;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.util.function.Supplier;
 
 import javax.net.ssl.SSLContext;
 
@@ -59,6 +61,7 @@ import org.wildfly.discovery.Discovery;
 import org.wildfly.security.auth.client.AuthenticationConfiguration;
 import org.wildfly.security.auth.client.AuthenticationContext;
 import org.wildfly.security.auth.client.AuthenticationContextConfigurationClient;
+import org.wildfly.security.auth.client.ElytronXmlParser;
 import org.wildfly.security.auth.client.MatchRule;
 import org.xnio.OptionMap;
 
@@ -82,11 +85,11 @@ public class EjbClientContextSetupProcessor implements DeploymentUnitProcessor {
         }
 
         RegistrationService registrationService = new RegistrationService(module);
-        ServiceName registrationServiceName = deploymentUnit.getServiceName().append("ejb3","client-context","registration-service");
+        ServiceName registrationServiceName = deploymentUnit.getServiceName().append("ejb3", "client-context", "registration-service");
         final ServiceName profileServiceName = getProfileServiceName(phaseContext);
         final ServiceBuilder<Void> builder = phaseContext.getServiceTarget().addService(registrationServiceName, registrationService)
-            .addDependency(getEJBClientContextServiceName(phaseContext), EJBClientContextService.class, registrationService.ejbClientContextInjectedValue)
-            .addDependency(getDiscoveryServiceName(phaseContext), Discovery.class, registrationService.discoveryInjector);
+                .addDependency(getEJBClientContextServiceName(phaseContext), EJBClientContextService.class, registrationService.ejbClientContextInjectedValue)
+                .addDependency(getDiscoveryServiceName(phaseContext), Discovery.class, registrationService.discoveryInjector);
         if (profileServiceName != null) {
             builder.addDependency(profileServiceName, RemotingProfileService.class, registrationService.profileServiceInjectedValue);
         }
@@ -98,7 +101,7 @@ public class EjbClientContextSetupProcessor implements DeploymentUnitProcessor {
             return;
         }
         //we need to make sure all our components have a dependency on the EJB client context registration, which in turn implies a dependency on the context
-        for(final ComponentDescription component : moduleDescription.getComponentDescriptions()) {
+        for (final ComponentDescription component : moduleDescription.getComponentDescriptions()) {
             component.addDependency(registrationServiceName);
         }
     }
@@ -169,6 +172,25 @@ public class EjbClientContextSetupProcessor implements DeploymentUnitProcessor {
                     EjbLogger.DEPLOYMENT_LOGGER.debugf("Registering EJB client context %s for classloader %s", ejbClientContext, classLoader);
                     final ContextManager<AuthenticationContext> authenticationContextManager = AuthenticationContext.getContextManager();
                     final RemotingProfileService profileService = profileServiceInjectedValue.getOptionalValue();
+                    authenticationContextManager.setClassLoaderDefaultSupplier(classLoader, new Supplier<AuthenticationContext>() {
+                        @Override
+                        public AuthenticationContext get() {
+                            return AccessController.doPrivileged(new PrivilegedAction<AuthenticationContext>() {
+                                @Override
+                                public AuthenticationContext run() {
+                                    ClassLoader old = Thread.currentThread().getContextClassLoader();
+                                    try {
+                                        Thread.currentThread().setContextClassLoader(classLoader);
+                                        return ElytronXmlParser.parseAuthenticationClientConfiguration().create();
+                                    } catch (Exception e) {
+                                        throw new RuntimeException(e);
+                                    } finally {
+                                        Thread.currentThread().setContextClassLoader(old);
+                                    }
+                                }
+                            });
+                        }
+                    });
                     if (profileService != null || ejbClientClustersAuthenticationContext != null) {
                         // this is cheating but it works for our purposes
                         AuthenticationContext authenticationContext = authenticationContextManager.getClassLoaderDefault(classLoader);
@@ -238,15 +260,15 @@ public class EjbClientContextSetupProcessor implements DeploymentUnitProcessor {
                 rule = rule.matchPort(port);
             }
             final String path = destinationUri.getPath();
-            if (path != null && ! path.isEmpty()) {
+            if (path != null && !path.isEmpty()) {
                 rule = rule.matchPath(path);
             }
             MatchRule ejbRule = rule.matchAbstractType("ejb", "jboss");
             MatchRule jtaRule = rule.matchAbstractType("jta", "jboss");
             final OptionMap connectOptions = connectionSpec.getConnectOptions();
             authenticationConfiguration = RemotingOptions.mergeOptionsIntoAuthenticationConfiguration(connectOptions, authenticationConfiguration);
-            AuthenticationConfiguration ejbConfiguration = CLIENT.getAuthenticationConfiguration(destinationUri, context, - 1, "ejb", "jboss");
-            AuthenticationConfiguration jtaConfiguration = CLIENT.getAuthenticationConfiguration(destinationUri, context, - 1, "jta", "jboss");
+            AuthenticationConfiguration ejbConfiguration = CLIENT.getAuthenticationConfiguration(destinationUri, context, -1, "ejb", "jboss");
+            AuthenticationConfiguration jtaConfiguration = CLIENT.getAuthenticationConfiguration(destinationUri, context, -1, "jta", "jboss");
             if (sslContext == null) {
                 try {
                     sslContext = CLIENT.getSSLContext(destinationUri, context);
