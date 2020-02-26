@@ -135,8 +135,7 @@ public class HttpInvokerDefinition extends PersistentResourceDefinition {
                     .addCapability(HTTP_INVOKER_HOST_CAPABILITY)
                     .setInstance(service)
                     .addCapabilityRequirement(HTTP_INVOKER_RUNTIME_CAPABILITY.getName(), PathHandler.class, service.getRemoteHttpInvokerServiceInjectedValue())
-                    .addCapabilityRequirement(Capabilities.CAPABILITY_HOST, Host.class, service.getHost(), serverName, hostName)
-                    ;
+                    .addCapabilityRequirement(Capabilities.CAPABILITY_HOST, Host.class, service.getHost(), serverName, hostName);
 
             if (httpAuthenticationFactory != null) {
                 builder.addCapabilityRequirement(Capabilities.REF_HTTP_AUTHENTICATION_FACTORY, HttpAuthenticationFactory.class, service.getHttpAuthenticationFactoryInjectedValue(), httpAuthenticationFactory);

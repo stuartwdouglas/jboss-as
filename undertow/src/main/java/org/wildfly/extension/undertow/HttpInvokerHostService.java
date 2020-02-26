@@ -23,6 +23,7 @@
 package org.wildfly.extension.undertow;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -30,7 +31,13 @@ import io.undertow.security.handlers.AuthenticationCallHandler;
 import io.undertow.security.handlers.AuthenticationConstraintHandler;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.Cookie;
+import io.undertow.server.handlers.CookieImpl;
 import io.undertow.server.handlers.PathHandler;
+import io.undertow.server.session.SecureRandomSessionIdGenerator;
+import io.undertow.util.HeaderValues;
+import io.undertow.util.Headers;
+import io.undertow.util.StatusCodes;
+
 import org.jboss.as.domain.management.SecurityRealm;
 import org.jboss.as.web.session.SimpleRoutingSupport;
 import org.jboss.as.web.session.SimpleSessionIdentifierCodec;
@@ -83,12 +90,24 @@ class HttpInvokerHostService implements Service<HttpInvokerHostService> {
     }
 
     private HttpHandler setupRoutes(HttpHandler handler) {
+        SecureRandomSessionIdGenerator idGen = new SecureRandomSessionIdGenerator();
         final SimpleSessionIdentifierCodec codec = new SimpleSessionIdentifierCodec(new SimpleRoutingSupport(), this.host.getValue().getServer().getRoute());
         return exchange -> {
             exchange.addResponseCommitListener(ex -> {
                 Cookie cookie = ex.getResponseCookies().get(JSESSIONID);
                 if(cookie != null ) {
                     cookie.setValue(codec.encode(cookie.getValue()).toString());
+                } else if (ex.getStatusCode() == StatusCodes.UNAUTHORIZED) {
+                    HeaderValues auth = ex.getResponseHeaders().get(Headers.WWW_AUTHENTICATE);
+                    if (auth != null) {
+                        //digest auth is stateful, if we are using it we need session affitnity
+                        for (String header : auth) {
+                            if (header.toLowerCase(Locale.ENGLISH).startsWith("digest")) {
+                                exchange.getResponseCookies().put("JSESSIONID", new CookieImpl("JSESSIONID", codec.encode(idGen.createSessionId()).toString()).setPath(path));
+                            }
+                        }
+
+                    }
                 }
             });
             handler.handleRequest(exchange);
