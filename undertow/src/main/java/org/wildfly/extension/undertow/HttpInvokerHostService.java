@@ -103,7 +103,7 @@ class HttpInvokerHostService implements Service<HttpInvokerHostService> {
                         //digest auth is stateful, if we are using it we need session affitnity
                         for (String header : auth) {
                             if (header.toLowerCase(Locale.ENGLISH).startsWith("digest")) {
-                                exchange.getResponseCookies().put("JSESSIONID", new CookieImpl("JSESSIONID", codec.encode(idGen.createSessionId()).toString()).setPath(path));
+                                exchange.getResponseCookies().put("JSESSIONID", new CookieImpl("JSESSIONID", codec.encode(idGen.createSessionId()).toString()).setPath(path.startsWith("/") ? path : ("/"+path));
                             }
                         }
 
